@@ -1,0 +1,27 @@
+export enum WorkspaceRole {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
+}
+
+export enum StandupStatus {
+  SUBMITTED = 'SUBMITTED',
+  LATE = 'LATE',
+  MISSED = 'MISSED',
+  PENDING_AI = 'PENDING_AI',
+}
+
+export enum BlockerSeverity {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
+export enum NotificationType {
+  SUBMISSION_REMINDER = 'SUBMISSION_REMINDER',
+  BLOCKER_ALERT = 'BLOCKER_ALERT',
+  SUMMARY_READY = 'SUMMARY_READY',
+  WEEKLY_DIGEST_READY = 'WEEKLY_DIGEST_READY',
+  INVITE_ACCEPTED = 'INVITE_ACCEPTED',
+  MEMBER_REMOVED = 'MEMBER_REMOVED',
+}

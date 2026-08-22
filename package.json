@@ -1,0 +1,17 @@
+{
+  "name": "ai-standup",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "turbo": "^2"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

@@ -6,12 +6,12 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 0: Infrastructure & Operational Safety Net
 
-- [ ] 0.1 Setup monorepo: `apps/web` (Next.js 16), `apps/api` (NestJS), `packages/shared` (types/enum bersama)
+- [x] 0.1 Setup monorepo: `apps/web` (Next.js 16), `apps/api` (NestJS), `packages/shared` (types/enum bersama)
   - Shared package harus include: WebSocket event types, API response types, enum re-exports dari Prisma
 - [ ] 0.2 Setup PostgreSQL + Redis lokal (native, sesuai preferensi non-Docker — Memurai kalau Windows)
-- [ ] 0.3 Init Prisma, tulis schema dari `design.md` Bagian 3, jalankan migration pertama
+- [x] 0.3 Init Prisma, tulis schema dari `design.md` Bagian 3, jalankan migration pertama
   - Pastikan semua model ada: User, Workspace, WorkspaceMember, Team, WorkspaceInvite, StandupEntry, BlockerFlag, AiSummary, WeeklyDigest, Notification, AuditLog
-- [ ] 0.4 Setup BullMQ + Bull Board
+- [x] 0.4 Setup BullMQ + Bull Board
   - Konfigurasi queues: `email`, `ai-summary`, `ai-blocker`, `ai-weekly-digest`
   - Bull Board UI di `/admin/queues` (protected by admin auth)
   - Pastikan Redis connection shared antara Socket.io adapter, BullMQ, dan rate limiter

@@ -1,0 +1,251 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ IDENTITY ============
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  avatarUrl           String?
+  isEmailVerified     Boolean   @default(false)
+  isLocked            Boolean   @default(false) // Account lockout after too many failed logins
+  lockedUntil         DateTime? // When the lockout expires
+  failedLoginAttempts Int       @default(0) // Counter for consecutive failed logins
+  consentGivenAt      DateTime? // Explicit consent timestamp (Requirement 14.1)
+  globalEmailPref     String    @default("IMMEDIATE") // IMMEDIATE | DAILY_DIGEST | OFF
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  memberships    WorkspaceMember[]
+  standupEntries StandupEntry[]
+  notifications  Notification[]
+}
+
+// ============ TENANCY ============
+
+model Workspace {
+  id                  String    @id @default(uuid())
+  name                String
+  slug                String    @unique
+  timezone            String    @default("Asia/Jakarta")
+  standupWindowStart  String    @default("00:00") // HH:mm, in Workspace timezone
+  standupWindowEnd    String    @default("11:00")
+  workingDays         Int[]     @default([1, 2, 3, 4, 5]) // 0=Sun, 1=Mon, ..., 6=Sat (ISO)
+  lastProcessedDate   DateTime? @db.Date // Prevents window-close double-processing (design 6.2)
+  onboardingCompleted Boolean   @default(false) // Tracks if onboarding wizard was completed
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  members        WorkspaceMember[]
+  teams          Team[]
+  standupEntries StandupEntry[]
+  aiSummaries    AiSummary[]
+  weeklyDigests  WeeklyDigest[]
+  auditLogs      AuditLog[]
+
+  @@index([slug])
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  teamId      String?
+  isMuted     Boolean       @default(false) // per-user notification mute (Requirement 10.3)
+  isActive    Boolean       @default(true) // soft-delete: false when member leaves/removed
+  joinedAt    DateTime      @default(now())
+  leftAt      DateTime? // when member left/was removed
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, userId]) // satu user cuma satu membership per workspace
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members   WorkspaceMember[]
+
+  @@index([workspaceId])
+}
+
+model WorkspaceInvite {
+  id          String    @id @default(uuid())
+  workspaceId String
+  email       String
+  token       String    @unique
+  invitedById String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([workspaceId, email, usedAt]) // Prevent duplicate pending invites for same email in same workspace
+  @@index([workspaceId])
+  @@index([token])
+}
+
+// ============ STANDUP CORE ============
+
+enum StandupStatus {
+  SUBMITTED
+  LATE
+  MISSED
+  PENDING_AI // Entry submitted but AI processing hasn't happened yet (for graceful degradation)
+}
+
+model StandupEntry {
+  id            String        @id @default(uuid())
+  workspaceId   String
+  userId        String
+  standupDate   DateTime      @db.Date
+  yesterdayText String?       @db.VarChar(2000)
+  todayText     String?       @db.VarChar(2000)
+  blockerText   String?       @db.VarChar(2000)
+  status        StandupStatus @default(SUBMITTED)
+  submittedAt   DateTime?
+  editedAt      DateTime? // Last edit timestamp (for edit-within-grace-period tracking)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockerFlag BlockerFlag?
+
+  @@unique([workspaceId, userId, standupDate]) // Requirement 5.2 — satu entry per orang per hari
+  @@index([workspaceId, standupDate])
+}
+
+// ============ AI OUTPUT ============
+
+enum BlockerSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model BlockerFlag {
+  id             String          @id @default(uuid())
+  standupEntryId String          @unique
+  severity       BlockerSeverity
+  reason         String          @db.VarChar(500)
+  isResolved     Boolean         @default(false)
+  resolvedById   String? // Who resolved it (Requirement 9.6)
+  createdAt      DateTime        @default(now())
+  resolvedAt     DateTime?
+
+  standupEntry StandupEntry @relation(fields: [standupEntryId], references: [id], onDelete: Cascade)
+
+  @@index([standupEntryId])
+}
+
+model AiSummary {
+  id              String   @id @default(uuid())
+  workspaceId     String
+  summaryDate     DateTime @db.Date
+  content         String   @db.Text
+  entryCount      Int
+  blockerCount    Int
+  submissionRate  Float // Percentage of members who submitted (Requirement 8.6)
+  missedMembers   String[] // Names of members who missed (Requirement 8.6)
+  generatedAt     DateTime @default(now())
+  isManualTrigger Boolean  @default(false) // Was this manually triggered vs auto-generated
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, summaryDate]) // Requirement 8 — satu summary per workspace per hari
+  @@index([workspaceId, summaryDate])
+}
+
+model WeeklyDigest {
+  id                String   @id @default(uuid())
+  workspaceId       String
+  weekStartDate     DateTime @db.Date // Monday of the week
+  weekEndDate       DateTime @db.Date // Friday (or last working day) of the week
+  content           String   @db.Text // AI-generated narrative
+  totalEntries      Int
+  totalBlockers     Int
+  resolvedBlockers  Int
+  avgSubmissionRate Float // Average daily submission rate for the week
+  topMissers        String[] // Members who missed the most that week
+  generatedAt       DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, weekStartDate])
+  @@index([workspaceId, weekStartDate])
+}
+
+// ============ NOTIFICATIONS ============
+
+enum NotificationType {
+  SUBMISSION_REMINDER // 30 min before window close
+  BLOCKER_ALERT // High severity blocker detected
+  SUMMARY_READY // Daily AI summary generated
+  WEEKLY_DIGEST_READY // Weekly digest generated
+  INVITE_ACCEPTED // Someone accepted your invite
+  MEMBER_REMOVED // You were removed from a workspace
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String // recipient
+  workspaceId String? // which workspace this relates to (null for system-level)
+  type        NotificationType
+  title       String
+  body        String           @db.VarChar(500)
+  isRead      Boolean          @default(false)
+  metadata    Json? // Extra data (e.g., standupEntryId, blockerId)
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([createdAt]) // For 30-day purge cron
+}
+
+// ============ AUDIT ============
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  workspaceId  String?
+  userId       String?
+  action       String
+  entityType   String?
+  entityId     String?
+  metadataJson Json?
+  ipAddress    String? // Record IP for security-sensitive actions
+  createdAt    DateTime @default(now())
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([workspaceId, action])
+  @@index([createdAt])
+}

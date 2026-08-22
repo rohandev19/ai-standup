@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "[pre-commit] Checking for hardcoded secrets with gitleaks..."
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged -v
+else
+  echo "[pre-commit] WARNING: gitleaks is not installed locally. Skipping secret scan."
+  echo "[pre-commit] To enforce security, please install gitleaks (https://github.com/gitleaks/gitleaks)"
+fi
+
+echo "[pre-commit] Running lint..."
+pnpm lint
