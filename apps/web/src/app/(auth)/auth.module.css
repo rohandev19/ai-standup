@@ -1,0 +1,53 @@
+.authCard {
+  width: 100%;
+  max-width: 450px;
+  padding: 2.5rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.forgotPassword {
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+.forgotPassword a {
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.forgotPassword a:hover {
+  color: var(--text-primary);
+}
+
+.footerText {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.footerText a {
+  font-weight: 600;
+}
