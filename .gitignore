@@ -1,0 +1,55 @@
+# ==================
+# Dependencies
+# ==================
+node_modules/
+.pnpm-store/
+
+# ==================
+# Build outputs
+# ==================
+dist/
+.next/
+.turbo/
+out/
+
+# ==================
+# Environment / Secrets
+# ==================
+.env
+.env.*
+!.env.example
+
+# ==================
+# IDE / OS
+# ==================
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# ==================
+# Logs
+# ==================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==================
+# Prisma
+# ==================
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# ==================
+# Testing
+# ==================
+coverage/
+
+# ==================
+# Misc
+# ==================
+*.tsbuildinfo
