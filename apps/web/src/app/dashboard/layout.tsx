@@ -1,6 +1,9 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import styles from './layout.module.css';
 
 export default function DashboardLayout({
@@ -9,6 +12,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading: isAuthLoading, logout } = useAuth();
+  const { activeWorkspace, workspaces, setActiveWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isAuthLoading, router]);
 
   const navItems = [
     { label: 'Overview', href: '/dashboard' },
@@ -16,6 +28,10 @@ export default function DashboardLayout({
     { label: 'Teams', href: '/dashboard/teams' },
     { label: 'Settings', href: '/dashboard/settings' },
   ];
+
+  if (isAuthLoading || !user) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+  }
 
   return (
     <div className={styles.container}>
@@ -26,10 +42,14 @@ export default function DashboardLayout({
         </div>
         
         <div className={styles.workspaceSelector}>
-          <div className={styles.avatar}>T</div>
+          <div className={styles.avatar}>{activeWorkspace ? activeWorkspace.name.charAt(0).toUpperCase() : '?'}</div>
           <div className={styles.workspaceInfo}>
-            <span className={styles.workspaceName}>TechCorp Inc.</span>
-            <span className={styles.workspaceRole}>Admin</span>
+            <span className={styles.workspaceName}>{activeWorkspace ? activeWorkspace.name : 'Loading...'}</span>
+            <span className={styles.workspaceRole}>
+              {activeWorkspace?.members?.[0]?.role ? 
+                activeWorkspace.members[0].role.charAt(0) + activeWorkspace.members[0].role.slice(1).toLowerCase() 
+                : 'Member'}
+            </span>
           </div>
         </div>
 
@@ -46,7 +66,15 @@ export default function DashboardLayout({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <button className={styles.logoutBtn}>Log out</button>
+          <button 
+            className={styles.logoutBtn}
+            onClick={() => {
+              logout();
+              router.push('/login');
+            }}
+          >
+            Log out
+          </button>
         </div>
       </aside>
 
@@ -64,7 +92,7 @@ export default function DashboardLayout({
         </header>
 
         <main className={styles.content}>
-          {children}
+          {isWorkspaceLoading ? <div>Loading workspace data...</div> : children}
         </main>
       </div>
     </div>

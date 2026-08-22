@@ -18,85 +18,80 @@ export default function DashboardPage() {
         setToast('📝 A team member just submitted a standup.');
       }
       
-      // Auto hide toast
-      setTimeout(() => setToast(null), 5000);
-    }
-  }, [latestEvent]);
+    };
+
+    fetchData();
+  }, [activeWorkspace]);
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>Loading dashboard data...</div>;
+  }
 
   return (
-    <div className={styles.dashboard}>
-      {toast && (
-        <div className={`${styles.toast} animate-slide-up`}>
-          {toast}
-        </div>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.5s ease' }}>
       
-      {/* Stats Row */}
-      <div className={styles.statsGrid}>
-        <Card>
-          <h3 className={styles.statLabel}>Team Members</h3>
-          <p className={styles.statValue}>12</p>
-        </Card>
-        <Card>
-          <h3 className={styles.statLabel}>Standups Today</h3>
-          <p className={styles.statValue}>8 <span className={styles.statMuted}>/ 12</span></p>
-        </Card>
-        <Card glow>
-          <h3 className={styles.statLabel}>Active Blockers</h3>
-          <p className={styles.statValueError}>2</p>
-        </Card>
-      </div>
-
-      {/* Main Content Area */}
-      <div className={styles.mainGrid}>
-        {/* Left Column: AI Summary */}
-        <div className={styles.summaryColumn}>
-          <div className={styles.sectionHeader}>
-            <h2>✨ Today&apos;s AI Summary</h2>
-            <span className={styles.badge}>Live</span>
-          </div>
-          
-          <Card className={styles.aiCard} glow>
-            <div className={styles.aiContent}>
-              <p>The team is making great progress on Phase 3. <strong>Frontend team</strong> completed the dashboard layout. <strong>Backend team</strong> is slightly delayed due to a Redis connection issue, but expected to resolve it by EOD.</p>
-              
-              <div className={styles.blockerAlert}>
-                <h4>🚨 Action Required</h4>
-                <ul>
-                  <li>Sarah is blocked on AWS permissions for the new S3 bucket.</li>
-                  <li>John needs code review on the auth module.</li>
-                </ul>
-              </div>
-            </div>
-          </Card>
+      {/* AI Summary Section */}
+      <section>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-green)', boxShadow: '0 0 10px var(--accent-green)' }}></div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Today's AI Summary</h2>
         </div>
+        <Card glow>
+          {summary ? (
+            <p style={{ lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+              {summary.content}
+            </p>
+          ) : (
+            <p style={{ lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+              No summary available yet for today. Standups are still being collected.
+            </p>
+          )}
+        </Card>
+      </section>
 
-        {/* Right Column: Recent Standups */}
-        <div className={styles.feedColumn}>
-          <div className={styles.sectionHeader}>
-            <h2>Recent Updates</h2>
-          </div>
+      <section>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Latest Submissions</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
           
-          <div className={styles.feedList}>
-            {[1,2,3].map(i => (
-              <Card key={i} className={styles.feedItem}>
-                <div className={styles.feedHeader}>
-                  <div className={styles.feedAvatar}>U</div>
-                  <div>
-                    <h4 className={styles.feedName}>User {i}</h4>
-                    <span className={styles.feedTime}>2 hours ago</span>
+          {standups.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)' }}>No standups submitted today.</p>
+          ) : (
+            standups.map((standup: any) => (
+              <Card key={standup.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--border-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>
+                      {standup.user?.name?.charAt(0) || standup.user?.email?.charAt(0) || '?'}
+                    </div>
+                    <span style={{ fontWeight: 500 }}>{standup.user?.name || standup.user?.email}</span>
                   </div>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    {new Date(standup.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </span>
                 </div>
-                <div className={styles.feedText}>
-                  <p><strong>Did:</strong> Finished the UI mockups.</p>
-                  <p><strong>Doing:</strong> Starting implementation of the Button component.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Yesterday</span>
+                    <span>{standup.yesterdayText}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Today</span>
+                    <span>{standup.todayText}</span>
+                  </div>
+                  {standup.blockerText && (
+                    <div>
+                      <span style={{ color: 'var(--accent-red)', display: 'block', marginBottom: '0.25rem' }}>Blocker</span>
+                      <span>{standup.blockerText}</span>
+                    </div>
+                  )}
                 </div>
               </Card>
-            ))}
-          </div>
+            ))
+          )}
+
         </div>
-      </div>
-      
+      </section>
+
     </div>
   );
 }

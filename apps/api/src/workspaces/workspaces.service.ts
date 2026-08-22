@@ -21,6 +21,25 @@ export class WorkspacesService {
     );
   }
 
+  async getMyWorkspaces(userId: string) {
+    return this.prisma.workspace.findMany({
+      where: {
+        members: {
+          some: {
+            userId,
+            isActive: true,
+          },
+        },
+      },
+      include: {
+        members: {
+          where: { userId },
+          select: { role: true },
+        },
+      },
+    });
+  }
+
   async createWorkspace(name: string, ownerId: string) {
     const slug = this.generateSlug(name);
 
