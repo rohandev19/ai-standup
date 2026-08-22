@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card/Card';
 import { Button } from '@/components/Button/Button';
 import styles from './standupForm.module.css';
 
 export default function NewStandupPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -13,7 +15,7 @@ export default function NewStandupPage() {
     // Simulate API call
     setTimeout(() => {
       setLoading(false);
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }, 1500);
   };
 
@@ -58,7 +60,7 @@ export default function NewStandupPage() {
           </div>
 
           <div className={styles.actions}>
-            <Button type="button" variant="ghost" onClick={() => window.history.back()}>
+            <Button type="button" variant="ghost" onClick={() => router.back()}>
               Cancel
             </Button>
             <Button type="submit" isLoading={loading}>

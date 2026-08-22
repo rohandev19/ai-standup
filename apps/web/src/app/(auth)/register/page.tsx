@@ -1,13 +1,15 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card/Card';
 import { Input } from '@/components/Input/Input';
 import { Button } from '@/components/Button/Button';
-import styles from './auth.module.css';
+import styles from '../auth.module.css';
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +17,7 @@ export default function RegisterPage() {
     // Simulate register
     setTimeout(() => {
       setLoading(false);
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }, 1500);
   };
 
@@ -23,7 +25,7 @@ export default function RegisterPage() {
     <Card className={`${styles.authCard} animate-fade-in`} glow>
       <div className={styles.header}>
         <h2>Create an account</h2>
-        <p>Start automating your team's standup today.</p>
+        <p>Start automating your team&apos;s standup today.</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>

@@ -52,7 +52,7 @@ export default function DashboardPage() {
         {/* Left Column: AI Summary */}
         <div className={styles.summaryColumn}>
           <div className={styles.sectionHeader}>
-            <h2>✨ Today's AI Summary</h2>
+            <h2>✨ Today&apos;s AI Summary</h2>
             <span className={styles.badge}>Live</span>
           </div>
           

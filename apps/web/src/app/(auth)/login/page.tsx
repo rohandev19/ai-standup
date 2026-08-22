@@ -1,13 +1,15 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card/Card';
 import { Input } from '@/components/Input/Input';
 import { Button } from '@/components/Button/Button';
-import styles from './auth.module.css';
+import styles from '../auth.module.css';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +17,7 @@ export default function LoginPage() {
     // Simulate login
     setTimeout(() => {
       setLoading(false);
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }, 1500);
   };
 
@@ -50,7 +52,7 @@ export default function LoginPage() {
       </form>
 
       <p className={styles.footerText}>
-        Don't have an account? <Link href="/register" className="text-gradient">Sign up</Link>
+        Don&apos;t have an account? <Link href="/register" className="text-gradient">Sign up</Link>
       </p>
     </Card>
   );
