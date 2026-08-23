@@ -8,7 +8,7 @@ import { RedisIoAdapter } from './common/redis/redis-io.adapter';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
 
   // Use Pino logger
   app.useLogger(app.get(Logger));

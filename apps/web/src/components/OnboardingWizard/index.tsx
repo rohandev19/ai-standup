@@ -1,11 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { api } from '@/lib/api';
 import styles from './OnboardingWizard.module.css';
 
 interface OnboardingWizardProps {
-  workspace: any;
+  workspace: {
+    id: string;
+    name?: string;
+    timezone?: string;
+    standupWindowStart?: string;
+    standupWindowEnd?: string;
+    workingDays?: number[];
+  };
   onComplete: () => void;
 }
 
@@ -64,8 +71,8 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
       }
 
       onComplete();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save settings. Please try again.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to save settings. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +84,7 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
         
         <div className={styles.header}>
           <h2>Welcome to AI Standup!</h2>
-          <p>Let's configure your workspace in a few quick steps.</p>
+          <p>Let&apos;s configure your workspace in a few quick steps.</p>
         </div>
 
         <div className={styles.progress}>

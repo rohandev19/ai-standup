@@ -92,7 +92,7 @@ export default function LandingPage() {
                 <div className={styles.mockupSidebarItem}></div>
               </div>
               <div className={styles.mockupContent}>
-                <div className={styles.mockupTitle}>Today's AI Summary</div>
+                <div className={styles.mockupTitle}>Today&apos;s AI Summary</div>
                 <div className={styles.mockupStats}>
                   <div className={styles.mockupStatCard}></div>
                   <div className={styles.mockupStatCard}></div>

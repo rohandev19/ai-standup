@@ -12,7 +12,7 @@ type Notification = {
   body: string;
   isRead: boolean;
   createdAt: string;
-  metadataJson: any;
+  metadataJson: Record<string, unknown>;
 };
 
 export default function NotificationBell({
@@ -26,6 +26,7 @@ export default function NotificationBell({
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setUnreadCount(initialCount);
   }, [initialCount]);
@@ -48,7 +49,7 @@ export default function NotificationBell({
       setIsLoading(true);
       const res = await api('/api/notifications');
       setNotifications(res.data);
-      setUnreadCount(res.data.filter((n: any) => !n.isRead).length);
+      setUnreadCount(res.data.filter((n: Notification) => !n.isRead).length);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     } finally {

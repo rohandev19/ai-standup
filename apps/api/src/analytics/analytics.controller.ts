@@ -3,9 +3,8 @@ import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { WorkspaceMembershipGuard } from '../common/guards/workspace-membership.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { RolesGuard } from '../auth/guards/roles.guard';
 
-@UseGuards(JwtAuthGuard, WorkspaceMembershipGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
 @Roles('OWNER', 'ADMIN') // Only Owner/Admin can see team analytics per tasks.md 10.1
 @Controller('analytics')
 export class AnalyticsController {

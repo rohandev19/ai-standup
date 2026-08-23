@@ -1,10 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useWorkspace } from '../../../../contexts/WorkspaceContext';
 import styles from './billing.module.css';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_mock');
 
 export default function BillingPage() {
   const { activeWorkspace: currentWorkspace } = useWorkspace();
@@ -33,8 +30,8 @@ export default function BillingPage() {
 
       const { url } = await response.json();
       window.location.href = url; // Redirect to Stripe
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as Error).message);
     } finally {
       setLoadingTier(null);
     }
@@ -44,7 +41,7 @@ export default function BillingPage() {
 
   // Assuming currentWorkspace object might not have subscriptionTier populated if API isn't updated to return it.
   // We'll mock it or rely on the backend.
-  const currentTier = (currentWorkspace as any).subscriptionTier || 'FREE';
+  const currentTier = (currentWorkspace as { subscriptionTier?: string }).subscriptionTier || 'FREE';
 
   return (
     <div className={styles.container}>
