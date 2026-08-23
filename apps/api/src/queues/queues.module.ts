@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { EmailProcessor } from './processors/email.processor';
 
 @Module({
   imports: [
@@ -11,7 +12,10 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
         password: process.env.REDIS_PASSWORD || undefined,
-        tls: process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost' ? {} : undefined,
+        tls:
+          process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
+            ? {}
+            : undefined,
       },
     }),
     BullModule.registerQueue({
@@ -48,5 +52,6 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
       adapter: BullMQAdapter,
     }),
   ],
+  providers: [EmailProcessor],
 })
 export class QueuesModule {}

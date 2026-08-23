@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { QueuesModule } from './queues/queues.module';
@@ -14,6 +15,9 @@ import { AiModule } from './ai/ai.module';
 import { StandupsModule } from './standups/standups.module';
 import { SummariesModule } from './summaries/summaries.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -38,8 +42,23 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     StandupsModule,
     SummariesModule,
     SchedulerModule,
+    NotificationsModule,
+    AnalyticsModule,
+    BillingModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: 'APP_GUARD',
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

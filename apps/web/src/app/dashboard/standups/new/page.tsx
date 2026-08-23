@@ -32,8 +32,9 @@ export default function NewStandupPage() {
         blockerText
       });
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit standup');
+    } catch (err: unknown) {
+      const errorResponse = err as { response?: { data?: { message?: string } } };
+      setError(errorResponse.response?.data?.message || 'Failed to submit standup');
       setLoading(false);
     }
   };

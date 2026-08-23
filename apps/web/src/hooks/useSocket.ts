@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client';
 
 export function useSocket(workspaceId: string) {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [latestEvent, setLatestEvent] = useState<{ type: string; payload: any } | null>(null);
+  const [latestEvent, setLatestEvent] = useState<{ type: string; payload: unknown } | null>(null);
 
   useEffect(() => {
     // Connect to the API server (adjust URL based on env in production)
@@ -36,6 +36,7 @@ export function useSocket(workspaceId: string) {
       setLatestEvent({ type: 'blocker_detected', payload });
     });
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSocket(socketInstance);
 
     return () => {

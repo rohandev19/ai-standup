@@ -8,6 +8,7 @@ export interface Workspace {
   name: string;
   slug: string;
   members: { role: string }[];
+  onboardingCompleted?: boolean;
 }
 
 interface WorkspaceContextType {
@@ -27,6 +28,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWorkspaces([]);
       setActiveWorkspaceState(null);
       setIsLoading(false);

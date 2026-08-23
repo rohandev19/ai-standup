@@ -2,6 +2,7 @@
 import { Card } from '@/components/Card/Card';
 import { Button } from '@/components/Button/Button';
 import { Input } from '@/components/Input/Input';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   return (
@@ -39,6 +40,19 @@ export default function SettingsPage() {
             <input type="checkbox" defaultChecked />
             <span>Send daily AI summaries to my inbox</span>
           </label>
+        </div>
+      </Card>
+      <Card style={{ maxWidth: '600px' }}>
+        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+          Workspace Billing
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Manage your workspace subscription tier, billing history, and plan features.</p>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Link href="/dashboard/settings/billing" style={{ color: 'var(--primary-accent)', textDecoration: 'none', fontWeight: 600 }}>
+              Go to Billing Settings &rarr;
+            </Link>
+          </div>
         </div>
       </Card>
     </div>

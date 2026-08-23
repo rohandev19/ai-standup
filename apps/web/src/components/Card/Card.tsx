@@ -5,11 +5,12 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   glow?: boolean;
+  style?: React.CSSProperties;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', glow = false }) => {
+export const Card: React.FC<CardProps> = ({ children, className = '', glow = false, style }) => {
   return (
-    <div className={`${styles.card} ${glow ? styles.glow : ''} ${className}`}>
+    <div className={`${styles.card} ${glow ? styles.glow : ''} ${className}`} style={style}>
       {children}
     </div>
   );

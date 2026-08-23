@@ -9,5 +9,6 @@ import { EventsGateway } from './events.gateway';
     }),
   ],
   providers: [EventsGateway],
+  exports: [EventsGateway],
 })
 export class EventsModule {}

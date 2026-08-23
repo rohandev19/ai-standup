@@ -4,6 +4,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { BadRequestException } from '@nestjs/common';
 import { Queue } from 'bullmq';
+import { EventsGateway } from '../events/events.gateway';
 
 describe('StandupsService', () => {
   let service: StandupsService;
@@ -32,6 +33,12 @@ describe('StandupsService', () => {
           provide: getQueueToken('ai-blocker'),
           useValue: {
             add: jest.fn(),
+          },
+        },
+        {
+          provide: EventsGateway,
+          useValue: {
+            broadcastToWorkspace: jest.fn(),
           },
         },
       ],

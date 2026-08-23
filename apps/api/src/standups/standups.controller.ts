@@ -58,4 +58,18 @@ export class StandupsController {
   ) {
     return this.standupsService.getWorkspaceStandups(workspaceId, date);
   }
+
+  // TODO: Add RolesGuard to restrict this to Owner/Admin
+  @Patch('blockers/:blockerId/resolve')
+  async resolveBlocker(
+    @Param('workspaceId') workspaceId: string,
+    @Param('blockerId') blockerId: string,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.standupsService.resolveBlocker(
+      workspaceId,
+      blockerId,
+      req.user.id,
+    );
+  }
 }

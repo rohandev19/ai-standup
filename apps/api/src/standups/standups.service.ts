@@ -7,12 +7,14 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class StandupsService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('ai-blocker') private aiBlockerQueue: Queue,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async submitStandup(
@@ -68,6 +70,12 @@ export class StandupsService {
         blockerText,
       });
     }
+
+    // 6. Broadcast real-time presence update (Phase 5)
+    this.eventsGateway.broadcastToWorkspace(workspaceId, 'presence_update', {
+      userId,
+      status,
+    });
 
     return entry;
   }
@@ -131,6 +139,55 @@ export class StandupsService {
         blockerFlag: true,
       },
       orderBy: { submittedAt: 'desc' },
+    });
+  }
+
+  async resolveBlocker(
+    workspaceId: string,
+    blockerId: string,
+    resolvedByUserId: string,
+  ) {
+    const blocker = await this.prisma.blockerFlag.findUnique({
+      where: { id: blockerId },
+      include: { standupEntry: true },
+    });
+
+    if (!blocker) {
+      throw new NotFoundException('Blocker not found');
+    }
+
+    if (blocker.standupEntry.workspaceId !== workspaceId) {
+      throw new ForbiddenException('Blocker does not belong to this workspace');
+    }
+
+    if (blocker.isResolved) {
+      throw new BadRequestException('Blocker is already resolved');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.blockerFlag.update({
+        where: { id: blockerId },
+        data: {
+          isResolved: true,
+          resolvedById: resolvedByUserId,
+          resolvedAt: new Date(),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          workspaceId,
+          userId: resolvedByUserId,
+          action: 'blocker.resolved',
+          entityType: 'BlockerFlag',
+          entityId: blockerId,
+          metadataJson: {
+            standupEntryId: blocker.standupEntryId,
+          },
+        },
+      });
+
+      return updated;
     });
   }
 }

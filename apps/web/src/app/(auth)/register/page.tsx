@@ -39,8 +39,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/login');
       }, 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register');
+    } catch (err: unknown) {
+      const errorResponse = err as { response?: { data?: { message?: string } } };
+      setError(errorResponse.response?.data?.message || 'Failed to register');
       setLoading(false);
     }
   };
@@ -50,7 +51,7 @@ export default function RegisterPage() {
       <Card className={`${styles.authCard} animate-fade-in`} glow>
         <div className={styles.header}>
           <h2>Check your email</h2>
-          <p>We've sent a verification link to {email}.</p>
+          <p>We&apos;ve sent a verification link to {email}.</p>
         </div>
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Redirecting to login...</p>
@@ -102,7 +103,7 @@ export default function RegisterPage() {
             style={{ marginTop: '0.2rem' }}
           />
           <span style={{ color: 'var(--text-secondary)' }}>
-            I agree to the <Link href="#" style={{ color: 'var(--text)' }}>Terms of Service</Link> and <Link href="#" style={{ color: 'var(--text)' }}>Privacy Policy</Link>, and consent to the processing of my personal data.
+            I agree to the <Link href="/terms" style={{ color: 'var(--text)' }}>Terms of Service</Link> and <Link href="/privacy" style={{ color: 'var(--text)' }}>Privacy Policy</Link>, and consent to the processing of my personal data.
           </span>
         </label>
 

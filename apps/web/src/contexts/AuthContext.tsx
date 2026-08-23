@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await api.post('/auth/refresh');
         setAccessToken(res.data.accessToken);
         setUser(res.data.user);
-      } catch (err) {
+      } catch {
         // Refresh token invalid atau tidak ada
         setAccessToken(null);
         setUser(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await api.post('/auth/logout');
-    } catch (e) {
+    } catch {
       // ignore
     }
     setAccessToken(null);
