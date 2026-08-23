@@ -15,14 +15,23 @@ import {
   Bar,
   Legend
 } from 'recharts';
+import { RefreshCw, Download, Filter, TrendingUp, AlertTriangle, Users, Trophy } from 'lucide-react';
 import styles from './analytics.module.css';
+
+interface StreakMember {
+  userId: string;
+  name: string;
+  currentStreak: number;
+  totalMissed30d: number;
+  needsAttention: boolean;
+}
 
 export default function AnalyticsPage() {
   const { activeWorkspace } = useWorkspace();
   const [healthData, setHealthData] = useState<{ score: number; submissionRate: number; resolutionRate: number; } | null>(null);
   const [submissionRate, setSubmissionRate] = useState<{ date: string; rate: number }[]>([]);
   const [blockerTrend, setBlockerTrend] = useState<{ date: string; HIGH: number; MEDIUM: number; LOW: number }[]>([]);
-  const [memberStreaks, setMemberStreaks] = useState<any[]>([]);
+  const [memberStreaks, setMemberStreaks] = useState<StreakMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(30);
@@ -45,12 +54,13 @@ export default function AnalyticsPage() {
         setSubmissionRate(subRate.data);
         setBlockerTrend(blockTrend.data);
         setMemberStreaks(streaks.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as Error;
         // Specifically check for 403 Forbidden to show user-friendly message
-        if (err.message?.includes('403') || err.message?.toLowerCase().includes('forbidden')) {
+        if (error.message?.includes('403') || error.message?.toLowerCase().includes('forbidden')) {
           setError('You need to be an Owner or Admin to view Team Analytics.');
         } else {
-          setError(err.message || 'Failed to load analytics data.');
+          setError(error.message || 'Failed to load analytics data.');
         }
       } finally {
         setIsLoading(false);

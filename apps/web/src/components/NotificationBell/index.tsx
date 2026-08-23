@@ -26,8 +26,8 @@ export default function NotificationBell({
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUnreadCount(initialCount);
   }, [initialCount]);
 

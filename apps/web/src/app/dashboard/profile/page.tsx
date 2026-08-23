@@ -8,6 +8,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import styles from './profile.module.css';
 
+interface WorkspaceItem {
+  id: string;
+  name: string;
+  role: string;
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
   
@@ -19,9 +25,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
   
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user?.name) setName(user.name);
   }, [user]);
 
@@ -43,8 +50,9 @@ export default function ProfilePage() {
       await api.patch('/api/users/me', { name });
       setSavedMessage('Profile saved successfully!');
       setTimeout(() => setSavedMessage(''), 3000);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update profile');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -70,8 +78,9 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to change password');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error.response?.data?.message || 'Failed to change password');
     }
   };
 
@@ -203,9 +212,9 @@ export default function ProfilePage() {
           <Card>
             <h3 className={styles.cardTitle}>My Workspaces</h3>
             <div className={styles.workspaceList}>
-              {workspaces.map((ws: any) => (
+              {workspaces.map((ws: WorkspaceItem) => (
                 <div key={ws.id} className={styles.workspaceItem}>
-                  <div className={styles.wsAvatar}>{ws.name.charAt(0)}</div>
+                  <div className={styles.wsAvatar}>{ws.name?.charAt(0)}</div>
                   <div className={styles.wsInfo}>
                     <div className={styles.wsName}>{ws.name}</div>
                     <div className={styles.wsMeta}>Workspace</div>

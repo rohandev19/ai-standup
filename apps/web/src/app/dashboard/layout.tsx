@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import NotificationBell from '@/components/NotificationBell';
 import OnboardingWizard from '@/components/OnboardingWizard';
 import styles from './layout.module.css';
@@ -57,7 +57,7 @@ export default function DashboardLayout({
       socketInstance.emit('leave_workspace', { workspaceId: activeWorkspace.id });
       socketInstance.disconnect();
     };
-  }, [activeWorkspace?.id, accessToken]);
+  }, [activeWorkspace, activeWorkspace?.id, accessToken]);
 
   const navItems = [
     { label: '📊 Overview', href: '/dashboard', icon: '📊' },

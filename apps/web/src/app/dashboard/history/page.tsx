@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/Card/Card';
 import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
@@ -9,10 +9,33 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
 import styles from './history.module.css';
 import { debounce } from 'lodash';
+import { format } from 'date-fns';
+
+interface HistoryItem {
+  id: string;
+  type: string;
+  date: string;
+  time?: string;
+  member?: string;
+  content: string;
+  metadata?: {
+    entryCount?: number;
+    blockerCount?: number;
+    submissionRate?: number;
+    entries?: number;
+    rate?: number;
+  };
+  blockers?: string[];
+  blocker?: string;
+  tasks?: string[];
+  status?: string;
+  yesterday?: string;
+  today?: string;
+}
 
 export default function HistoryPage() {
   const { activeWorkspace } = useWorkspace();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<HistoryItem[]>([]);
   const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number; }>({ total: 0, page: 1, limit: 20, totalPages: 1 });
   
   const [search, setSearch] = useState('');
@@ -22,7 +45,7 @@ export default function HistoryPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<{ userId: string; user: { name: string } }[]>([]);
 
   // Fetch workspace members for the dropdown
   useEffect(() => {
@@ -39,11 +62,12 @@ export default function HistoryPage() {
   }, [activeWorkspace]);
 
   // Debounce search so we don't spam API
-  const debouncedSearch = useCallback(
-    debounce((q: string) => {
-      fetchHistory(1, q, memberFilter, startDate, endDate);
+  const debouncedSearch = React.useMemo(
+    () => debounce((q: string, mFilter: string, sDate: string, eDate: string) => {
+      fetchHistory(1, q, mFilter, sDate, eDate);
     }, 500),
-    [activeWorkspace, memberFilter, startDate, endDate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   useEffect(() => {
@@ -79,11 +103,12 @@ export default function HistoryPage() {
   useEffect(() => {
     if (!activeWorkspace) return;
     fetchHistory(meta.page, search, memberFilter, startDate, endDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeWorkspace, meta.page, memberFilter, startDate, endDate]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    debouncedSearch(e.target.value);
+    debouncedSearch(e.target.value, memberFilter, startDate, endDate);
   };
 
   const handleExport = async (type: 'entries' | 'summaries') => {
@@ -129,7 +154,7 @@ export default function HistoryPage() {
     }
   };
 
-  const grouped = data.reduce<Record<string, any[]>>((acc, item) => {
+  const grouped = data.reduce<Record<string, HistoryItem[]>>((acc, item) => {
     if (!acc[item.date]) acc[item.date] = [];
     acc[item.date].push(item);
     return acc;
@@ -221,7 +246,7 @@ export default function HistoryPage() {
                       <div className={styles.summaryHeader}>
                         <Badge variant="info">Weekly Digest</Badge>
                         <div className={styles.summaryMeta}>
-                          {item.metadata.entries || 0} entries • {item.metadata.rate || 0}% rate
+                          {item.metadata?.entries || 0} members • {item.metadata?.rate || 0}% participation
                         </div>
                       </div>
                       <p className={styles.summaryText}>{item.content}</p>
@@ -235,7 +260,7 @@ export default function HistoryPage() {
                       <div className={styles.summaryHeader}>
                         <Badge variant="purple">AI Summary</Badge>
                         <div className={styles.summaryMeta}>
-                          {item.metadata.entryCount || 0} entries • {item.metadata.blockerCount || 0} blockers • {item.metadata.submissionRate || 0}% rate
+                          {item.metadata?.entryCount || 0} entries • {item.metadata?.blockerCount || 0} blockers • {item.metadata?.submissionRate || 0}% rate
                         </div>
                       </div>
                       <p className={styles.summaryText}>{item.content}</p>
@@ -247,9 +272,9 @@ export default function HistoryPage() {
                   <Card key={item.id} className={styles.standupCard}>
                     <div className={styles.standupHeader}>
                       <div className={styles.standupAuthor}>
-                        <div className={styles.avatar}>{item.member.charAt(0)}</div>
+                        <div className={styles.avatar}>{(item.member || '?').charAt(0)}</div>
                         <div>
-                          <div className={styles.authorName}>{item.member}</div>
+                          <div className={styles.authorName}>{item.member || 'Unknown'}</div>
                           <div className={styles.authorTime}>{item.time}</div>
                         </div>
                       </div>

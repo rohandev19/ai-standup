@@ -357,7 +357,7 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 - [x] 12.1 Audit final: `.env` tidak pernah ke-commit di history manapun; kalau ada, rotate semua secret
 - [x] 12.2 Audit CORS REST: whitelist origin eksplisit antara domain FE (`domain.com`) dan domain BE (`api.domain.com`), tidak ada wildcard + credentials
 - [x] 12.2b Audit CORS Socket.io — dikonfigurasi TERPISAH dari CORS REST NestJS (design.md 12), pastikan origin whitelist di-set eksplisit dan tidak wildcard
-- [ ] 12.2c Audit Nginx config: pastikan WebSocket upgrade header (`Upgrade`, `Connection`) di-forward dengan benar untuk Socket.io endpoint
+- [x] 12.2c Audit Nginx config: pastikan WebSocket upgrade header (`Upgrade`, `Connection`) di-forward dengan benar untuk Socket.io endpoint
 - [x] 12.3 Kepatuhan data privasi:
   - Privacy policy page (mention Claude API as AI processor explicitly — Requirement 14.5)
   - Consent checkbox saat registrasi terpasang dan enforced
