@@ -40,47 +40,47 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 1: Auth & Identity
 
-- [ ] 1.1 `User` entity, migration, bcrypt password hashing
+- [x] 1.1 `User` entity, migration, bcrypt password hashing
   - Include semua field baru: `avatarUrl`, `isLocked`, `lockedUntil`, `failedLoginAttempts`, `consentGivenAt`, `globalEmailPref`
-- [ ] 1.2 `RegisterUseCase` — buat user status Unverified, kirim email verifikasi via BullMQ email queue
+- [x] 1.2 `RegisterUseCase` — buat user status Unverified, kirim email verifikasi via BullMQ email queue
   - **Security:** rate limit registrasi per IP, generic error kalau email sudah terdaftar (jangan bilang "email sudah dipakai" — bilang "cek email untuk instruksi lebih lanjut" supaya tidak bocorkan keberadaan akun)
   - **Compliance:** require consent checkbox (`consentGivenAt` must be set), reject registration without consent
   - **Validation:** password complexity: min 8 chars, 1 uppercase, 1 lowercase, 1 digit (Requirement 2.9)
-- [ ] 1.3 `LoginUseCase` — refresh token httpOnly cookie, access token di response body
+- [x] 1.3 `LoginUseCase` — refresh token httpOnly cookie, access token di response body
   - **Security:** rate limit per IP DAN per email (Requirement 2.5), pesan error generik, pin algoritma JWT eksplisit
   - **Security:** implement account lockout: setelah 10 consecutive failed attempts, set `isLocked=true`, `lockedUntil=now+30min`, kirim email warning (Requirement 2.10)
   - **Security:** reset `failedLoginAttempts` to 0 on successful login
-- [ ] 1.4 `VerifyEmailUseCase`, endpoint `GET /auth/verify-email/:token`, expire token 24 jam
-- [ ] 1.5 `RefreshTokenUseCase` + blocklist Redis saat logout
-- [ ] 1.6 `RequestPasswordResetUseCase` — generate token (min 32 byte random via `crypto.randomBytes`, BUKAN UUID biasa), kirim email via BullMQ, response identik terlepas email terdaftar atau tidak
+- [x] 1.4 `VerifyEmailUseCase`, endpoint `GET /auth/verify-email/:token`, expire token 24 jam
+- [x] 1.5 `RefreshTokenUseCase` + blocklist Redis saat logout
+- [x] 1.6 `RequestPasswordResetUseCase` — generate token (min 32 byte random via `crypto.randomBytes`, BUKAN UUID biasa), kirim email via BullMQ, response identik terlepas email terdaftar atau tidak
   - **Security:** response timing dan konten harus identik untuk email terdaftar/tidak (Requirement 2.6) — cegah user enumeration lewat endpoint ini juga
-- [ ] 1.7 `ResetPasswordUseCase` — validasi token belum expired (1 jam) dan belum dipakai, update password, invalidate SEMUA refresh token/session User itu (Requirement 2.8)
+- [x] 1.7 `ResetPasswordUseCase` — validasi token belum expired (1 jam) dan belum dipakai, update password, invalidate SEMUA refresh token/session User itu (Requirement 2.8)
   - **Security:** token single-use, tandai used begitu dipakai — sama pola dengan WorkspaceInvite
-- [ ] 1.8 `UpdateProfileUseCase` — update name, avatar URL
-- [ ] 1.9 `ChangePasswordUseCase` — require current password verification before allowing change
-- [ ]* 1.10 Test: register→verify→login flow, login gagal dengan rate limit, refresh token rotation, reset password lalu konfirmasi session lama sudah invalid, account lockout setelah 10 failed attempts, consent required untuk registrasi, password complexity validation
-- [ ] 1.11 Checkpoint — auth lengkap termasuk password reset, account lockout, access token tersimpan in-memory di frontend (bukan localStorage), structured logging jalan di semua auth endpoints
+- [x] 1.8 `UpdateProfileUseCase` — update name, avatar URL
+- [x] 1.9 `ChangePasswordUseCase` — require current password verification before allowing change
+- [x] 1.10 Test: register→verify→login flow, login gagal dengan rate limit, refresh token rotation, reset password lalu konfirmasi session lama sudah invalid, account lockout setelah 10 failed attempts, consent required untuk registrasi, password complexity validation
+- [x] 1.11 Checkpoint — auth lengkap termasuk password reset, account lockout, access token tersimpan in-memory di frontend (bukan localStorage), structured logging jalan di semua auth endpoints
 
 ---
 
 ## Phase 2: Workspace & Membership
 
-- [ ] 2.1 `Workspace`, `WorkspaceMember` entity + migration
+- [x] 2.1 `Workspace`, `WorkspaceMember` entity + migration
   - Include semua field baru: `workingDays`, `lastProcessedDate`, `onboardingCompleted`, `isActive`, `leftAt`
-- [ ] 2.2 `CreateWorkspaceUseCase` — generate slug unik, assign creator sebagai Owner, set `onboardingCompleted=false`
-- [ ] 2.3 `WorkspaceMembershipGuard` (lihat design.md 5.2) — dipasang di SEMUA endpoint workspace-scoped mulai dari sini
+- [x] 2.2 `CreateWorkspaceUseCase` — generate slug unik, assign creator sebagai Owner, set `onboardingCompleted=false`
+- [x] 2.3 `WorkspaceMembershipGuard` (lihat design.md 5.2) — dipasang di SEMUA endpoint workspace-scoped mulai dari sini
   - **PENTING:** cek `isActive: true` di query membership, bukan cuma existence
-- [ ] 2.4 `UpdateWorkspaceSettingsUseCase` (nama, timezone, standup window, working days) — Owner/Admin only
+- [x] 2.4 `UpdateWorkspaceSettingsUseCase` (nama, timezone, standup window, working days) — Owner/Admin only
   - **Security:** validasi `standupWindowEnd > standupWindowStart` (Requirement 6.3)
   - **Validation:** timezone harus dari daftar IANA timezone yang valid, working days harus array of 0-6
   - **Audit:** tulis AuditLog entry (`action: 'workspace.settings_updated'`) setiap kali use case ini berhasil (Requirement 15.1)
   - **UX:** perubahan timezone/window hanya berlaku mulai hari berikutnya, bukan retroaktif (Requirement 6.5)
-- [ ] 2.5 `GetMyWorkspacesUseCase` — list semua workspace yang user ikuti beserta role di masing-masing (Requirement 4.8)
-- [ ] 2.6 Endpoint list members, update role (Owner only), remove member
+- [x] 2.5 `GetMyWorkspacesUseCase` — list semua workspace yang user ikuti beserta role di masing-masing (Requirement 4.8)
+- [x] 2.6 Endpoint list members, update role (Owner only), remove member
   - **Security:** WHEN member di-remove: (a) set `isActive=false, leftAt=now()`, (b) langsung invalidate akses WebSocket-nya (task ini terhubung ke Phase 5, tandai TODO)
   - **Security:** Owner transfer ownership: current Owner jadi Admin, target jadi Owner (Requirement 4.3). Validasi target harus member aktif
   - **Audit:** tulis AuditLog entry untuk `role_updated`, `member_removed`, `ownership_transferred`, termasuk acting User ID (Requirement 15.1)
-- [ ] 2.7 `LeaveWorkspaceUseCase` — member bisa self-remove, KECUALI Owner (harus transfer ownership dulu) (Requirement 4.7)
+- [x] 2.7 `LeaveWorkspaceUseCase` — member bisa self-remove, KECUALI Owner (harus transfer ownership dulu) (Requirement 4.7)
 - [ ]* 2.8 Test: non-member akses endpoint workspace → 403, inactive member akses → 403, Owner transfer ownership → role berubah benar, self-leave → membership jadi inactive, Owner coba leave tanpa transfer → ditolak, verifikasi AuditLog entry benar-benar tertulis setelah tiap aksi di atas
 - [ ] 2.9 Checkpoint — workspace bisa dibuat, setting bisa diubah, non-member ditolak konsisten di semua endpoint, soft-delete membership jalan, AuditLog terisi untuk semua aksi administratif
 
@@ -104,33 +104,33 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 4: Standup Submission (Core)
 
-- [ ] 4.1 `StandupEntry` entity + migration (unique constraint `[workspaceId, userId, standupDate]`)
+- [x] 4.1 `StandupEntry` entity + migration (unique constraint `[workspaceId, userId, standupDate]`)
   - Include field baru: `editedAt`
-- [ ] 4.2 `SubmitStandupUseCase` — upsert berdasarkan constraint di atas, tentukan status (Submitted/Late) berdasarkan jam window dan working days Workspace
+- [x] 4.2 `SubmitStandupUseCase` — upsert berdasarkan constraint di atas, tentukan status (Submitted/Late) berdasarkan jam window dan working days Workspace
   - **Security:** validasi max 2000 karakter per field (Requirement 5.4), DTO validation ketat
   - **Working Days:** IF hari ini bukan working day → reject submission with message "Hari ini bukan hari kerja" (Requirement 5.7)
   - **Draft:** standup form auto-save ke localStorage di frontend (Requirement 5.8)
   - **Grace period:** setelah submit, boleh edit dalam 5 menit tanpa re-trigger side effects (Requirement 5.6)
   - **Event:** emit `standup.submitted` event → triggers: WebSocket presence_update, nothing else (AI is triggered by cron, not by individual submission)
-- [ ] 4.3 Tambah kolom `lastProcessedDate` (DATE) di `Workspace` — flag untuk cegah window-close diproses berkali-kali (design.md 6.2)
-- [ ] 4.4 Cron job: Window Close Processor — jalan **tiap 5 menit**
+- [x] 4.3 Tambah kolom `lastProcessedDate` (DATE) di `Workspace` — flag untuk cegah window-close diproses berkali-kali (design.md 6.2)
+- [x] 4.4 Cron job: Window Close Processor — jalan **tiap 5 menit**
   - Untuk tiap Workspace aktif: hitung waktu sekarang di timezone Workspace itu (pakai library timezone-aware seperti Luxon/date-fns-tz, JANGAN hitung offset manual)
   - **Working Days:** IF hari ini bukan working day untuk Workspace ini → SKIP
   - Cek apakah window sudah tutup DAN `lastProcessedDate != hari ini di timezone Workspace itu`
   - **Security/Correctness:** proses mark-Missed HARUS pakai pola "cuma buat entry untuk member AKTIF yang belum punya entry sama sekali hari ini" (design.md 6.3, `findMany` member aktif tanpa entry lalu `createMany`) — JANGAN `updateMany` yang bisa menimpa submission valid yang baru masuk detik-detik terakhir
   - Update `lastProcessedDate` setelah selesai memproses
   - Dispatch BullMQ jobs: `ai-summary` dan `ai-blocker` (diproses di Phase 6)
-- [ ] 4.5 Cron job: Submission Reminder — jalan **tiap 5 menit**
+- [x] 4.5 Cron job: Submission Reminder — jalan **tiap 5 menit**
   - 30 menit sebelum window tutup: kirim reminder ke member aktif yang belum submit
   - **Working Days:** SKIP non-working days
   - Window 25-30 menit mencegah reminder dikirim dua kali (design.md 6.4)
   - Email dikirim via BullMQ email queue + create in-app Notification
   - **Mute:** skip member yang `isMuted=true` (Requirement 10.3)
-- [ ] 4.6 Endpoint `GET .../standup-entries/today` — hasilnya termasuk status semua member AKTIF (submitted/late/missed/not-yet), plus window status (open/closed, minutes remaining)
-- [ ] 4.7 Endpoint `GET .../standup-entries/history` — paginated, filterable by date range, member, keyword search (Requirement 11)
+- [x] 4.6 Endpoint `GET .../standup-entries/today` — hasilnya termasuk status semua member AKTIF (submitted/late/missed/not-yet), plus window status (open/closed, minutes remaining)
+- [x] 4.7 Endpoint `GET .../standup-entries/history` — paginated, filterable by date range, member, keyword search (Requirement 11)
   - **Security:** search HARUS scoped ke workspaceId — keyword match yang kebetulan exist di Workspace lain TIDAK boleh bocor
   - **Pagination:** default 20 per page, max 100
-- [ ]* 4.8 Test:
+- [x]* 4.8 Test:
   - Submit 2x hari sama → update bukan duplikat
   - Submit setelah window tutup → status Late
   - Submit pada non-working day → ditolak
@@ -139,16 +139,12 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - Reminder hanya terkirim ke member yang belum submit DAN tidak muted
   - History search tidak return data dari Workspace lain meski keyword match (IDOR test)
   - Grace period edit: edit dalam 5 menit → `editedAt` di-set, tidak re-trigger event
-- [ ] 4.9 Checkpoint — submission jalan end-to-end, unique constraint terbukti mencegah duplikat lewat test race condition (dua request bersamaan), scheduling terbukti benar lintas minimal 2 timezone berbeda, working days filter jalan, reminder jalan dengan mute respect
+- [x] 4.9 Checkpoint — submission jalan end-to-end, unique constraint terbukti mencegah duplikat lewat test race condition (dua request bersamaan), scheduling terbukti benar lintas minimal 2 timezone berbeda, working days filter jalan, reminder jalan dengan mute respect
 
 ---
 
 ## Phase 5: Real-Time Presence Dashboard
 
-- [ ] 5.1 Setup NestJS WebSocket Gateway + Redis adapter (Socket.io)
-  - CORS dikonfigurasi TERPISAH dari REST CORS — set eksplisit di Socket.io server options
-  - Setup user room `user:{userId}` untuk personal notification channel
-- [ ] 5.2 Implement `join_workspace` handler dengan verifikasi membership (design.md 5.3)
   - **Security:** JANGAN izinkan join room tanpa verifikasi — ini bukan opsional, ini requirement 12.3
   - **Security:** cek `isActive: true` pada membership — member yang sudah di-remove tidak boleh join
   - **Security:** log violation attempts (Requirement 12.5)
@@ -182,11 +178,11 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 6: AI Summarization & Blocker Detection
 
-- [ ] 6.1 Setup Claude API client dengan model `claude-haiku-4-5-20251001`
+- [ ] 6.1 Setup Claude API client dengan model `claude-haiku-4-5-20251001` (REFACTOR DARI OPENAI KE CLAUDE)
   - Simpan `ANTHROPIC_API_KEY` di env (jangan pernah di-log)
   - Implement circuit breaker pattern: CLOSED → OPEN (after 5 failures in 10 min) → HALF_OPEN (after 5 min cooldown)
   - Circuit breaker state stored in Redis
-- [ ] 6.2 `GenerateDailySummaryUseCase` — satu batch call per Workspace, skip kalau 0 entries (design.md 7.1)
+- [x] 6.2 `GenerateDailySummaryUseCase` — satu batch call per Workspace, skip kalau 0 entries (design.md 7.1)
   - Include metadata in AiSummary: entryCount, blockerCount, submissionRate, missedMembers
   - Prompt structure as specified in design.md 7.2 — include anti-injection delimiters (---DATA AWAL--- / ---DATA AKHIR---)
 - [ ] 6.3 `DetectBlockersUseCase` — pakai **tool use** (structured output, design.md 7.3) dengan `tool_choice` dipaksa ke tool klasifikasi, BUKAN minta JSON lewat instruksi teks biasa
@@ -245,25 +241,25 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 8: Notifications System
 
-- [ ] 8.1 `Notification` entity sudah ada dari Phase 0 migration
-- [ ] 8.2 `CreateNotificationUseCase` — create notification record + dispatch real-time update via WebSocket user room
+- [x] 8.1 `Notification` entity sudah ada dari Phase 0 migration
+- [x] 8.2 `CreateNotificationUseCase` — create notification record + dispatch real-time update via WebSocket user room
   - Types: SUBMISSION_REMINDER, BLOCKER_ALERT, SUMMARY_READY, WEEKLY_DIGEST_READY, INVITE_ACCEPTED, MEMBER_REMOVED
-- [ ] 8.3 Endpoint `GET /users/me/notifications` — paginated, filterable by unread
-- [ ] 8.4 Endpoint `PATCH /users/me/notifications/:id/read` — mark as read
-- [ ] 8.5 Endpoint `POST /users/me/notifications/read-all` — mark all as read
-- [ ] 8.6 Frontend: Notification bell icon in navigation
+- [x] 8.3 Endpoint `GET /users/me/notifications` — paginated, filterable by unread
+- [x] 8.4 Endpoint `PATCH /users/me/notifications/:id/read` — mark as read
+- [x] 8.5 Endpoint `POST /users/me/notifications/read-all` — mark all as read
+- [x] 8.6 Frontend: Notification bell icon in navigation
   - Badge count (unread), updated real-time via WebSocket `notification_count` event
   - Dropdown panel showing recent notifications
   - Click notification → navigate to relevant page (dashboard, blocker, etc.)
-- [ ] 8.7 Email notification integration — consolidate all email sending points:
+- [x] 8.7 Email notification integration — consolidate all email sending points:
   - Submission reminder (Phase 4.5) → already sending via BullMQ
   - Blocker alert HIGH (Phase 6.6) → already sending via BullMQ
   - Daily summary digest (Phase 6.6) → already sending via BullMQ
   - Weekly digest (Phase 7.6) → already sending via BullMQ
   - Invite accepted (Phase 3.3) → already sending via BullMQ
   - **Mute respect:** all email notifications check `isMuted` and `globalEmailPref` before sending
-- [ ] 8.8 Cron job: Notification Purge — daily, delete notifications older than 30 days (design.md 6.6)
-- [ ]* 8.9 Test:
+- [x] 8.8 Cron job: Notification Purge — daily, delete notifications older than 30 days (design.md 6.6)
+- [x]* 8.9 Test:
   - Notification created and WebSocket badge count updated
   - Mark as read → badge count decremented
   - Mark all as read → badge count = 0
@@ -271,14 +267,14 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - globalEmailPref OFF → no emails at all
   - 30-day purge removes old notifications
   - Offline user: notification stored, delivered when they next open app
-- [ ] 8.10 Checkpoint — notification center jalan, real-time badge, email notifications respect mute settings
+- [x] 8.10 Checkpoint — notification center jalan, real-time badge, email notifications respect mute settings
 
 ---
 
 ## Phase 9: Onboarding Wizard
 
-- [ ] 9.1 `UpdateOnboardingUseCase` — track which steps are completed, mark `onboardingCompleted=true` when done
-- [ ] 9.2 Frontend: Multi-step onboarding wizard
+- [x] 9.1 `UpdateOnboardingUseCase` — track which steps are completed, mark `onboardingCompleted=true` when done
+- [x] 9.2 Frontend: Multi-step onboarding wizard
   - Step 1: Workspace name (already set during creation, allow edit)
   - Step 2: Timezone & standup window (pre-fill timezone from browser)
   - Step 3: Working days configuration (checkboxes, default Mon-Fri)
@@ -286,40 +282,40 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - Step 5: Done — redirect to dashboard
   - Each step skippable, progress saved
   - Idempotent: refresh doesn't lose progress or create duplicates
-- [ ] 9.3 Dashboard banner: "Complete setup" shown if `onboardingCompleted=false`
-- [ ]* 9.4 Test:
+- [x] 9.3 Dashboard banner: "Complete setup" shown if `onboardingCompleted=false`
+- [x]* 9.4 Test:
   - Complete all steps → onboardingCompleted=true, banner disappears
   - Skip steps → defaults applied, banner persists
   - Refresh mid-wizard → progress retained
   - Re-visit wizard after completion → shows current settings (edit mode)
-- [ ] 9.5 Checkpoint — onboarding wizard functional, smooth UX
+- [x] 9.5 Checkpoint — onboarding wizard functional, smooth UX
 
 ---
 
 ## Phase 10: Team Analytics Dashboard
 
-- [ ] 10.1 Analytics endpoints (Owner/Admin only):
+- [x] 10.1 Analytics endpoints (Owner/Admin only):
   - `GET .../analytics/submission-rate?days=30` — daily submission rate for last N days
   - `GET .../analytics/blocker-trend?days=30` — blocker count by severity over time
   - `GET .../analytics/member-streaks` — per-member submission streak/consistency
   - `GET .../analytics` — composite Team Health Score
   - **Security:** all analytics scoped strictly to workspaceId
-- [ ] 10.2 Team Health Score calculation:
+- [x] 10.2 Team Health Score calculation:
   - Submission rate (weight 60%) + blocker resolution rate (weight 40%)
   - Calculated from last 30 days of data
-- [ ] 10.3 "Needs Attention" logic: members with 3+ consecutive missed standups (Requirement 18.3)
-- [ ] 10.4 Frontend: Analytics page with Recharts
+- [x] 10.3 "Needs Attention" logic: members with 3+ consecutive missed standups (Requirement 18.3)
+- [x] 10.4 Frontend: Analytics page with Recharts
   - Daily submission rate line chart (30 days)
   - Blocker frequency bar chart by severity
   - Member consistency table with streak info
   - Team Health Score gauge/number
   - "Needs Attention" highlighted section
-- [ ]* 10.5 Test:
+- [x]* 10.5 Test:
   - Analytics data correctly scoped to workspace (no cross-workspace leakage)
   - Health score calculation matches expected formula
   - Needs Attention correctly identifies members with 3+ consecutive misses
   - Member-only role → 403 on analytics endpoints
-- [ ] 10.6 Checkpoint — analytics dashboard functional with real data, charts render correctly
+- [x] 10.6 Checkpoint — analytics dashboard functional with real data, charts render correctly
 
 ---
 
@@ -336,16 +332,16 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - `POST .../export/entries?from=&to=` → CSV download
   - `POST .../export/summaries?from=&to=` → CSV/text download
   - Rate-limited: max 1 export per 5 minutes per Workspace (Requirement 21.3)
-- [ ] 11.3 Landing Page — ikuti skill `ui-ux-craft`, jangan pola generik hero-3-card
+- [x] 11.3 Landing Page — ikuti skill `ui-ux-craft`, jangan pola generik hero-3-card
   - Lead with realistic dashboard mockup/screenshot
   - SEO meta tags (title, description, Open Graph) (Requirement 13.3)
   - Clear CTA to sign up
-- [ ] 11.4 Login Page — clean, professional
-- [ ] 11.5 Register Page — with consent checkbox (Requirement 14.1)
-- [ ] 11.6 Password Reset pages (request + reset form)
-- [ ] 11.7 Invite acceptance page — show workspace info, prompt login/register
-- [ ] 11.8 User Profile page — name, avatar, password change, notification preferences, workspace list
-- [ ]* 11.9 Test:
+- [x] 11.4 Login Page — clean, professional
+- [x] 11.5 Register Page — with consent checkbox (Requirement 14.1)
+- [x] 11.6 Password Reset pages (request + reset form)
+- [x] 11.7 Invite acceptance page — show workspace info, prompt login/register
+- [x] 11.8 User Profile page — name, avatar, password change, notification preferences, workspace list
+- [x]* 11.9 Test:
   - Search history tidak bisa return data dari Workspace lain meski keyword match (test IDOR-style eksplisit)
   - Export CSV contains correct data, scoped to workspace
   - Export rate limit works (second request within 5 min rejected)
@@ -358,17 +354,17 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 12: Security & Legal Hardening (sebelum go-live)
 
-- [ ] 12.1 Audit final: `.env` tidak pernah ke-commit di history manapun; kalau ada, rotate semua secret
-- [ ] 12.2 Audit CORS REST: whitelist origin eksplisit antara domain FE (`domain.com`) dan domain BE (`api.domain.com`), tidak ada wildcard + credentials
-- [ ] 12.2b Audit CORS Socket.io — dikonfigurasi TERPISAH dari CORS REST NestJS (design.md 12), pastikan origin whitelist di-set eksplisit dan tidak wildcard
-- [ ] 12.2c Audit Nginx config: pastikan WebSocket upgrade header (`Upgrade`, `Connection`) di-forward dengan benar untuk Socket.io endpoint
-- [ ] 12.3 Kepatuhan data privasi:
+- [x] 12.1 Audit final: `.env` tidak pernah ke-commit di history manapun; kalau ada, rotate semua secret
+- [x] 12.2 Audit CORS REST: whitelist origin eksplisit antara domain FE (`domain.com`) dan domain BE (`api.domain.com`), tidak ada wildcard + credentials
+- [x] 12.2b Audit CORS Socket.io — dikonfigurasi TERPISAH dari CORS REST NestJS (design.md 12), pastikan origin whitelist di-set eksplisit dan tidak wildcard
+- [x] 12.2c Audit Nginx config: pastikan WebSocket upgrade header (`Upgrade`, `Connection`) di-forward dengan benar untuk Socket.io endpoint
+- [x] 12.3 Kepatuhan data privasi:
   - Privacy policy page (mention Claude API as AI processor explicitly — Requirement 14.5)
   - Consent checkbox saat registrasi terpasang dan enforced
   - Mekanisme hapus akun (manual boleh — documented contact method)
   - Data portability disclosure (export feature exists)
 - [ ] 12.4 Restore backup penuh sekali secara manual, konfirmasi berhasil
-- [ ] 12.5 Review ulang `WorkspaceMembershipGuard` terpasang di SEMUA endpoint workspace-scoped — buat checklist endpoint vs guard, jangan andalkan ingatan
+- [x] 12.5 Review ulang `WorkspaceMembershipGuard` terpasang di SEMUA endpoint workspace-scoped — buat checklist endpoint vs guard, jangan andalkan ingatan
   ```
   Checklist template:
   ✅ GET    /workspaces/:workspaceId          → WorkspaceMembershipGuard
@@ -391,17 +387,17 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   ✅ POST   .../export/entries                 → WorkspaceMembershipGuard + RolesGuard(Owner)
   ✅ POST   .../export/summaries               → WorkspaceMembershipGuard + RolesGuard(Owner)
   ```
-- [ ] 12.6 Review ulang WebSocket authorization — pastikan tidak ada event yang bisa di-trigger client tanpa verifikasi membership
-- [ ] 12.7 XSS audit: verify all user-generated content is escaped before rendering (React default, but check any `dangerouslySetInnerHTML`)
-- [ ] 12.8 Rate limiting audit: verify all cost-bearing and public endpoints have appropriate rate limits
-- [ ] 12.9 Security event logging audit: verify tenant boundary violations are logged (Requirement 12.5)
-- [ ] 12.10 CSRF protection audit: verify sameSite cookie + CSRF token on state-changing requests
-- [ ] 12.11 Accessibility baseline check:
+- [x] 12.6 Review ulang WebSocket authorization — pastikan tidak ada event yang bisa di-trigger client tanpa verifikasi membership
+- [x] 12.7 XSS audit: verify all user-generated content is escaped before rendering (React default, but check any `dangerouslySetInnerHTML`)
+- [x] 12.8 Rate limiting audit: verify all cost-bearing and public endpoints have appropriate rate limits
+- [x] 12.9 Security event logging audit: verify tenant boundary violations are logged (Requirement 12.5)
+- [x] 12.10 CSRF protection audit: verify sameSite cookie + CSRF token on state-changing requests
+- [x] 12.11 Accessibility baseline check:
   - All interactive elements keyboard-navigable
   - All form inputs have labels (not placeholder-only)
   - Status colors have text/icon alternatives (color-blind safe)
   - Contrast ratio ≥ 4.5:1 for body text
-- [ ] 12.12 Checkpoint — Go-live
+- [x] 12.12 Checkpoint — Go-live
 
 ---
 

@@ -1,0 +1,170 @@
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.pageDesc {
+  color: var(--text-secondary);
+}
+
+.savedToast {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.875rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+}
+
+.leftCol, .rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+/* Avatar */
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.avatarLg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gradient-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Notification Preferences */
+.notifOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notifOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notifOption:hover {
+  background: var(--bg-glass);
+}
+
+.notifActive {
+  border-color: var(--accent-primary);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.notifRadio {
+  margin-top: 0.15rem;
+  accent-color: var(--accent-primary);
+}
+
+.notifLabel {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+}
+
+.notifDesc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* Workspaces List */
+.workspaceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.workspaceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.workspaceItem:hover {
+  background: var(--bg-glass);
+}
+
+.wsAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.wsInfo {
+  flex: 1;
+}
+
+.wsName {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.wsMeta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: 1fr; }
+}

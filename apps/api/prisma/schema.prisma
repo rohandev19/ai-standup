@@ -34,6 +34,20 @@ model User {
 
 // ============ TENANCY ============
 
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  TRIALING
+}
+
 model Workspace {
   id                  String    @id @default(uuid())
   name                String
@@ -42,10 +56,14 @@ model Workspace {
   standupWindowStart  String    @default("00:00") // HH:mm, in Workspace timezone
   standupWindowEnd    String    @default("11:00")
   workingDays         Int[]     @default([1, 2, 3, 4, 5]) // 0=Sun, 1=Mon, ..., 6=Sat (ISO)
-  lastProcessedDate   DateTime? @db.Date // Prevents window-close double-processing (design 6.2)
-  onboardingCompleted Boolean   @default(false) // Tracks if onboarding wizard was completed
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  lastProcessedDate    DateTime? @db.Date // Prevents window-close double-processing (design 6.2)
+  onboardingCompleted  Boolean   @default(false) // Tracks if onboarding wizard was completed
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionTier     SubscriptionTier @default(FREE)
+  subscriptionStatus   SubscriptionStatus?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   members        WorkspaceMember[]
   teams          Team[]

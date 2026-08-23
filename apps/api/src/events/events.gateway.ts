@@ -13,7 +13,8 @@ import { PrismaService } from '../common/prisma/prisma.service';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // Di production sebaiknya spesifik domain front-end
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
   },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,17 +34,43 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.disconnect();
         return;
       }
-      const payload = this.jwtService.verify<{ sub?: string; id?: string }>(
-        token,
-      );
-      client.data.user = payload;
+      const payload = this.jwtService.verify<{
+        sub?: string;
+        id?: string;
+        exp?: number;
+      }>(token);
+      (client.data as { user: any }).user = payload;
+
+      // Token Expiry Check (Phase 5)
+      if (payload.exp) {
+        const expiresInMs = payload.exp * 1000 - Date.now();
+        if (expiresInMs <= 0) {
+          client.disconnect();
+        } else {
+          const timeoutId = setTimeout(() => {
+            client.emit('token_expired', {
+              message: 'Your session has expired. Please reconnect.',
+            });
+            client.disconnect();
+          }, expiresInMs);
+          (client.data as { timeoutId: NodeJS.Timeout }).timeoutId = timeoutId;
+        }
+      }
+
+      // Join user-specific room for individual notifications
+      if (payload.sub || payload.id) {
+        void client.join(`user_${payload.sub || payload.id}`);
+      }
     } catch {
       client.disconnect();
     }
   }
 
-  handleDisconnect() {
-    // client disconnected
+  handleDisconnect(client: Socket) {
+    const data = client.data as { timeoutId?: NodeJS.Timeout };
+    if (data.timeoutId) {
+      clearTimeout(data.timeoutId);
+    }
   }
 
   @SubscribeMessage('join_workspace')
@@ -51,7 +78,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { workspaceId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const user = client.data.user as { sub?: string; id?: string } | undefined;
+    const user = (client.data as { user?: { sub?: string; id?: string } }).user;
     if (!user || !data.workspaceId)
       return {
         status: 'error',
@@ -96,5 +123,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Utility to broadcast events to a workspace
   broadcastToWorkspace(workspaceId: string, event: string, payload: any) {
     this.server.to(`workspace_${workspaceId}`).emit(event, payload);
+  }
+
+  // Utility to broadcast events to a specific user
+  broadcastToUser(userId: string, event: string, payload: any) {
+    this.server.to(`user_${userId}`).emit(event, payload);
   }
 }

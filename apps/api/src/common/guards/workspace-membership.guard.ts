@@ -54,12 +54,42 @@ export class WorkspaceMembershipGuard implements CanActivate {
     });
 
     if (!membership || !membership.isActive) {
+      await this.prisma.auditLog.create({
+        data: {
+          workspaceId,
+          userId: user.id,
+          action: 'SECURITY_VIOLATION',
+          entityType: 'Workspace',
+          entityId: workspaceId,
+          metadataJson: {
+            reason: 'unauthorized_access_attempt',
+            path: request.route?.path || request.url,
+            method: request.method,
+          },
+        },
+      });
       throw new ForbiddenException('You do not have access to this workspace');
     }
 
     // Check role if specified
     if (requiredRoles && requiredRoles.length > 0) {
       if (!requiredRoles.includes(membership.role)) {
+        await this.prisma.auditLog.create({
+          data: {
+            workspaceId,
+            userId: user.id,
+            action: 'SECURITY_VIOLATION',
+            entityType: 'Workspace',
+            entityId: workspaceId,
+            metadataJson: {
+              reason: 'insufficient_role',
+              requiredRoles,
+              actualRole: membership.role,
+              path: request.route?.path || request.url,
+              method: request.method,
+            },
+          },
+        });
         throw new ForbiddenException(
           'You do not have the required role in this workspace',
         );

@@ -1,0 +1,54 @@
+.authContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 1rem;
+}
+
+.authBackground {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glow1, .glow2 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.3;
+  animation: pulseGlow 10s infinite alternate;
+}
+
+.glow1 {
+  width: 50vw; height: 50vw;
+  background: rgba(139, 92, 246, 0.5);
+  top: -20vw; left: -20vw;
+}
+
+.glow2 {
+  width: 40vw; height: 40vw;
+  background: rgba(59, 130, 246, 0.4);
+  bottom: -10vw; right: -10vw;
+  animation-delay: -5s;
+}
+
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  letter-spacing: -1px;
+}

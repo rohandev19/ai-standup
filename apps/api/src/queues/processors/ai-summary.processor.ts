@@ -27,6 +27,20 @@ export class AiSummaryProcessor extends WorkerHost {
       );
       return summary;
     } catch (error) {
+      const maxAttempts = job.opts.attempts || 3;
+      if (job.attemptsMade >= maxAttempts - 1) {
+        this.logger.warn(
+          `Final attempt failed for AI summary workspace ${job.data.workspaceId}. Applying graceful fallback.`,
+        );
+        // Fallback: save placeholder text
+        await this.summariesService.saveSummary(
+          job.data.workspaceId,
+          new Date(job.data.targetDate),
+          'We were unable to generate an AI summary for today due to a technical issue. Please review the standups manually.',
+        );
+        return; // Complete job gracefully
+      }
+
       if (error instanceof Error) {
         this.logger.error(
           `Failed to process ai-summary for workspace ${job.data.workspaceId}`,

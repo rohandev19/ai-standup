@@ -23,8 +23,9 @@ export class UsersController {
   async getProfile(@Req() req: RequestWithUser) {
     const user = await this.usersService.findById(req.user.id);
     if (!user) return null;
-    const { passwordHash, ...safeUser } = user;
-    return safeUser;
+    const result = { ...user } as any;
+    delete result.passwordHash;
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -34,8 +35,9 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     const user = await this.usersService.update(req.user.id, dto);
-    const { passwordHash, ...safeUser } = user;
-    return safeUser;
+    const result = { ...user } as any;
+    delete result.passwordHash;
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

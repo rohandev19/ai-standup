@@ -4,9 +4,14 @@ import { Logger } from 'nestjs-pino';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { RedisIoAdapter } from './common/redis/redis-io.adapter';
+import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
 
   // Use Pino logger
   app.useLogger(app.get(Logger));
@@ -17,8 +22,16 @@ async function bootstrap() {
   // Global Validation
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
+  // WebSocket Redis Adapter
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
+
   // Cookie parser
   app.use(cookieParser());
+
+  // Security headers
+  app.use(helmet());
 
   // Enable CORS
   app.enableCors({
