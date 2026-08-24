@@ -26,15 +26,20 @@ export default function NewStandupPage() {
     setError('');
 
     try {
-      await api.post(`/workspaces/${activeWorkspace.id}/standups`, {
+      console.log('Submitting standup to:', `/workspaces/${activeWorkspace.id}/standups`);
+      const res = await api.post(`/workspaces/${activeWorkspace.id}/standups`, {
         yesterdayText,
         todayText,
         blockerText
       });
+      console.log('Standup response:', res.data);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const errorResponse = err as { response?: { data?: { message?: string } } };
-      setError(errorResponse.response?.data?.message || 'Failed to submit standup');
+      const errorResponse = err as { response?: { data?: { message?: string | string[] } }, message?: string };
+      const errMsg = errorResponse.response?.data?.message;
+      console.log('Submit standup error:', errMsg || errorResponse.message);
+      setError(Array.isArray(errMsg) ? errMsg.join(', ') : (errMsg || errorResponse.message || 'Failed to submit standup'));
+    } finally {
       setLoading(false);
     }
   };

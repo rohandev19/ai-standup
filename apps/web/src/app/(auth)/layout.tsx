@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styles from './layout.module.css';
 
 export default function AuthLayout({
@@ -13,7 +14,9 @@ export default function AuthLayout({
       </div>
       <div className={styles.contentWrapper}>
         <div className={styles.logo}>
-          <span className="text-gradient">AI Standup</span>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span className="text-gradient">AI Standup</span>
+          </Link>
         </div>
         {children}
       </div>

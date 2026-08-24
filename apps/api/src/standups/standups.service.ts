@@ -7,14 +7,15 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { EventsGateway } from '../events/events.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class StandupsService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('ai-blocker') private aiBlockerQueue: Queue,
-    private readonly eventsGateway: EventsGateway,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async submitStandup(
@@ -72,7 +73,8 @@ export class StandupsService {
     }
 
     // 6. Broadcast real-time presence update (Phase 5)
-    this.eventsGateway.broadcastToWorkspace(workspaceId, 'presence_update', {
+    this.eventEmitter.emit('standup.submitted', {
+      workspaceId,
       userId,
       status,
     });
@@ -123,6 +125,119 @@ export class StandupsService {
     }
 
     return updated;
+  }
+
+  async getDashboardState(workspaceId: string) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        members: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: { id: true, name: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!workspace) throw new NotFoundException('Workspace not found');
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const standups = await this.prisma.standupEntry.findMany({
+      where: {
+        workspaceId,
+        standupDate: today,
+      },
+      include: {
+        blockerFlag: true,
+      },
+    });
+
+    // Window Status Logic (mirroring Scheduler)
+    const localTime = DateTime.now().setZone(workspace.timezone);
+    const dayOfWeek = localTime.weekday; // 1 = Monday, 7 = Sunday
+    const isWorkingDay = workspace.workingDays.includes(dayOfWeek);
+
+    let windowStatus: 'open' | 'closed' = 'closed';
+    let windowRemaining = '0m';
+    
+    if (isWorkingDay) {
+      const [startHour, startMinute] = workspace.standupWindowStart.split(':').map(Number);
+      const [endHour, endMinute] = workspace.standupWindowEnd.split(':').map(Number);
+      
+      const windowStartTime = localTime.set({ hour: startHour, minute: startMinute, second: 0, millisecond: 0 });
+      const windowEndTime = localTime.set({ hour: endHour, minute: endMinute, second: 0, millisecond: 0 });
+
+      if (localTime >= windowStartTime && localTime <= windowEndTime) {
+        windowStatus = 'open';
+        const diffInMinutes = windowEndTime.diff(localTime, 'minutes').minutes;
+        if (diffInMinutes > 60) {
+          const hours = Math.floor(diffInMinutes / 60);
+          const mins = Math.floor(diffInMinutes % 60);
+          windowRemaining = `${hours}h ${mins}m`;
+        } else {
+          windowRemaining = `${Math.floor(diffInMinutes)}m`;
+        }
+      }
+    }
+
+    // Map members to their status
+    const members = workspace.members.map((member) => {
+      const entry = standups.find((s) => s.userId === member.userId);
+      let status = 'not_yet';
+      let time = null;
+      let yesterday = null;
+      let todayText = null;
+      let blocker = null;
+
+      if (entry) {
+        status = 'submitted'; // we ignore 'late' for simple UI, or we could calculate if submittedAt > windowEndTime
+        const submittedLocal = DateTime.fromJSDate(entry.submittedAt || new Date()).setZone(workspace.timezone);
+        time = submittedLocal.toFormat('HH:mm');
+        yesterday = entry.yesterdayText;
+        todayText = entry.todayText;
+        if (entry.blockerFlag) {
+          blocker = {
+            id: entry.blockerFlag.id,
+            text: entry.blockerText,
+            isResolved: entry.blockerFlag.isResolved,
+          };
+        }
+      } else if (windowStatus === 'closed') {
+        status = 'missed';
+      }
+
+      return {
+        id: member.userId,
+        name: member.user.name,
+        avatarUrl: member.user.avatarUrl,
+        status,
+        time,
+        yesterday,
+        today: todayText,
+        blocker,
+      };
+    });
+
+    const activeBlockers = standups.reduce(
+      (acc, s) => acc + (s.blockerFlag && !s.blockerFlag.isResolved ? 1 : 0),
+      0,
+    );
+
+    return {
+      stats: {
+        submitted: standups.length,
+        totalMembers: workspace.members.length,
+        activeBlockers,
+        windowStatus,
+        windowRemaining,
+      },
+      members,
+    };
   }
 
   async getWorkspaceStandups(workspaceId: string, dateStr: string) {

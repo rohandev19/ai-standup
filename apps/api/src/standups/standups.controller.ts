@@ -51,6 +51,11 @@ export class StandupsController {
     );
   }
 
+  @Get('dashboard-state')
+  async getDashboardState(@Param('workspaceId') workspaceId: string) {
+    return this.standupsService.getDashboardState(workspaceId);
+  }
+
   @Get()
   async getStandups(
     @Param('workspaceId') workspaceId: string,

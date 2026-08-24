@@ -22,10 +22,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    let message: string | string[] =
       exception instanceof HttpException
         ? exception.message
         : 'Internal server error';
+
+    if (exception instanceof HttpException) {
+      const errResponse = exception.getResponse() as any;
+      if (errResponse && errResponse.message) {
+        message = errResponse.message;
+      }
+    }
 
     // In a real app, you would integrate Sentry here
     if (status >= 500) {

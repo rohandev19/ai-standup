@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  // Use Next.js rewrite proxy to avoid CORS/Network errors in browser
+  baseURL: process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : '/api',
   withCredentials: true, // Untuk mengirim cookie refreshToken
 });
 

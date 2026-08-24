@@ -23,12 +23,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Use a ref to keep the latest token without dealing with useEffect firing order
+  const tokenRef = React.useRef<string | null>(null);
+  
+  // Sync token to ref
+  useEffect(() => {
+    tokenRef.current = accessToken;
+  }, [accessToken]);
 
-  // Setup interceptor dinamis
+  // Setup interceptor dinamis (hanya sekali saat mount)
   useEffect(() => {
     const requestInterceptor = api.interceptors.request.use((config) => {
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
+      if (tokenRef.current) {
+        config.headers.Authorization = `Bearer ${tokenRef.current}`;
       }
       return config;
     });
@@ -36,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       api.interceptors.request.eject(requestInterceptor);
     };
-  }, [accessToken]);
+  }, []);
 
   // Handle refresh token on mount
   useEffect(() => {

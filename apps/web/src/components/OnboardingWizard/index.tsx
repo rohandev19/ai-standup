@@ -46,7 +46,7 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
     setError('');
     try {
       // 1. Update Workspace Settings & complete onboarding
-      await api(`/api/workspaces/${workspace.id}/onboarding`, {
+      await api(`/workspaces/${workspace.id}/onboarding`, {
         method: 'PATCH',
         data: JSON.stringify({
           name,
@@ -64,7 +64,7 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
         .filter(e => e.length > 0);
 
       if (emails.length > 0) {
-        await api(`/api/workspaces/${workspace.id}/invite-bulk`, {
+        await api(`/workspaces/${workspace.id}/invite-bulk`, {
           method: 'POST',
           data: JSON.stringify({ emails }),
         });

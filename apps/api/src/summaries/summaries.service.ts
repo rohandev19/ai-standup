@@ -4,6 +4,7 @@ import { AiService } from '../ai/ai.service';
 import { EventsGateway } from '../events/events.gateway';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SummariesService {
@@ -15,8 +16,10 @@ export class SummariesService {
     private readonly eventsGateway: EventsGateway,
     @InjectQueue('ai-weekly-digest')
     private readonly aiWeeklyDigestQueue: Queue,
+    @InjectQueue('ai-summary')
+    private readonly aiSummaryQueue: Queue,
     @InjectQueue('email') private readonly emailQueue: Queue,
-    private readonly notificationsService: import('../notifications/notifications.service').NotificationsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async generateDailySummary(workspaceId: string, targetDate: Date) {
@@ -335,6 +338,17 @@ export class SummariesService {
     );
     return this.aiWeeklyDigestQueue.add(
       'generate-weekly-digest',
+      { workspaceId, targetDate },
+      { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+    );
+  }
+
+  async dispatchDailySummaryJob(workspaceId: string, targetDate: Date) {
+    this.logger.log(
+      `Manually dispatching Daily Summary for workspace ${workspaceId}`,
+    );
+    return this.aiSummaryQueue.add(
+      'generate-daily-summary',
       { workspaceId, targetDate },
       { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
     );

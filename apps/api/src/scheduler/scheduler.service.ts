@@ -4,6 +4,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { DateTime } from 'luxon';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SchedulerService {
@@ -15,7 +16,7 @@ export class SchedulerService {
     @InjectQueue('ai-weekly-digest')
     private readonly aiWeeklyDigestQueue: Queue,
     @InjectQueue('email') private readonly emailQueue: Queue,
-    private readonly notificationsService: import('../notifications/notifications.service').NotificationsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**

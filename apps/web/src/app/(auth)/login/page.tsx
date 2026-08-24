@@ -40,7 +40,7 @@ export default function LoginPage() {
         <p>Enter your details to access your dashboard.</p>
       </div>
 
-      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input 
