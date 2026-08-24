@@ -17,6 +17,14 @@ export class SummariesController {
   }
 
   // TODO: Add RolesGuard to restrict this to Owner/Admin
+  @Post('trigger-daily')
+  async triggerDailySummary(@Param('workspaceId') workspaceId: string) {
+    const today = new Date();
+    // Use target date from query if needed, but for now we just trigger for today
+    return this.summariesService.dispatchDailySummaryJob(workspaceId, today);
+  }
+
+  // TODO: Add RolesGuard to restrict this to Owner/Admin
   @Post('digests/trigger')
   async triggerWeeklyDigest(@Param('workspaceId') workspaceId: string) {
     const today = new Date();

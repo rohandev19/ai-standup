@@ -1,3 +1,4 @@
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -128,5 +129,36 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Utility to broadcast events to a specific user
   broadcastToUser(userId: string, event: string, payload: any) {
     this.server.to(`user_${userId}`).emit(event, payload);
+  }
+
+  @OnEvent('standup.submitted')
+  handleStandupSubmitted(payload: { workspaceId: string; userId: string; status: string }) {
+    this.broadcastToWorkspace(payload.workspaceId, 'presence_update', {
+      userId: payload.userId,
+      status: payload.status,
+    });
+  }
+
+  @OnEvent('member.removed')
+  async handleMemberRemoved(payload: { workspaceId: string; userId: string }) {
+    this.broadcastToWorkspace(payload.workspaceId, 'member_removed', {
+      userId: payload.userId,
+    });
+    
+    // Also force disconnect the socket from the room if they are connected
+    const sockets = await this.server.in(`workspace_${payload.workspaceId}`).fetchSockets();
+    for (const socket of sockets) {
+      const user = (socket.data as { user?: { sub?: string; id?: string } }).user;
+      if (user && (user.sub === payload.userId || user.id === payload.userId)) {
+        socket.leave(`workspace_${payload.workspaceId}`);
+      }
+    }
+  }
+
+  @OnEvent('member.joined')
+  handleMemberJoined(payload: { workspaceId: string; member: any }) {
+    this.broadcastToWorkspace(payload.workspaceId, 'member_joined', {
+      member: payload.member,
+    });
   }
 }

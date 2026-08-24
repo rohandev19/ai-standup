@@ -14,6 +14,7 @@ import { AiWeeklyDigestProcessor } from '../queues/processors/ai-weekly.processo
     PrismaModule,
     AiModule,
     EventsModule,
+    BullModule.registerQueue({ name: 'ai-summary' }),
     BullModule.registerQueue({ name: 'ai-weekly-digest' }),
     BullModule.registerQueue({ name: 'email' }),
     NotificationsModule,

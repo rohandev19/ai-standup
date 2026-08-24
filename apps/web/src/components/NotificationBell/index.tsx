@@ -47,7 +47,7 @@ export default function NotificationBell({
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      const res = await api('/api/notifications');
+      const res = await api('/users/me/notifications');
       setNotifications(res.data);
       setUnreadCount(res.data.filter((n: Notification) => !n.isRead).length);
     } catch (err) {
@@ -67,7 +67,7 @@ export default function NotificationBell({
 
   const markAsRead = async (id: string) => {
     try {
-      await api(`/api/notifications/${id}/read`, { method: 'POST' });
+      await api(`/users/me/notifications/${id}/read`, { method: 'PATCH' });
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -79,7 +79,7 @@ export default function NotificationBell({
 
   const markAllAsRead = async () => {
     try {
-      await api('/api/notifications/read-all', { method: 'POST' });
+      await api('/users/me/notifications/read-all', { method: 'POST' });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

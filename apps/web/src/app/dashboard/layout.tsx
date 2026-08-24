@@ -17,8 +17,10 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, accessToken, isLoading: isAuthLoading, logout } = useAuth();
-  const { activeWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+  const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -71,6 +73,48 @@ export default function DashboardLayout({
 
   if (isAuthLoading || !user) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+  }
+
+  // Handle case where user has zero workspaces
+  if (!isWorkspaceLoading && workspaces.length === 0) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
+        <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-glass)', width: '100%', maxWidth: '400px' }}>
+          <h2 style={{ marginBottom: '1rem', color: 'var(--text-main)' }}>Welcome to AI Standup</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>You don&apos;t belong to any workspaces yet. Create one to get started.</p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-main)' }}>Workspace Name</label>
+              <input 
+                type="text" 
+                value={newWorkspaceName}
+                onChange={e => setNewWorkspaceName(e.target.value)}
+                placeholder="e.g. Acme Corp"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)' }}
+              />
+            </div>
+            <button 
+              disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
+              onClick={async () => {
+                setIsCreatingWorkspace(true);
+                try {
+                  const { api } = await import('@/lib/api');
+                  await api.post('/workspaces', { name: newWorkspaceName });
+                  window.location.reload();
+                } catch (err) {
+                  alert('Failed to create workspace');
+                  setIsCreatingWorkspace(false);
+                }
+              }}
+              style={{ padding: '0.75rem', background: 'var(--primary-color, #6366f1)', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 0.5 : 1 }}
+            >
+              {isCreatingWorkspace ? 'Creating...' : 'Create Workspace'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Intercept if onboarding is not completed

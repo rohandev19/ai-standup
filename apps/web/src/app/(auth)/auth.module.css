@@ -1,53 +1,109 @@
 .authCard {
   width: 100%;
-  max-width: 450px;
-  padding: 2.5rem;
+  max-width: 420px;
+  padding: 3rem;
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), var(--shadow-glow);
+  backdrop-filter: blur(20px);
+}
+
+.authCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gradient-glow);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .header h2 {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.5px;
 }
 
 .header p {
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .forgotPassword {
   text-align: right;
   font-size: 0.875rem;
+  margin-top: -0.5rem;
 }
 
 .forgotPassword a {
   color: var(--text-secondary);
-  transition: color 0.2s ease;
+  transition: color 0.3s ease;
+  font-weight: 500;
 }
 
 .forgotPassword a:hover {
   color: var(--text-primary);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.passwordHint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: -1rem;
+  line-height: 1.4;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border-glass);
+}
+
+.passwordHint ul {
+  list-style: none;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.passwordHint li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.passwordHint li::before {
+  content: "•";
+  color: var(--accent-primary);
 }
 
 .footerText {
   text-align: center;
-  margin-top: 2rem;
-  font-size: 0.875rem;
+  margin-top: 2.5rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
+  border-top: 1px solid var(--border-glass);
+  padding-top: 1.5rem;
 }
 
 .footerText a {
   font-weight: 600;
+  transition: opacity 0.3s ease;
+}
+
+.footerText a:hover {
+  opacity: 0.8;
 }

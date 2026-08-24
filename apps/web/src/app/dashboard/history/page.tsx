@@ -52,7 +52,7 @@ export default function HistoryPage() {
     if (!activeWorkspace) return;
     const fetchMembers = async () => {
       try {
-        const res = await api(`/api/workspaces/${activeWorkspace.id}/members`);
+        const res = await api(`/workspaces/${activeWorkspace.id}/members`);
         setMembers(res.data);
       } catch (err) {
         console.error('Failed to fetch members', err);
@@ -90,7 +90,7 @@ export default function HistoryPage() {
       if (start) params.append('startDate', start);
       if (end) params.append('endDate', end);
 
-      const res = await api(`/api/workspaces/${activeWorkspace.id}/history?${params.toString()}`);
+      const res = await api(`/workspaces/${activeWorkspace.id}/history?${params.toString()}`);
       setData(res.data.data);
       setMeta(res.data.meta);
     } catch (err) {

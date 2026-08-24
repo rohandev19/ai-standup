@@ -68,7 +68,7 @@ export default function RegisterPage() {
         <p>Start automating your team&apos;s standup today.</p>
       </div>
 
-      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input 
@@ -95,6 +95,16 @@ export default function RegisterPage() {
           placeholder="••••••••" 
           required 
         />
+        
+        <div className={styles.passwordHint}>
+          Password must contain:
+          <ul>
+            <li>At least 8 characters</li>
+            <li>One uppercase letter (A-Z)</li>
+            <li>One lowercase letter (a-z)</li>
+            <li>One number (0-9)</li>
+          </ul>
+        </div>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.875rem' }}>
           <input 
             type="checkbox" 

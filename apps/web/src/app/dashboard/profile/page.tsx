@@ -35,7 +35,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
-        const res = await api('/api/workspaces');
+        const res = await api('/workspaces');
         setWorkspaces(res.data);
       } catch (err) {
         console.error('Failed to fetch workspaces', err);

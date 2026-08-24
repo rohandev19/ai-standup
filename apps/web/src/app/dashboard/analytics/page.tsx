@@ -44,10 +44,10 @@ export default function AnalyticsPage() {
       setError('');
       try {
         const [health, subRate, blockTrend, streaks] = await Promise.all([
-          api(`/api/analytics/${activeWorkspace.id}/health`),
-          api(`/api/analytics/${activeWorkspace.id}/submission-rate?days=${days}`),
-          api(`/api/analytics/${activeWorkspace.id}/blocker-trend?days=${days}`),
-          api(`/api/analytics/${activeWorkspace.id}/member-streaks`),
+          api(`/analytics/${activeWorkspace.id}/health`),
+          api(`/analytics/${activeWorkspace.id}/submission-rate?days=${days}`),
+          api(`/analytics/${activeWorkspace.id}/blocker-trend?days=${days}`),
+          api(`/analytics/${activeWorkspace.id}/member-streaks`),
         ]);
 
         setHealthData(health.data);

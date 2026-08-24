@@ -148,31 +148,31 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - **Security:** JANGAN izinkan join room tanpa verifikasi — ini bukan opsional, ini requirement 12.3
   - **Security:** cek `isActive: true` pada membership — member yang sudah di-remove tidak boleh join
   - **Security:** log violation attempts (Requirement 12.5)
-- [ ] 5.3 Implement WebSocket token validation — periodik cek token expiry, force disconnect expired clients
-- [ ] 5.4 Broadcast `presence_update` dari event listener (bukan langsung dari Use Case)
+- [x] 5.3 Implement WebSocket token validation — periodik cek token expiry, force disconnect expired clients
+- [x] 5.4 Broadcast `presence_update` dari event listener (bukan langsung dari Use Case)
   - Listener subscribe ke `standup.submitted` event dari EventEmitter
-- [ ] 5.5 Broadcast `member_removed`, disconnect socket yang bersangkutan dari room (selesaikan TODO dari task 2.6)
+- [x] 5.5 Broadcast `member_removed`, disconnect socket yang bersangkutan dari room (selesaikan TODO dari task 2.6)
   - Listener subscribe ke `member.removed` event
-- [ ] 5.6 Broadcast `member_joined` saat invite diterima
+- [x] 5.6 Broadcast `member_joined` saat invite diterima
   - Listener subscribe ke `invite.accepted` event
 - [ ] 5.7 Broadcast `notification_count` ke user room saat notification baru dibuat
-- [ ] 5.8 Frontend: Dashboard route sebagai Server Component untuk fetch initial state (REST), passing sebagai props ke satu Client Component (`'use client'`) yang pegang koneksi `socket.io-client`
+- [x] 5.8 Frontend: Dashboard route sebagai Server Component untuk fetch initial state (REST), passing sebagai props ke satu Client Component (`'use client'`) yang pegang koneksi `socket.io-client`
   - JANGAN jadikan seluruh halaman Client Component, cukup bagian yang benar-benar butuh koneksi socket (design.md, catatan arsitektur)
   - Status colors: Submitted (green), Late (amber), Missed (red), Not Yet (neutral gray) — konsisten
   - Participation progress bar: "6 dari 8 orang sudah submit (75%)"
   - Window status: "Window aktif (sisa 2 jam 15 menit)" / "Window sudah tutup hari ini"
   - Active blockers panel: prominent, not in a tab
-- [ ] 5.9 Auto-reconnect + resync full state via REST saat reconnect (Requirement 7.4)
+- [x] 5.9 Auto-reconnect + resync full state via REST saat reconnect (Requirement 7.4)
   - Show "Reconnecting..." indicator, JANGAN blank dashboard
-- [ ] 5.10 Real-time status transition animations (150-200ms, Requirement 7.8)
-- [ ]* 5.11 Test:
+- [x] 5.10 Real-time status transition animations (150-200ms, Requirement 7.8)
+- [x]* 5.11 Test:
   - Dua client browser berbeda, submit di satu, verifikasi presence update sampai ke yang lain dalam <2 detik
   - Client dari Workspace lain TIDAK menerima event (isolation test)
   - Member yang di-remove langsung ter-disconnect dari room
   - Reconnect setelah network drop: dashboard resync tanpa data loss
   - Inactive member TIDAK bisa join room
   - Token expired → client force-disconnected
-- [ ] 5.12 Checkpoint — dashboard real-time terbukti jalan lintas dua browser session, isolasi antar-Workspace terverifikasi lewat test eksplisit, reconnect graceful
+- [x] 5.12 Checkpoint — dashboard real-time terbukti jalan lintas dua browser session, isolasi antar-Workspace terverifikasi lewat test eksplisit, reconnect graceful
 
 ---
 
@@ -214,28 +214,28 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 7: AI Weekly Digest
 
-- [ ] 7.1 `WeeklyDigest` entity sudah ada dari Phase 0 migration
-- [ ] 7.2 `GenerateWeeklyDigestUseCase` — aggregate daily summaries + blocker flags untuk satu minggu
+- [x] 7.1 `WeeklyDigest` entity sudah ada dari Phase 0 migration
+- [x] 7.2 `GenerateWeeklyDigestUseCase` — aggregate daily summaries + blocker flags untuk satu minggu
   - Input: semua AiSummary + BlockerFlag dari weekStartDate sampai weekEndDate
   - Calculate: totalEntries, totalBlockers, resolvedBlockers, avgSubmissionRate, topMissers
   - Skip AI call kalau 0 submissions all week (Requirement 17.6)
   - Prompt structure as specified in design.md 7.4
-- [ ] 7.3 BullMQ job processor untuk `ai-weekly-digest` queue
+- [x] 7.3 BullMQ job processor untuk `ai-weekly-digest` queue
   - Same retry strategy as daily: 3 attempts, exponential backoff
-- [ ] 7.4 Cron job: Weekly Digest Trigger — jalan **tiap jam**
+- [x] 7.4 Cron job: Weekly Digest Trigger — jalan **tiap jam**
   - IF hari ini = hari kerja terakhir minggu ini (berdasarkan workingDays) AND jam >= window close AND belum ada digest minggu ini → dispatch job
   - Working day calculation harus benar: kalau workingDays=[1,2,3,4,5], hari terakhir = Jumat
-- [ ] 7.5 Manual trigger endpoint (rate-limited 1x/jam/workspace) — Owner/Admin only
-- [ ] 7.6 Event-driven side effects:
+- [x] 7.5 Manual trigger endpoint (rate-limited 1x/jam/workspace) — Owner/Admin only
+- [x] 7.6 Event-driven side effects:
   - `weekly_digest.generated` event → WebSocket `digest_ready` broadcast + email digest ke Owner/Admin + create Notification
-- [ ] 7.7 Frontend: Weekly Digest view di History page — tampilkan digest per minggu dengan collapsible detail
-- [ ]* 7.8 Test:
+- [x] 7.7 Frontend: Weekly Digest view di History page — tampilkan digest per minggu dengan collapsible detail
+- [x]* 7.8 Test:
   - 0 submissions all week → skip AI call
   - Digest generated with correct aggregated stats
   - Cron triggers on correct day (last working day)
   - Manual trigger works and rate-limited
   - Email digest delivered to Owner/Admin
-- [ ] 7.9 Checkpoint — weekly digest jalan otomatis dan manual, email delivered, stats akurat
+- [x] 7.9 Checkpoint — weekly digest jalan otomatis dan manual, email delivered, stats akurat
 
 ---
 
@@ -321,14 +321,14 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 
 ## Phase 11: History, Search, Export & Public Pages
 
-- [ ] 11.1 Frontend History page with:
+- [x] 11.1 Frontend History page with:
   - Date range picker
   - Member filter dropdown
   - Keyword search input
   - Paginated results (20 per page)
   - AI content visually distinguished from human content (label + styling)
   - Weekly digest section (collapsible by week)
-- [ ] 11.2 Data Export endpoints (Owner only):
+- [x] 11.2 Data Export endpoints (Owner only):
   - `POST .../export/entries?from=&to=` → CSV download
   - `POST .../export/summaries?from=&to=` → CSV/text download
   - Rate-limited: max 1 export per 5 minutes per Workspace (Requirement 21.3)
@@ -348,7 +348,7 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
   - Landing page renders without auth
   - SEO meta tags present in HTML source
   - Consent checkbox required for registration
-- [ ] 11.10 Checkpoint
+- [x] 11.10 Checkpoint
 
 ---
 
