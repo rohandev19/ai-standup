@@ -41,28 +41,46 @@ export class StandupsService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        'You have already submitted a standup for today',
-      );
+      if (existing.status !== 'MISSED') {
+        throw new BadRequestException(
+          'You have already submitted a standup for today',
+        );
+      }
     }
 
     // 3. Determine status based on blocker text
     const hasBlocker = Boolean(blockerText && blockerText.trim().length > 0);
-    const status = hasBlocker ? 'PENDING_AI' : 'SUBMITTED';
+    const status = hasBlocker ? 'PENDING_AI' : (existing && existing.status === 'MISSED' ? 'LATE' : 'SUBMITTED');
 
-    // 4. Create Entry
-    const entry = await this.prisma.standupEntry.create({
-      data: {
-        workspaceId,
-        userId,
-        standupDate: today,
-        yesterdayText,
-        todayText,
-        blockerText,
-        status,
-        submittedAt: new Date(),
-      },
-    });
+    let entry;
+
+    if (existing) {
+      // Update the automatically created MISSED entry (Late submission)
+      entry = await this.prisma.standupEntry.update({
+        where: { id: existing.id },
+        data: {
+          yesterdayText,
+          todayText,
+          blockerText,
+          status,
+          submittedAt: new Date(),
+        },
+      });
+    } else {
+      // 4. Create Entry
+      entry = await this.prisma.standupEntry.create({
+        data: {
+          workspaceId,
+          userId,
+          standupDate: today,
+          yesterdayText,
+          todayText,
+          blockerText,
+          status,
+          submittedAt: new Date(),
+        },
+      });
+    }
 
     // 5. Enqueue AI processing if needed
     if (hasBlocker) {
@@ -303,6 +321,17 @@ export class StandupsService {
       });
 
       return updated;
+    });
+  }
+
+  async getUserStandups(workspaceId: string, userId: string) {
+    return this.prisma.standupEntry.findMany({
+      where: {
+        workspaceId,
+        userId,
+      },
+      orderBy: { standupDate: 'desc' },
+      take: 30, // Get the last 30 days of standups
     });
   }
 }

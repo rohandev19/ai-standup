@@ -73,6 +73,8 @@
 }
 
 .navItem {
+  display: flex;
+  align-items: center;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);

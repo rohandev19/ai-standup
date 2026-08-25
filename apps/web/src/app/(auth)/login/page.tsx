@@ -25,7 +25,13 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       login(res.data.accessToken, res.data.user);
-      router.push('/dashboard');
+      
+      const pendingToken = localStorage.getItem('pending_invite_token');
+      if (pendingToken) {
+        router.push(`/join?token=${pendingToken}`);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { data?: { message?: string } } };
       setError(errorResponse.response?.data?.message || 'Failed to login');

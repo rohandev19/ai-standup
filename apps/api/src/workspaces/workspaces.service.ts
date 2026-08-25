@@ -475,4 +475,141 @@ export class WorkspacesService {
       return membership;
     });
   }
+
+  async getWorkspaceMembers(workspaceId: string) {
+    return this.prisma.workspaceMember.findMany({
+      where: { workspaceId, isActive: true },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+  }
+
+  async updateMemberRole(
+    workspaceId: string,
+    userId: string,
+    newRole: 'OWNER' | 'ADMIN' | 'MEMBER',
+    requesterId: string,
+  ) {
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+    });
+
+    if (!member || !member.isActive) {
+      throw new NotFoundException('Member not found or inactive');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // If transferring ownership
+      if (newRole === 'OWNER') {
+        const currentOwner = await tx.workspaceMember.findUnique({
+          where: { workspaceId_userId: { workspaceId, userId: requesterId } },
+        });
+        
+        if (currentOwner?.role === 'OWNER') {
+          // Demote current owner
+          await tx.workspaceMember.update({
+            where: { id: currentOwner.id },
+            data: { role: 'ADMIN' },
+          });
+        }
+      }
+
+      const updated = await tx.workspaceMember.update({
+        where: { id: member.id },
+        data: { role: newRole },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          workspaceId,
+          userId: requesterId,
+          action: 'member.role_updated',
+          entityType: 'WorkspaceMember',
+          entityId: member.id,
+          metadataJson: JSON.parse(JSON.stringify({ newRole, targetUserId: userId })),
+        },
+      });
+
+      return updated;
+    });
+  }
+
+  async removeMember(workspaceId: string, userId: string, requesterId: string) {
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+    });
+
+    if (!member || !member.isActive) {
+      throw new NotFoundException('Member not found or already removed');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const removed = await tx.workspaceMember.update({
+        where: { id: member.id },
+        data: {
+          isActive: false,
+          leftAt: new Date(),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          workspaceId,
+          userId: requesterId,
+          action: 'member.removed',
+          entityType: 'WorkspaceMember',
+          entityId: member.id,
+          metadataJson: JSON.parse(JSON.stringify({ targetUserId: userId })),
+        },
+      });
+
+      return removed;
+    });
+  }
+
+  async getActivityLog(workspaceId: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+    
+    const [data, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where: { workspaceId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.auditLog.count({
+        where: { workspaceId },
+      }),
+    ]);
+
+    // We need to fetch the users who performed the actions to get their names
+    const userIds = Array.from(new Set(data.map(log => log.userId).filter(Boolean))) as string[];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true },
+    });
+
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    const enrichedData = data.map(log => {
+      const actor = log.userId ? userMap.get(log.userId) : null;
+      return {
+        ...log,
+        actorName: actor ? actor.name : 'System',
+        actorEmail: actor ? actor.email : null,
+      };
+    });
+
+    return {
+      data: enrichedData,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }

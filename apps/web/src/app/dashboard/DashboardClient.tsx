@@ -29,8 +29,9 @@ interface DashboardState {
 }
 
 export default function DashboardClient() {
-  const { token } = useAuth();
-  const { activeWorkspaceId } = useWorkspace();
+  const { accessToken } = useAuth();
+  const { activeWorkspace } = useWorkspace();
+  const activeWorkspaceId = activeWorkspace?.id;
   const [state, setState] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +58,13 @@ export default function DashboardClient() {
 
   // 2. WebSocket Connection and Listeners
   useEffect(() => {
-    if (!token || !activeWorkspaceId) return;
+    if (!accessToken || !activeWorkspaceId) return;
 
     // Connect to proxy /socket.io or directly. For now, since Next.js rewrites /api, we should use the backend URL for socket.io if we don't have a rewrite for /socket.io.
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     
     const socket = io(backendUrl, {
-      auth: { token },
+      auth: { token: accessToken },
     });
     
     socketRef.current = socket;
@@ -130,7 +131,7 @@ export default function DashboardClient() {
     return () => {
       socket.disconnect();
     };
-  }, [token, activeWorkspaceId]);
+  }, [accessToken, activeWorkspaceId]);
 
   if (!activeWorkspaceId) {
     return <div style={{ padding: '2rem' }}>Please select a workspace.</div>;
