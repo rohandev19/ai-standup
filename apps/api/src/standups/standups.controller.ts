@@ -56,6 +56,14 @@ export class StandupsController {
     return this.standupsService.getDashboardState(workspaceId);
   }
 
+  @Get('me')
+  async getMyStandups(
+    @Param('workspaceId') workspaceId: string,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.standupsService.getUserStandups(workspaceId, req.user.id);
+  }
+
   @Get()
   async getStandups(
     @Param('workspaceId') workspaceId: string,

@@ -48,8 +48,8 @@ export default function NotificationBell({
     try {
       setIsLoading(true);
       const res = await api('/users/me/notifications');
-      setNotifications(res.data);
-      setUnreadCount(res.data.filter((n: Notification) => !n.isRead).length);
+      setNotifications(res.data.items || []);
+      setUnreadCount(res.data.unreadCount || 0);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     } finally {

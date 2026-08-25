@@ -47,7 +47,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      await api.patch('/api/users/me', { name });
+      await api.patch('/users/me', { name });
       setSavedMessage('Profile saved successfully!');
       setTimeout(() => setSavedMessage(''), 3000);
     } catch (err: unknown) {
@@ -70,7 +70,7 @@ export default function ProfilePage() {
     }
     
     try {
-      await api.patch('/api/users/me/password', {
+      await api.patch('/users/me/password', {
         currentPassword,
         newPassword,
       });

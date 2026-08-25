@@ -1,74 +1,89 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/Card/Card';
 import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { api } from '@/lib/api';
 import styles from './activity.module.css';
 
-type ActionType = 'setting_changed' | 'member_invited' | 'member_removed' | 'role_changed' | 'blocker_resolved' | 'member_joined';
-
-interface AuditEntry {
+interface AuditLog {
   id: string;
-  action: ActionType;
-  actor: string;
-  target: string;
-  detail: string;
-  timestamp: string;
+  action: string;
+  actorName: string;
+  metadataJson: any;
+  createdAt: string;
 }
 
-const mockAuditLog: AuditEntry[] = [
-  { id: '1', action: 'blocker_resolved', actor: 'Andi Raharjo', target: 'Siti Wulandari', detail: 'Resolved blocker: "Waiting on design assets for the dashboard redesign"', timestamp: '2026-08-23T14:30:00Z' },
-  { id: '2', action: 'member_invited', actor: 'Andi Raharjo', target: 'john@newco.com', detail: 'Sent invitation to join workspace', timestamp: '2026-08-23T11:00:00Z' },
-  { id: '3', action: 'setting_changed', actor: 'Andi Raharjo', target: 'Standup Window', detail: 'Changed window from 00:00-11:00 to 08:00-11:00 (Asia/Jakarta)', timestamp: '2026-08-22T16:20:00Z' },
-  { id: '4', action: 'role_changed', actor: 'Andi Raharjo', target: 'Maya Putri', detail: 'Changed role from Member to Admin', timestamp: '2026-08-22T10:15:00Z' },
-  { id: '5', action: 'member_joined', actor: 'Hendri Salim', target: 'Hendri Salim', detail: 'Accepted invitation and joined workspace', timestamp: '2026-08-21T09:30:00Z' },
-  { id: '6', action: 'member_removed', actor: 'Andi Raharjo', target: 'Old Member', detail: 'Removed from workspace (standup history retained)', timestamp: '2026-08-20T14:00:00Z' },
-  { id: '7', action: 'setting_changed', actor: 'Andi Raharjo', target: 'Working Days', detail: 'Changed working days: removed Saturday', timestamp: '2026-08-19T11:30:00Z' },
-  { id: '8', action: 'member_invited', actor: 'Maya Putri', target: 'linda@team.com', detail: 'Sent invitation to join workspace', timestamp: '2026-08-18T09:45:00Z' },
-  { id: '9', action: 'member_joined', actor: 'Linda Oktavia', target: 'Linda Oktavia', detail: 'Accepted invitation and joined workspace', timestamp: '2026-08-18T15:20:00Z' },
-  { id: '10', action: 'blocker_resolved', actor: 'Maya Putri', target: 'Reza Firmansyah', detail: 'Resolved blocker: "CI pipeline is flaky"', timestamp: '2026-08-17T13:00:00Z' },
-];
-
-const actionLabels: Record<ActionType, string> = {
-  setting_changed: 'Setting Changed',
-  member_invited: 'Invite Sent',
-  member_removed: 'Member Removed',
-  role_changed: 'Role Changed',
-  blocker_resolved: 'Blocker Resolved',
-  member_joined: 'Member Joined',
+const actionLabels: Record<string, string> = {
+  'member.invited': 'Invite Sent',
+  'member.bulk_invited': 'Bulk Invite Sent',
+  'member.role_updated': 'Role Changed',
+  'member.removed': 'Member Removed',
+  'blocker.resolved': 'Blocker Resolved',
+  'workspace.created': 'Workspace Created',
+  'workspace.onboarding_completed': 'Onboarding Completed',
+  'member.joined': 'Member Joined',
 };
 
-const actionIcons: Record<ActionType, string> = {
-  setting_changed: '⚙️',
-  member_invited: '📧',
-  member_removed: '👋',
-  role_changed: '🔑',
-  blocker_resolved: '✅',
-  member_joined: '🎉',
+const actionIcons: Record<string, string> = {
+  'member.invited': '📧',
+  'member.bulk_invited': '📧',
+  'member.role_updated': '🔑',
+  'member.removed': '👋',
+  'blocker.resolved': '✅',
+  'workspace.created': '✨',
+  'workspace.onboarding_completed': '🚀',
+  'member.joined': '🎉',
 };
 
-const actionVariants: Record<ActionType, 'info' | 'success' | 'warning' | 'danger' | 'purple' | 'neutral'> = {
-  setting_changed: 'info',
-  member_invited: 'purple',
-  member_removed: 'warning',
-  role_changed: 'info',
-  blocker_resolved: 'success',
-  member_joined: 'success',
+const actionVariants: Record<string, 'info' | 'success' | 'warning' | 'danger' | 'purple' | 'neutral'> = {
+  'member.invited': 'purple',
+  'member.bulk_invited': 'purple',
+  'member.role_updated': 'info',
+  'member.removed': 'warning',
+  'blocker.resolved': 'success',
+  'workspace.created': 'success',
+  'workspace.onboarding_completed': 'success',
+  'member.joined': 'success',
 };
-
-const allActionTypes: ActionType[] = ['setting_changed', 'member_invited', 'member_removed', 'role_changed', 'blocker_resolved', 'member_joined'];
 
 export default function ActivityPage() {
+  const { activeWorkspace } = useWorkspace();
   const [filterAction, setFilterAction] = useState<string>('all');
   const [page, setPage] = useState(1);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   const perPage = 20;
 
-  const filtered = filterAction === 'all'
-    ? mockAuditLog
-    : mockAuditLog.filter(e => e.action === filterAction);
+  useEffect(() => {
+    const fetchActivity = async () => {
+      if (!activeWorkspace) return;
+      setIsLoading(true);
+      setError('');
+      try {
+        const res = await api.get(`/workspaces/${activeWorkspace.id}/activity?page=${page}&limit=${perPage}`);
+        setLogs(res.data.data);
+        setTotalPages(res.data.meta.totalPages);
+      } catch (err: any) {
+        if (err.response?.status === 403) {
+          setError('You must be an Owner or Admin to view the Activity Log.');
+        } else {
+          setError('Failed to fetch activity log.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchActivity();
+  }, [activeWorkspace, page]);
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const filteredLogs = filterAction === 'all'
+    ? logs
+    : logs.filter(e => e.action === filterAction);
 
   const formatTime = (ts: string) => {
     const d = new Date(ts);
@@ -84,6 +99,48 @@ export default function ActivityPage() {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const getActionDetail = (entry: AuditLog) => {
+    const meta = entry.metadataJson || {};
+    switch (entry.action) {
+      case 'member.invited':
+        return `Sent invitation to ${meta.email}`;
+      case 'member.bulk_invited':
+        return `Sent ${meta.count} invitations`;
+      case 'member.role_updated':
+        return `Changed role to ${meta.newRole}`;
+      case 'blocker.resolved':
+        return `Resolved blocker`;
+      case 'member.removed':
+        return `Removed member from workspace`;
+      case 'workspace.created':
+        return `Created the workspace`;
+      case 'member.joined':
+        return `Joined the workspace`;
+      default:
+        return 'Performed an action';
+    }
+  };
+
+  const getActionTarget = (entry: AuditLog) => {
+    const meta = entry.metadataJson || {};
+    if (meta.email) return meta.email;
+    if (meta.targetUserId) return 'Member'; // We don't fetch target user names in this simple implementation, just their ID
+    return '';
+  };
+
+  const allAvailableActions = Array.from(new Set(logs.map(l => l.action)));
+
+  if (error) {
+    return (
+      <div className={styles.activity}>
+        <div style={{ padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <h3>Access Denied</h3>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.activity}>
       <div>
@@ -96,50 +153,61 @@ export default function ActivityPage() {
         <select
           className={styles.filterSelect}
           value={filterAction}
-          onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
+          onChange={(e) => setFilterAction(e.target.value)}
         >
           <option value="all">All Actions</option>
-          {allActionTypes.map(a => (
-            <option key={a} value={a}>{actionLabels[a]}</option>
+          {allAvailableActions.map(a => (
+            <option key={a} value={a}>{actionLabels[a] || a}</option>
           ))}
         </select>
       </div>
 
       {/* Timeline */}
-      <div className={styles.timeline}>
-        {paginated.map((entry, i) => (
-          <div key={entry.id} className={styles.timelineItem}>
-            <div className={styles.timelineLine}>
-              <div className={styles.timelineDot}>
-                {actionIcons[entry.action]}
-              </div>
-              {i < paginated.length - 1 && <div className={styles.timelineConnector} />}
-            </div>
-
-            <Card className={styles.timelineCard}>
-              <div className={styles.timelineHeader}>
-                <div className={styles.timelineAction}>
-                  <Badge variant={actionVariants[entry.action]} size="sm">
-                    {actionLabels[entry.action]}
-                  </Badge>
-                  <span className={styles.timelineAgo}>{formatTime(entry.timestamp)}</span>
+      {isLoading ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading activity...</div>
+      ) : filteredLogs.length === 0 ? (
+        <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px' }}>
+          No activity logs found.
+        </div>
+      ) : (
+        <div className={styles.timeline}>
+          {filteredLogs.map((entry, i) => {
+            const target = getActionTarget(entry);
+            return (
+              <div key={entry.id} className={styles.timelineItem}>
+                <div className={styles.timelineLine}>
+                  <div className={styles.timelineDot}>
+                    {actionIcons[entry.action] || '📌'}
+                  </div>
+                  {i < filteredLogs.length - 1 && <div className={styles.timelineConnector} />}
                 </div>
+
+                <Card className={styles.timelineCard}>
+                  <div className={styles.timelineHeader}>
+                    <div className={styles.timelineAction}>
+                      <Badge variant={actionVariants[entry.action] || 'neutral'} size="sm">
+                        {actionLabels[entry.action] || entry.action}
+                      </Badge>
+                      <span className={styles.timelineAgo}>{formatTime(entry.createdAt)}</span>
+                    </div>
+                  </div>
+                  <p className={styles.timelineDetail}>{getActionDetail(entry)}</p>
+                  <div className={styles.timelineActors}>
+                    <span className={styles.actorLabel}>By</span>
+                    <span className={styles.actorName}>{entry.actorName}</span>
+                    {target && (
+                      <>
+                        <span className={styles.actorLabel}>→</span>
+                        <span className={styles.actorName}>{target}</span>
+                      </>
+                    )}
+                  </div>
+                </Card>
               </div>
-              <p className={styles.timelineDetail}>{entry.detail}</p>
-              <div className={styles.timelineActors}>
-                <span className={styles.actorLabel}>By</span>
-                <span className={styles.actorName}>{entry.actor}</span>
-                {entry.actor !== entry.target && (
-                  <>
-                    <span className={styles.actorLabel}>→</span>
-                    <span className={styles.actorName}>{entry.target}</span>
-                  </>
-                )}
-              </div>
-            </Card>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

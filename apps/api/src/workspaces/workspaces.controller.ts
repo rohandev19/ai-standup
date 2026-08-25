@@ -11,6 +11,7 @@ import {
   HttpException,
   HttpStatus,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { WorkspacesService } from './workspaces.service';
@@ -155,5 +156,56 @@ export class WorkspacesController {
     res.header('Content-Type', 'text/csv');
     res.attachment(`ai-summaries-${workspaceId}.csv`);
     return res.send(csv);
+  }
+
+  @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
+  @Get(':id/members')
+  async getMembers(@Param('id') workspaceId: string) {
+    return this.workspacesService.getWorkspaceMembers(workspaceId);
+  }
+
+  @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Patch(':id/members/:userId/role')
+  async updateMemberRole(
+    @Param('id') workspaceId: string,
+    @Param('userId') userId: string,
+    @Body('role') role: 'OWNER' | 'ADMIN' | 'MEMBER',
+    @Req() req: RequestWithUser,
+  ) {
+    return this.workspacesService.updateMemberRole(
+      workspaceId,
+      userId,
+      role,
+      req.user.id,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Delete(':id/members/:userId')
+  async removeMember(
+    @Param('id') workspaceId: string,
+    @Param('userId') userId: string,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.workspacesService.removeMember(
+      workspaceId,
+      userId,
+      req.user.id,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Get(':id/activity')
+  async getActivityLog(
+    @Param('id') workspaceId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageInt = page ? parseInt(page, 10) : 1;
+    const limitInt = limit ? parseInt(limit, 10) : 20;
+    return this.workspacesService.getActivityLog(workspaceId, pageInt, limitInt);
   }
 }
