@@ -100,7 +100,9 @@ export class WorkspacesService {
         data: {
           workspaceId: id,
           action: 'workspace.onboarding_completed',
-          metadataJson: JSON.parse(JSON.stringify(dto)) as Prisma.InputJsonValue,
+          metadataJson: JSON.parse(
+            JSON.stringify(dto),
+          ) as Prisma.InputJsonValue,
         },
       });
 
@@ -693,7 +695,9 @@ export class WorkspacesService {
           action: 'member.removed',
           entityType: 'WorkspaceMember',
           entityId: member.id,
-          metadataJson: JSON.parse(JSON.stringify({ targetUserId: userId })) as Prisma.InputJsonValue,
+          metadataJson: JSON.parse(
+            JSON.stringify({ targetUserId: userId }),
+          ) as Prisma.InputJsonValue,
         },
       });
 

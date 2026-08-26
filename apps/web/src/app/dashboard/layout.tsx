@@ -17,7 +17,9 @@ import {
   Settings,
   UserCircle,
   CreditCard,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from 'lucide-react';
 import styles from './layout.module.css';
 
@@ -32,6 +34,7 @@ export default function DashboardLayout({
   const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading, setActiveWorkspace } = useWorkspace();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -223,10 +226,22 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.container}>
+      {/* Mobile Overlay */}
+      <div 
+        className={`${styles.overlay} ${isSidebarOpen ? styles.open : ''}`} 
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : ''}`}>
         <div className={styles.logo}>
           <span className="text-gradient">AI Standup</span>
+          <button 
+            className={styles.closeSidebarBtn}
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <div
@@ -331,6 +346,7 @@ export default function DashboardLayout({
               key={item.href}
               href={item.href}
               className={`${styles.navItem} ${pathname === item.href ? styles.active : ''}`}
+              onClick={() => setIsSidebarOpen(false)}
             >
               {item.icon}
               <span style={{ marginLeft: '12px' }}>{item.label}</span>
@@ -339,7 +355,11 @@ export default function DashboardLayout({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link href="/dashboard/profile" className={`${styles.navItem} ${pathname === '/dashboard/profile' ? styles.active : ''}`}>
+          <Link 
+            href="/dashboard/profile" 
+            className={`${styles.navItem} ${pathname === '/dashboard/profile' ? styles.active : ''}`}
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <UserCircle size={20} />
             <span style={{ marginLeft: '12px' }}>Profile</span>
           </Link>
@@ -359,6 +379,12 @@ export default function DashboardLayout({
       <div className={styles.mainWrapper}>
         <header className={styles.topbar}>
           <div className={styles.topbarLeft}>
+            <button 
+              className={styles.hamburger} 
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
             <h1>Dashboard</h1>
           </div>
           <div className={styles.topbarRight}>
