@@ -22,6 +22,9 @@ describe('WorkspaceMembershipGuard', () => {
       workspaceMember: {
         findUnique: jest.fn(),
       },
+      auditLog: {
+        create: jest.fn(),
+      },
     } as any;
 
     guard = new WorkspaceMembershipGuard(reflector, prisma);

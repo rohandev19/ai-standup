@@ -50,7 +50,11 @@ export class StandupsService {
 
     // 3. Determine status based on blocker text
     const hasBlocker = Boolean(blockerText && blockerText.trim().length > 0);
-    const status = hasBlocker ? 'PENDING_AI' : (existing && existing.status === 'MISSED' ? 'LATE' : 'SUBMITTED');
+    const status = hasBlocker
+      ? 'PENDING_AI'
+      : existing && existing.status === 'MISSED'
+        ? 'LATE'
+        : 'SUBMITTED';
 
     let entry;
 
@@ -182,13 +186,27 @@ export class StandupsService {
 
     let windowStatus: 'open' | 'closed' = 'closed';
     let windowRemaining = '0m';
-    
+
     if (isWorkingDay) {
-      const [startHour, startMinute] = workspace.standupWindowStart.split(':').map(Number);
-      const [endHour, endMinute] = workspace.standupWindowEnd.split(':').map(Number);
-      
-      const windowStartTime = localTime.set({ hour: startHour, minute: startMinute, second: 0, millisecond: 0 });
-      const windowEndTime = localTime.set({ hour: endHour, minute: endMinute, second: 0, millisecond: 0 });
+      const [startHour, startMinute] = workspace.standupWindowStart
+        .split(':')
+        .map(Number);
+      const [endHour, endMinute] = workspace.standupWindowEnd
+        .split(':')
+        .map(Number);
+
+      const windowStartTime = localTime.set({
+        hour: startHour,
+        minute: startMinute,
+        second: 0,
+        millisecond: 0,
+      });
+      const windowEndTime = localTime.set({
+        hour: endHour,
+        minute: endMinute,
+        second: 0,
+        millisecond: 0,
+      });
 
       if (localTime >= windowStartTime && localTime <= windowEndTime) {
         windowStatus = 'open';
@@ -214,7 +232,9 @@ export class StandupsService {
 
       if (entry) {
         status = 'submitted'; // we ignore 'late' for simple UI, or we could calculate if submittedAt > windowEndTime
-        const submittedLocal = DateTime.fromJSDate(entry.submittedAt || new Date()).setZone(workspace.timezone);
+        const submittedLocal = DateTime.fromJSDate(
+          entry.submittedAt || new Date(),
+        ).setZone(workspace.timezone);
         time = submittedLocal.toFormat('HH:mm');
         yesterday = entry.yesterdayText;
         todayText = entry.todayText;

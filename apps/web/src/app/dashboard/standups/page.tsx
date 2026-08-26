@@ -68,7 +68,7 @@ export default function StandupsPage() {
         ) : standups.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             <h3 style={{ marginBottom: '0.5rem', fontWeight: 600 }}>No standups yet</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>You haven't submitted any standups in this workspace.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>You haven&apos;t submitted any standups in this workspace.</p>
           </div>
         ) : (
           standups.map((entry, index) => (
