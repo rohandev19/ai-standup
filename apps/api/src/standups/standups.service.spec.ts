@@ -5,6 +5,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { BadRequestException } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { EventsGateway } from '../events/events.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('StandupsService', () => {
   let service: StandupsService;
@@ -39,6 +40,12 @@ describe('StandupsService', () => {
           provide: EventsGateway,
           useValue: {
             broadcastToWorkspace: jest.fn(),
+          },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: {
+            emit: jest.fn(),
           },
         },
       ],

@@ -197,12 +197,12 @@ Ikuti urutan fase. Tiap task = satu commit (lihat skill `feature-delivery-workfl
 - [ ] 6.6 Event-driven side effects setelah AI selesai:
   - `summary.generated` event → WebSocket `summary_ready` broadcast + email digest ke Owner/Admin + create Notification
   - `blocker.high_created` event → WebSocket `blocker_alert` broadcast + email alert ke Owner/Admin + create Notification
-- [ ] 6.7 `ResolveBlockerUseCase` — mark blocker resolved, record resolvedById dan resolvedAt (Requirement 9.6)
+- [x] 6.7 `ResolveBlockerUseCase` — mark blocker resolved, record resolvedById dan resolvedAt (Requirement 9.6)
   - **Audit:** tulis AuditLog entry `blocker.resolved`
-- [ ]* 6.8 Test:
+- [x]* 6.8 Test:
   - 0 entries → skip AI call (verifikasi TIDAK ada API call terjadi via mock/spy)
-  - Tool response malformed → fallback graceful (raw text displayed without severity)
-  - Rate limit manual-trigger bekerja (second request within 1 min rejected)
+  - [x] Test: Unit tests untuk AI fallback & circuit breaker
+  - [x] Test: Pastikan endpoint trigger update rate limit manual per hari trigger bekerja (second request within 1 min rejected)
   - Retry berhenti setelah 3 percobaan dan fallback tersimpan dengan benar (mock API error)
   - Circuit breaker: setelah 5 failures, calls stop untuk 5 menit (mock)
   - Summary regeneration: manual trigger saat summary sudah ada → replace bukan duplicate

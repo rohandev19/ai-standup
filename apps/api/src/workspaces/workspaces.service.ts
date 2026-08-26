@@ -6,12 +6,12 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
-import { EventsGateway } from '../events/events.gateway';
 import { HistoryQueryDto } from './dto/history-query.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class WorkspacesService {
@@ -19,6 +19,7 @@ export class WorkspacesService {
     private readonly prisma: PrismaService,
     @InjectQueue('email') private readonly emailQueue: Queue,
     private readonly notificationsService: NotificationsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private generateSlug(name: string): string {
@@ -53,12 +54,16 @@ export class WorkspacesService {
 
   async createWorkspace(name: string, ownerId: string) {
     const slug = this.generateSlug(name);
+    const joinCode = crypto.randomBytes(4).toString('hex');
+    const joinPassword = crypto.randomBytes(4).toString('hex');
 
     return this.prisma.$transaction(async (tx) => {
       const workspace = await tx.workspace.create({
         data: {
           name,
           slug,
+          joinCode,
+          joinPassword,
           members: {
             create: {
               userId: ownerId,
@@ -95,7 +100,9 @@ export class WorkspacesService {
         data: {
           workspaceId: id,
           action: 'workspace.onboarding_completed',
-          metadataJson: JSON.parse(JSON.stringify(dto)),
+          metadataJson: JSON.parse(
+            JSON.stringify(dto),
+          ) as Prisma.InputJsonValue,
         },
       });
 
@@ -138,33 +145,103 @@ export class WorkspacesService {
       if (member) throw new BadRequestException('User is already a member');
     }
 
+    // Check if there is already a pending invite
+    const existingInvite = await this.prisma.workspaceInvite.findFirst({
+      where: { workspaceId, email, usedAt: null },
+    });
+
+    if (existingInvite) {
+      await this.emailQueue.add('send-invite', {
+        email,
+        workspaceName: workspace.name,
+        token: existingInvite.token,
+        inviterName: inviter.name,
+      });
+      return { message: 'Invitation resent', inviteId: existingInvite.id };
+    }
+
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 
-    // Delete any pending invite for this email in this workspace
-    await this.prisma.workspaceInvite.deleteMany({
-      where: { workspaceId, email, usedAt: null },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const invite = await tx.workspaceInvite.create({
+        data: {
+          workspaceId,
+          email,
+          token,
+          invitedById: inviterId,
+          expiresAt,
+        },
+      });
 
-    const invite = await this.prisma.workspaceInvite.create({
-      data: {
-        workspaceId,
+      await tx.auditLog.create({
+        data: {
+          workspaceId,
+          userId: inviterId,
+          action: 'invite.sent',
+          entityType: 'WorkspaceInvite',
+          entityId: invite.id,
+          metadataJson: { email },
+        },
+      });
+
+      // Trigger Email Queue to send the invite link
+      await this.emailQueue.add('send-invite', {
         email,
+        workspaceName: workspace.name,
         token,
-        invitedById: inviterId,
-        expiresAt,
-      },
+        inviterName: inviter.name,
+      });
+
+      return { message: 'Invitation sent', inviteId: invite.id };
+    });
+  }
+
+  async resendInvite(workspaceId: string, inviteId: string, inviterId: string) {
+    const invite = await this.prisma.workspaceInvite.findUnique({
+      where: { id: inviteId },
+    });
+    if (!invite) throw new NotFoundException('Invite not found');
+    if (invite.workspaceId !== workspaceId)
+      throw new BadRequestException('Invalid workspace');
+    if (invite.usedAt) throw new BadRequestException('Invite already used');
+
+    const workspace = await this.findWorkspaceById(workspaceId);
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterId },
     });
 
-    // Trigger Email Queue to send the invite link
-    await this.emailQueue.add('send-invite', {
-      email,
-      workspaceName: workspace.name,
-      token,
-      inviterName: inviter.name,
+    const newToken = crypto.randomBytes(32).toString('hex');
+    const newExpiresAt = new Date();
+    newExpiresAt.setDate(newExpiresAt.getDate() + 7);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.workspaceInvite.update({
+        where: { id: invite.id },
+        data: { token: newToken, expiresAt: newExpiresAt },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          workspaceId,
+          userId: inviterId,
+          action: 'invite.sent',
+          entityType: 'WorkspaceInvite',
+          entityId: invite.id,
+          metadataJson: { email: invite.email, resend: true },
+        },
+      });
+
+      await this.emailQueue.add('send-invite', {
+        email: invite.email,
+        workspaceName: workspace?.name,
+        token: newToken,
+        inviterName: inviter?.name,
+      });
+
+      return { message: 'Invitation resent', inviteId: invite.id };
     });
-    return { message: 'Invitation sent', inviteId: invite.id };
   }
 
   async bulkInviteMembers(
@@ -191,11 +268,75 @@ export class WorkspacesService {
       try {
         const invite = await this.inviteMember(workspaceId, email, inviterId);
         results.push({ email, success: true, inviteId: invite.inviteId });
-      } catch (error: any) {
-        results.push({ email, success: false, error: error.message });
+      } catch (error) {
+        const e = error as Error;
+        results.push({ email, success: false, error: e.message });
       }
     }
     return results;
+  }
+
+  async joinWithCode(userId: string, joinCode: string, joinPassword: string) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { joinCode },
+    });
+
+    if (!workspace) throw new NotFoundException('Invalid Room Code');
+    if (workspace.joinPassword !== joinPassword)
+      throw new BadRequestException('Invalid Password');
+
+    const existingMember = await this.prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: { workspaceId: workspace.id, userId },
+      },
+    });
+
+    if (existingMember) {
+      if (!existingMember.isActive) {
+        // Reactivate
+        await this.prisma.workspaceMember.update({
+          where: { id: existingMember.id },
+          data: { isActive: true, joinedAt: new Date(), leftAt: null },
+        });
+      }
+      return {
+        message: 'Successfully joined workspace',
+        workspaceId: workspace.id,
+      };
+    }
+
+    // New member
+    if (workspace.subscriptionTier === 'FREE') {
+      const activeMembersCount = await this.prisma.workspaceMember.count({
+        where: { workspaceId: workspace.id, isActive: true },
+      });
+      if (activeMembersCount >= 5) {
+        throw new BadRequestException(
+          'Workspace is full (Free tier limit reached)',
+        );
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.workspaceMember.create({
+        data: {
+          workspaceId: workspace.id,
+          userId,
+          role: 'MEMBER',
+        },
+      });
+
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      this.eventEmitter.emit('workspace.member_joined', {
+        workspaceId: workspace.id,
+        member: { id: user?.id, name: user?.name, avatarUrl: user?.avatarUrl },
+      });
+
+      return {
+        message: 'Successfully joined workspace',
+        workspaceId: workspace.id,
+      };
+    });
   }
 
   async getHistory(workspaceId: string, query: HistoryQueryDto) {
@@ -447,30 +588,19 @@ export class WorkspacesService {
         },
       });
 
-      // Find the inviter
+      // Find the inviter for event emitting
       const inviter = await tx.user.findUnique({
         where: { id: invite.invitedById },
       });
-      if (inviter) {
-        await this.notificationsService.createNotification(
-          inviter.id,
-          'INVITE_ACCEPTED',
-          'Invitation Accepted',
-          `${user.name} has accepted your invitation to join the workspace.`,
-          invite.workspaceId,
-          { acceptedUserId: userId },
-        );
 
-        if (inviter.globalEmailPref !== 'OFF') {
-          // Send email Notification to inviter
-          await this.emailQueue.add('send-notification', {
-            email: inviter.email,
-            workspaceName: invite.workspaceId,
-            title: 'Invitation Accepted',
-            body: `${user.name} has joined your workspace!`,
-          });
-        }
-      }
+      this.eventEmitter.emit('invite.accepted', {
+        workspaceId: invite.workspaceId,
+        userId,
+        inviterId: invite.invitedById,
+        userEmail: user.email,
+        userName: user.name,
+        inviterEmail: inviter?.email,
+      });
 
       return membership;
     });
@@ -480,7 +610,9 @@ export class WorkspacesService {
     return this.prisma.workspaceMember.findMany({
       where: { workspaceId, isActive: true },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
       },
       orderBy: { joinedAt: 'asc' },
     });
@@ -506,7 +638,7 @@ export class WorkspacesService {
         const currentOwner = await tx.workspaceMember.findUnique({
           where: { workspaceId_userId: { workspaceId, userId: requesterId } },
         });
-        
+
         if (currentOwner?.role === 'OWNER') {
           // Demote current owner
           await tx.workspaceMember.update({
@@ -528,7 +660,9 @@ export class WorkspacesService {
           action: 'member.role_updated',
           entityType: 'WorkspaceMember',
           entityId: member.id,
-          metadataJson: JSON.parse(JSON.stringify({ newRole, targetUserId: userId })),
+          metadataJson: JSON.parse(
+            JSON.stringify({ newRole, targetUserId: userId }),
+          ) as Prisma.InputJsonValue,
         },
       });
 
@@ -561,7 +695,9 @@ export class WorkspacesService {
           action: 'member.removed',
           entityType: 'WorkspaceMember',
           entityId: member.id,
-          metadataJson: JSON.parse(JSON.stringify({ targetUserId: userId })),
+          metadataJson: JSON.parse(
+            JSON.stringify({ targetUserId: userId }),
+          ) as Prisma.InputJsonValue,
         },
       });
 
@@ -569,9 +705,13 @@ export class WorkspacesService {
     });
   }
 
-  async getActivityLog(workspaceId: string, page: number = 1, limit: number = 20) {
+  async getActivityLog(
+    workspaceId: string,
+    page: number = 1,
+    limit: number = 20,
+  ) {
     const skip = (page - 1) * limit;
-    
+
     const [data, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where: { workspaceId },
@@ -585,15 +725,17 @@ export class WorkspacesService {
     ]);
 
     // We need to fetch the users who performed the actions to get their names
-    const userIds = Array.from(new Set(data.map(log => log.userId).filter(Boolean))) as string[];
+    const userIds = Array.from(
+      new Set(data.map((log) => log.userId).filter(Boolean)),
+    ) as string[];
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, email: true },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const enrichedData = data.map(log => {
+    const enrichedData = data.map((log) => {
       const actor = log.userId ? userMap.get(log.userId) : null;
       return {
         ...log,
@@ -611,5 +753,41 @@ export class WorkspacesService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  @OnEvent('invite.accepted')
+  async handleInviteAccepted(payload: {
+    workspaceId: string;
+    userId: string;
+    inviterId: string;
+    userEmail: string;
+    userName: string;
+    inviterEmail?: string;
+  }) {
+    if (!payload.inviterId) return;
+
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: payload.inviterId },
+    });
+
+    if (inviter) {
+      await this.notificationsService.createNotification(
+        inviter.id,
+        'INVITE_ACCEPTED',
+        'Invitation Accepted',
+        `${payload.userName} has accepted your invitation to join the workspace.`,
+        payload.workspaceId,
+        { acceptedUserId: payload.userId },
+      );
+
+      if (inviter.globalEmailPref !== 'OFF') {
+        await this.emailQueue.add('send-notification', {
+          email: inviter.email,
+          workspaceName: payload.workspaceId,
+          title: 'Invitation Accepted',
+          body: `${payload.userName} has joined your workspace!`,
+        });
+      }
+    }
   }
 }

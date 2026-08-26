@@ -1,12 +1,37 @@
-import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { SummariesService } from './summaries.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { WorkspaceMembershipGuard } from '../common/guards/workspace-membership.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
 @Controller('workspaces/:workspaceId/summaries')
 export class SummariesController {
+  private rateLimitMap = new Map<string, number>();
+
   constructor(private readonly summariesService: SummariesService) {}
+
+  private enforceRateLimit(workspaceId: string, type: string, limitMs: number) {
+    const key = `${workspaceId}_${type}`;
+    const now = Date.now();
+    const lastTrigger = this.rateLimitMap.get(key);
+    if (lastTrigger && now - lastTrigger < limitMs) {
+      throw new HttpException(
+        `Rate limit exceeded. Try again later.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    this.rateLimitMap.set(key, now);
+  }
 
   @Get()
   async getSummaries(
@@ -16,22 +41,19 @@ export class SummariesController {
     return this.summariesService.getSummaries(workspaceId, type);
   }
 
-  // TODO: Add RolesGuard to restrict this to Owner/Admin
+  @Roles('OWNER', 'ADMIN')
   @Post('trigger-daily')
   async triggerDailySummary(@Param('workspaceId') workspaceId: string) {
+    this.enforceRateLimit(workspaceId, 'daily', 60 * 1000); // 1 minute
     const today = new Date();
-    // Use target date from query if needed, but for now we just trigger for today
     return this.summariesService.dispatchDailySummaryJob(workspaceId, today);
   }
 
-  // TODO: Add RolesGuard to restrict this to Owner/Admin
+  @Roles('OWNER', 'ADMIN')
   @Post('digests/trigger')
   async triggerWeeklyDigest(@Param('workspaceId') workspaceId: string) {
+    this.enforceRateLimit(workspaceId, 'weekly', 60 * 60 * 1000); // 1 hour
     const today = new Date();
-    // In a real scenario, we would check Redis for rate limit (1x/hour)
-    // For now, we dispatch directly to BullMQ.
-    // Wait, since SummariesController doesn't have the queue injected,
-    // it's cleaner to have a service method.
     return this.summariesService.dispatchWeeklyDigestJob(workspaceId, today);
   }
 }

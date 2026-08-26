@@ -17,7 +17,9 @@ import {
   Settings,
   UserCircle,
   CreditCard,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from 'lucide-react';
 import styles from './layout.module.css';
 
@@ -29,11 +31,18 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, accessToken, isLoading: isAuthLoading, logout } = useAuth();
-  const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+  const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading, setActiveWorkspace } = useWorkspace();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joinPassword, setJoinPassword] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  
+  // Create workspace modal (for when user already has workspaces)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -144,13 +153,44 @@ export default function DashboardLayout({
             <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-glass)', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-main)' }}>Join an Existing Team</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1 }}>
-                Does your team already use AI Standup? You don&apos;t need to create a new workspace here.
+                Have a Room Code and Password from your Admin? Enter them below to join immediately.
               </p>
 
-              <div style={{ marginTop: 'auto', padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', border: '1px dashed rgba(99, 102, 241, 0.3)', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>
-                  Ask your Admin for an <strong>invite link</strong>. Clicking it will automatically add you to their workspace.
-                </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto' }}>
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={e => setJoinCode(e.target.value)}
+                  placeholder="Room Code"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem' }}
+                />
+                <input
+                  type="password"
+                  value={joinPassword}
+                  onChange={e => setJoinPassword(e.target.value)}
+                  placeholder="Password"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem' }}
+                />
+                <button
+                  disabled={isJoining || !joinCode.trim() || !joinPassword.trim()}
+                  onClick={async () => {
+                    setIsJoining(true);
+                    try {
+                      const { api } = await import('@/lib/api');
+                      await api.post('/workspaces/join-with-code', { 
+                        joinCode: joinCode.trim(), 
+                        joinPassword: joinPassword.trim() 
+                      });
+                      window.location.reload();
+                    } catch (err: any) {
+                      alert(err.response?.data?.message || 'Failed to join workspace');
+                      setIsJoining(false);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-accent)', borderRadius: '8px', border: '1px solid rgba(99, 102, 241, 0.3)', cursor: 'pointer', fontWeight: 600, opacity: (!joinCode.trim() || !joinPassword.trim() || isJoining) ? 0.5 : 1, transition: 'all 0.2s' }}
+                >
+                  {isJoining ? 'Joining...' : 'Join Workspace'}
+                </button>
               </div>
             </div>
           </div>
@@ -186,10 +226,22 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.container}>
+      {/* Mobile Overlay */}
+      <div 
+        className={`${styles.overlay} ${isSidebarOpen ? styles.open : ''}`} 
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : ''}`}>
         <div className={styles.logo}>
           <span className="text-gradient">AI Standup</span>
+          <button 
+            className={styles.closeSidebarBtn}
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <div
@@ -210,22 +262,7 @@ export default function DashboardLayout({
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              marginTop: '0.5rem',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-glass)',
-              borderRadius: '8px',
-              padding: '0.5rem',
-              zIndex: 50,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.25rem'
-            }}>
+            <div className={styles.workspaceDropdown}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', textTransform: 'uppercase' }}>
                 Your Workspaces
               </div>
@@ -261,6 +298,29 @@ export default function DashboardLayout({
                   <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{w.name}</span>
                 </button>
               ))}
+              <div style={{ height: '1px', background: 'var(--border-glass)', margin: '0.25rem 0' }}></div>
+              <button
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  setIsCreateModalOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--primary-accent)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: 600
+                }}
+              >
+                + Create New Workspace
+              </button>
             </div>
           )}
         </div>
@@ -271,6 +331,7 @@ export default function DashboardLayout({
               key={item.href}
               href={item.href}
               className={`${styles.navItem} ${pathname === item.href ? styles.active : ''}`}
+              onClick={() => setIsSidebarOpen(false)}
             >
               {item.icon}
               <span style={{ marginLeft: '12px' }}>{item.label}</span>
@@ -279,7 +340,11 @@ export default function DashboardLayout({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link href="/dashboard/profile" className={`${styles.navItem} ${pathname === '/dashboard/profile' ? styles.active : ''}`}>
+          <Link 
+            href="/dashboard/profile" 
+            className={`${styles.navItem} ${pathname === '/dashboard/profile' ? styles.active : ''}`}
+            onClick={() => setIsSidebarOpen(false)}
+          >
             <UserCircle size={20} />
             <span style={{ marginLeft: '12px' }}>Profile</span>
           </Link>
@@ -299,6 +364,12 @@ export default function DashboardLayout({
       <div className={styles.mainWrapper}>
         <header className={styles.topbar}>
           <div className={styles.topbarLeft}>
+            <button 
+              className={styles.hamburger} 
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
             <h1>Dashboard</h1>
           </div>
           <div className={styles.topbarRight}>
@@ -317,6 +388,46 @@ export default function DashboardLayout({
           {isWorkspaceLoading ? <div>Loading workspace data...</div> : children}
         </main>
       </div>
+
+      {isCreateModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border-glass)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>Create New Workspace</h3>
+            <input
+              type="text"
+              value={newWorkspaceName}
+              onChange={e => setNewWorkspaceName(e.target.value)}
+              placeholder="e.g. Acme Corp"
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem', marginBottom: '1rem' }}
+            />
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
+                onClick={async () => {
+                  setIsCreatingWorkspace(true);
+                  try {
+                    const { api } = await import('@/lib/api');
+                    await api.post('/workspaces', { name: newWorkspaceName });
+                    window.location.reload();
+                  } catch (err) {
+                    alert('Failed to create workspace');
+                    setIsCreatingWorkspace(false);
+                  }
+                }}
+                style={{ padding: '0.5rem 1rem', background: 'var(--primary-color, #6366f1)', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', opacity: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 0.5 : 1 }}
+              >
+                {isCreatingWorkspace ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

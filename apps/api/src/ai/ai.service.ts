@@ -7,7 +7,7 @@ import { CircuitBreakerService } from './circuit-breaker.service';
 export class AiService {
   private anthropic: Anthropic | null = null;
   private readonly logger = new Logger(AiService.name);
-  private readonly CLAUDE_MODEL = 'claude-3-5-haiku-20241022'; // Using the latest fast model
+  private readonly CLAUDE_MODEL = 'claude-haiku-4-5-20251001'; // Phase 6.1 requirement
 
   constructor(private readonly circuitBreaker: CircuitBreakerService) {
     const apiKey = process.env.ANTHROPIC_API_KEY;

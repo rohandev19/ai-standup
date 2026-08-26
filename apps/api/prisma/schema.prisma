@@ -56,6 +56,8 @@ model Workspace {
   standupWindowStart  String    @default("00:00") // HH:mm, in Workspace timezone
   standupWindowEnd    String    @default("11:00")
   workingDays         Int[]     @default([1, 2, 3, 4, 5]) // 0=Sun, 1=Mon, ..., 6=Sat (ISO)
+  joinCode            String    @unique @default(uuid())
+  joinPassword        String    @default("admin123")
   lastProcessedDate    DateTime? @db.Date // Prevents window-close double-processing (design 6.2)
   onboardingCompleted  Boolean   @default(false) // Tracks if onboarding wizard was completed
   stripeCustomerId     String?   @unique

@@ -3,6 +3,7 @@ import { SchedulerService } from './scheduler.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { DateTime } from 'luxon';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('SchedulerService', () => {
   let service: SchedulerService;
@@ -38,6 +39,13 @@ describe('SchedulerService', () => {
         {
           provide: getQueueToken('email'),
           useValue: { add: jest.fn() },
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            sendReminder: jest.fn(),
+            createNotification: jest.fn(),
+          },
         },
       ],
     }).compile();

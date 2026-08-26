@@ -58,6 +58,35 @@ export default function SettingsPage() {
 
       <Card style={{ maxWidth: '600px' }}>
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+          Workspace Invite Details
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Share these details with your team members so they can join your workspace.</p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <Input label="Room Code" defaultValue={activeWorkspace?.joinCode || ''} disabled />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Input label="Password" defaultValue={activeWorkspace?.joinPassword || ''} disabled />
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <Button 
+              onClick={() => {
+                const text = `Join my workspace on AI Standup!\nRoom Code: ${activeWorkspace?.joinCode}\nPassword: ${activeWorkspace?.joinPassword}`;
+                navigator.clipboard.writeText(text);
+                alert('Invite details copied to clipboard!');
+              }}
+              variant="ghost"
+            >
+              Copy to Clipboard
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ maxWidth: '600px' }}>
+        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
           Workspace Billing
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

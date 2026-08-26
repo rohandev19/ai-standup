@@ -72,7 +72,7 @@ function JoinContent() {
         {status === 'auth_required' && (
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <Button onClick={() => router.push('/login')} variant="primary" style={{ flex: 1 }}>Log In</Button>
-            <Button onClick={() => router.push('/register')} variant="outline" style={{ flex: 1 }}>Sign Up</Button>
+            <Button onClick={() => router.push('/register')} variant="ghost" style={{ flex: 1 }}>Sign Up</Button>
           </div>
         )}
 

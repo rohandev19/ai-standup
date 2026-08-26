@@ -23,8 +23,10 @@ import { InviteMemberDto } from './dto/invite-member.dto';
 import { InviteBulkDto } from './dto/invite-bulk.dto';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { JoinWorkspaceDto } from './dto/join-workspace.dto';
+import { JoinWithCodeDto } from './dto/join-with-code.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
+import { RateLimitGuard } from '../common/guards/rate-limit.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('workspaces')
@@ -72,6 +74,21 @@ export class WorkspacesController {
     return this.workspacesService.inviteMember(
       workspaceId,
       dto.email,
+      req.user.id,
+    );
+  }
+
+  @UseGuards(WorkspaceMembershipGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Post(':id/invites/:inviteId/resend')
+  async resendInvite(
+    @Param('id') workspaceId: string,
+    @Param('inviteId') inviteId: string,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.workspacesService.resendInvite(
+      workspaceId,
+      inviteId,
       req.user.id,
     );
   }
@@ -136,6 +153,19 @@ export class WorkspacesController {
     res.header('Content-Type', 'text/csv');
     res.attachment(`standup-entries-${workspaceId}.csv`);
     return res.send(csv);
+  }
+
+  @UseGuards(RateLimitGuard, JwtAuthGuard)
+  @Post('join-with-code')
+  async joinWithCode(
+    @Req() req: RequestWithUser,
+    @Body() dto: JoinWithCodeDto,
+  ) {
+    return this.workspacesService.joinWithCode(
+      req.user.id,
+      dto.joinCode,
+      dto.joinPassword,
+    );
   }
 
   @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
@@ -206,6 +236,10 @@ export class WorkspacesController {
   ) {
     const pageInt = page ? parseInt(page, 10) : 1;
     const limitInt = limit ? parseInt(limit, 10) : 20;
-    return this.workspacesService.getActivityLog(workspaceId, pageInt, limitInt);
+    return this.workspacesService.getActivityLog(
+      workspaceId,
+      pageInt,
+      limitInt,
+    );
   }
 }

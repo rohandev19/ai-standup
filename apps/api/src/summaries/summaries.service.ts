@@ -61,8 +61,14 @@ export class SummariesService {
       await this.aiService.generateDailySummary(compiledText);
 
     if (summaryContent) {
-      const summary = await this.prisma.aiSummary.create({
-        data: {
+      const summary = await this.prisma.aiSummary.upsert({
+        where: {
+          workspaceId_summaryDate: {
+            workspaceId,
+            summaryDate: startOfDay,
+          },
+        },
+        create: {
           workspaceId,
           summaryDate: startOfDay,
           content: summaryContent,
@@ -70,6 +76,13 @@ export class SummariesService {
           blockerCount: standups.filter((s) => !!s.blockerFlag).length,
           submissionRate: 100, // TODO: calculate actual rate
           missedMembers: [],
+        },
+        update: {
+          content: summaryContent,
+          entryCount: standups.length,
+          blockerCount: standups.filter((s) => !!s.blockerFlag).length,
+          generatedAt: new Date(),
+          isManualTrigger: true, // If upserted, it's likely a manual re-trigger
         },
       });
 
@@ -260,8 +273,14 @@ export class SummariesService {
       (s) => s.blockerFlag?.isResolved,
     ).length;
 
-    const digest = await this.prisma.weeklyDigest.create({
-      data: {
+    const digest = await this.prisma.weeklyDigest.upsert({
+      where: {
+        workspaceId_weekStartDate: {
+          workspaceId,
+          weekStartDate: startOfPeriod,
+        },
+      },
+      create: {
         workspaceId,
         weekStartDate: startOfPeriod,
         weekEndDate: endOfPeriod,
@@ -269,8 +288,16 @@ export class SummariesService {
         totalEntries: nonMissedEntries.length,
         totalBlockers,
         resolvedBlockers,
-        avgSubmissionRate: 0, // Fallback, will be recalculated safely if needed, but not required for placeholder
+        avgSubmissionRate: 0,
         topMissers,
+      },
+      update: {
+        content,
+        totalEntries: nonMissedEntries.length,
+        totalBlockers,
+        resolvedBlockers,
+        topMissers,
+        generatedAt: new Date(),
       },
     });
 
@@ -296,8 +323,14 @@ export class SummariesService {
     const startOfDay = new Date(targetDate);
     startOfDay.setUTCHours(0, 0, 0, 0);
 
-    const summary = await this.prisma.aiSummary.create({
-      data: {
+    const summary = await this.prisma.aiSummary.upsert({
+      where: {
+        workspaceId_summaryDate: {
+          workspaceId,
+          summaryDate: startOfDay,
+        },
+      },
+      create: {
         workspaceId,
         summaryDate: startOfDay,
         content,
@@ -305,6 +338,10 @@ export class SummariesService {
         blockerCount: 0,
         submissionRate: 0,
         missedMembers: [],
+      },
+      update: {
+        content,
+        generatedAt: new Date(),
       },
     });
 

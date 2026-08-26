@@ -9,6 +9,8 @@ export interface Workspace {
   slug: string;
   members: { role: string }[];
   onboardingCompleted?: boolean;
+  joinCode?: string;
+  joinPassword?: string;
 }
 
 interface WorkspaceContextType {

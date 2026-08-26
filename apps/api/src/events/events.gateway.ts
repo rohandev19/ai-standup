@@ -132,7 +132,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @OnEvent('standup.submitted')
-  handleStandupSubmitted(payload: { workspaceId: string; userId: string; status: string }) {
+  handleStandupSubmitted(payload: {
+    workspaceId: string;
+    userId: string;
+    status: string;
+  }) {
     this.broadcastToWorkspace(payload.workspaceId, 'presence_update', {
       userId: payload.userId,
       status: payload.status,
@@ -144,11 +148,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.broadcastToWorkspace(payload.workspaceId, 'member_removed', {
       userId: payload.userId,
     });
-    
+
     // Also force disconnect the socket from the room if they are connected
-    const sockets = await this.server.in(`workspace_${payload.workspaceId}`).fetchSockets();
+    const sockets = await this.server
+      .in(`workspace_${payload.workspaceId}`)
+      .fetchSockets();
     for (const socket of sockets) {
-      const user = (socket.data as { user?: { sub?: string; id?: string } }).user;
+      const user = (socket.data as { user?: { sub?: string; id?: string } })
+        .user;
       if (user && (user.sub === payload.userId || user.id === payload.userId)) {
         socket.leave(`workspace_${payload.workspaceId}`);
       }
