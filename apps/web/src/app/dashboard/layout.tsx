@@ -262,22 +262,7 @@ export default function DashboardLayout({
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              marginTop: '0.5rem',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-glass)',
-              borderRadius: '8px',
-              padding: '0.5rem',
-              zIndex: 50,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.25rem'
-            }}>
+            <div className={styles.workspaceDropdown}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', textTransform: 'uppercase' }}>
                 Your Workspaces
               </div>
