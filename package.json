@@ -7,7 +7,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "turbo run clean",
-    "prepare": "husky"
+    "prepare": "husky",
+    "heroku-postbuild": "if [ \"$PROJECT_TARGET\" = \"api\" ]; then pnpm run build --filter=api; else pnpm run build --filter=web; fi",
+    "start": "if [ \"$PROJECT_TARGET\" = \"api\" ]; then pnpm --filter=api run start:prod; else pnpm --filter=web run start; fi"
   },
   "devDependencies": {
     "husky": "^9.1.7",
