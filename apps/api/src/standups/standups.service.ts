@@ -230,7 +230,7 @@ export class StandupsService {
       let blocker = null;
 
       if (entry) {
-        status = 'submitted'; // we ignore 'late' for simple UI, or we could calculate if submittedAt > windowEndTime
+        status = entry.status === 'MISSED' ? 'missed' : 'submitted'; // we ignore 'late' for simple UI
         const submittedLocal = DateTime.fromJSDate(
           entry.submittedAt || new Date(),
         ).setZone(workspace.timezone);
