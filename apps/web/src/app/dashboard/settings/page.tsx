@@ -58,6 +58,47 @@ export default function SettingsPage() {
 
       <Card style={{ maxWidth: '600px' }}>
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+          Workspace Preferences
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Input 
+            label="Standup Window Start" 
+            type="time" 
+            defaultValue={activeWorkspace?.standupWindowStart || '09:00'} 
+            id="ws-start"
+          />
+          <Input 
+            label="Standup Window End" 
+            type="time" 
+            defaultValue={activeWorkspace?.standupWindowEnd || '11:00'} 
+            id="ws-end"
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <Button 
+              onClick={async () => {
+                const start = (document.getElementById('ws-start') as HTMLInputElement).value;
+                const end = (document.getElementById('ws-end') as HTMLInputElement).value;
+                try {
+                  const { api } = await import('@/lib/api');
+                  await api(`/workspaces/${activeWorkspace?.id}/onboarding`, {
+                    method: 'PATCH',
+                    data: { standupWindowStart: start, standupWindowEnd: end }
+                  });
+                  alert('Settings updated! Please refresh the page to see changes.');
+                  window.location.reload();
+                } catch(e) {
+                  alert('Failed to update settings');
+                }
+              }}
+            >
+              Save Preferences
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ maxWidth: '600px' }}>
+        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
           Workspace Invite Details
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

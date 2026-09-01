@@ -48,13 +48,13 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
       // 1. Update Workspace Settings & complete onboarding
       await api(`/workspaces/${workspace.id}/onboarding`, {
         method: 'PATCH',
-        data: JSON.stringify({
+        data: {
           name,
           timezone,
           standupWindowStart,
           standupWindowEnd,
           workingDays,
-        }),
+        },
       });
 
       // 2. Handle Bulk Invites if provided
@@ -66,7 +66,7 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
       if (emails.length > 0) {
         await api(`/workspaces/${workspace.id}/invite-bulk`, {
           method: 'POST',
-          data: JSON.stringify({ emails }),
+          data: { emails },
         });
       }
 
