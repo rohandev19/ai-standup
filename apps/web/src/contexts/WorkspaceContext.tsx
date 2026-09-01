@@ -11,6 +11,8 @@ export interface Workspace {
   onboardingCompleted?: boolean;
   joinCode?: string;
   joinPassword?: string;
+  standupWindowStart?: string;
+  standupWindowEnd?: string;
 }
 
 interface WorkspaceContextType {
