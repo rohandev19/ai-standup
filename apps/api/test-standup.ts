@@ -14,11 +14,11 @@ async function testSubmit() {
   console.log("Found workspace and user. Submitting standup...");
 
   // Mock queue and event emitter
-  const aiBlockerQueue = { add: async (...args) => console.log("Queue add:", args) };
+  const aiBlockerQueue = { add: async (...args: any[]) => console.log("Queue add:", args) };
   const eventEmitter = new EventEmitter2();
-  eventEmitter.on('standup.submitted', (payload) => console.log('Event emitted:', payload));
+  eventEmitter.on('standup.submitted', (payload: any) => console.log('Event emitted:', payload));
 
-  const service = new StandupsService(prisma, aiBlockerQueue, eventEmitter);
+  const service = new StandupsService(prisma, aiBlockerQueue as any, eventEmitter);
   
   try {
     const res = await service.submitStandup(ws.id, user.id, "test", "test", "test");
