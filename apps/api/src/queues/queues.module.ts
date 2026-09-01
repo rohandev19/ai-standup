@@ -5,18 +5,32 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { EmailProcessor } from './processors/email.processor';
 
+const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL;
+let redisConnection: any = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  password: process.env.REDIS_PASSWORD || undefined,
+  tls:
+    process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
+      ? {}
+      : undefined,
+};
+
+if (redisUrl) {
+  const url = new URL(redisUrl);
+  redisConnection = {
+    host: url.hostname,
+    port: parseInt(url.port, 10),
+    password: url.password ? decodeURIComponent(url.password) : undefined,
+    username: url.username ? decodeURIComponent(url.username) : undefined,
+    tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+  };
+}
+
 @Module({
   imports: [
     BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        password: process.env.REDIS_PASSWORD || undefined,
-        tls:
-          process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
-            ? {}
-            : undefined,
-      },
+      connection: redisConnection,
     }),
     BullModule.registerQueue({
       name: 'email',
