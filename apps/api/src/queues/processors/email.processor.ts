@@ -42,7 +42,7 @@ export class EmailProcessor extends WorkerHost {
     try {
       let subject = '';
       let text = '';
-      let html = '';
+      const html = '';
 
       switch (job.name) {
         case 'send-reminder':
@@ -72,10 +72,14 @@ export class EmailProcessor extends WorkerHost {
           html: html || text,
         };
         await this.transporter.sendMail(mailOptions);
-        this.logger.log(`[REAL EMAIL] Sent to: ${job.data.email}, Subject: ${subject}`);
+        this.logger.log(
+          `[REAL EMAIL] Sent to: ${job.data.email}, Subject: ${subject}`,
+        );
       } else {
         // Mock email
-        this.logger.log(`[MOCK EMAIL] To: ${job.data.email}, Subject: ${subject}`);
+        this.logger.log(
+          `[MOCK EMAIL] To: ${job.data.email}, Subject: ${subject}`,
+        );
         this.logger.log(`[MOCK EMAIL CONTENT] ${text}`);
       }
 
