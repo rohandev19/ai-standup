@@ -13,22 +13,14 @@ export default function BillingPage() {
     setLoadingTier(tier);
     setError(null);
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/workspaces/${currentWorkspace.id}/checkout`, {
-        method: 'POST',
+      const { api } = await import('@/lib/api');
+      const response = await api.post(`/billing/workspaces/${currentWorkspace.id}/checkout`, { tier }, {
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
           'x-workspace-id': currentWorkspace.id,
-        },
-        body: JSON.stringify({ tier }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-
-      const { url } = await response.json();
+      const { url } = response.data;
       window.location.href = url; // Redirect to Stripe
     } catch (err: unknown) {
       setError((err as Error).message);

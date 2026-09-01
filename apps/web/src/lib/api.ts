@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  // Use Next.js rewrite proxy to avoid CORS/Network errors in browser
-  baseURL: process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : '/api',
+  // Use Next.js rewrite proxy to avoid CORS/Network errors and enable Secure SameSite=Lax cookies
+  baseURL: '/api',
   withCredentials: true, // Untuk mengirim cookie refreshToken
 });
 

@@ -119,26 +119,17 @@ export default function HistoryPage() {
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/workspaces/${activeWorkspace.id}/export/${type}?${params.toString()}`, {
+      const { api } = await import('@/lib/api');
+      const response = await api(`/workspaces/${activeWorkspace.id}/export/${type}?${params.toString()}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        responseType: 'blob',
       });
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          alert('Export limit reached. Please wait 5 minutes between exports.');
-        } else if (response.status === 403) {
-          alert('Only workspace owners can export data.');
-        } else {
-          alert('Export failed. Please try again.');
-        }
-        return;
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error('Export failed');
       }
 
-      const blob = await response.blob();
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
