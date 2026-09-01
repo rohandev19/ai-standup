@@ -25,7 +25,11 @@ export class StandupsService {
     todayText: string | undefined,
     blockerText: string | undefined,
   ) {
-    // 1. Get current date (UTC normalized to Date)
+    // 1. Get current date in workspace timezone
+    const workspace = await this.prisma.workspace.findUniqueOrThrow({
+      where: { id: workspaceId },
+      select: { timezone: true },
+    });
     const localTime = DateTime.now().setZone(workspace.timezone);
     const today = localTime.startOf('day').toJSDate();
 
