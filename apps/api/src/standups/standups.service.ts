@@ -26,8 +26,8 @@ export class StandupsService {
     blockerText: string | undefined,
   ) {
     // 1. Get current date (UTC normalized to Date)
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const localTime = DateTime.now().setZone(workspace.timezone);
+    const today = localTime.startOf('day').toJSDate();
 
     // 2. Prevent duplicate submission for the same date (Requirement 5.2)
     const existing = await this.prisma.standupEntry.findUnique({
@@ -166,8 +166,8 @@ export class StandupsService {
 
     if (!workspace) throw new NotFoundException('Workspace not found');
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const localTime = DateTime.now().setZone(workspace.timezone);
+    const today = localTime.startOf('day').toJSDate();
 
     const standups = await this.prisma.standupEntry.findMany({
       where: {
@@ -180,7 +180,6 @@ export class StandupsService {
     });
 
     // Window Status Logic (mirroring Scheduler)
-    const localTime = DateTime.now().setZone(workspace.timezone);
     const dayOfWeek = localTime.weekday; // 1 = Monday, 7 = Sunday
     const isWorkingDay = workspace.workingDays.includes(dayOfWeek);
 
