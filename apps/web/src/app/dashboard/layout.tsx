@@ -18,6 +18,8 @@ import {
   UserCircle,
   CreditCard,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Menu,
   X
 } from 'lucide-react';
@@ -35,6 +37,7 @@ export default function DashboardLayout({
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -233,32 +236,45 @@ export default function DashboardLayout({
       />
 
       {/* Sidebar */}
-      <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : ''}`}>
-        <div className={styles.logo}>
-          <span className="text-gradient">AI Standup</span>
-          <button 
-            className={styles.closeSidebarBtn}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <X size={24} />
-          </button>
+      <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : ''} ${isSidebarCollapsed ? styles.collapsed : ''}`}>
+        <div className={styles.logo} style={{ justifyContent: isSidebarCollapsed ? 'center' : 'space-between' }}>
+          {!isSidebarCollapsed && <span className="text-gradient">AI Standup</span>}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button 
+              className={styles.toggleCollapseBtn}
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title="Toggle Sidebar"
+            >
+              {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            </button>
+            <button 
+              className={styles.closeSidebarBtn}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div
-          className={styles.workspaceSelector}
+          className={`${styles.workspaceSelector} ${isSidebarCollapsed ? styles.collapsedSelector : ''}`}
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           style={{ cursor: 'pointer', position: 'relative' }}
         >
           <div className={styles.avatar}>{activeWorkspace ? activeWorkspace.name.charAt(0).toUpperCase() : '?'}</div>
-          <div className={styles.workspaceInfo}>
-            <span className={styles.workspaceName}>{activeWorkspace ? activeWorkspace.name : 'Loading...'}</span>
-            <span className={styles.workspaceRole}>
-              {activeWorkspace?.members?.[0]?.role ?
-                activeWorkspace.members[0].role.charAt(0) + activeWorkspace.members[0].role.slice(1).toLowerCase()
-                : 'Member'}
-            </span>
-          </div>
-          <ChevronDown size={16} style={{ color: 'var(--text-secondary)', marginLeft: 'auto' }} />
+          {!isSidebarCollapsed && (
+            <>
+              <div className={styles.workspaceInfo}>
+                <span className={styles.workspaceName}>{activeWorkspace ? activeWorkspace.name : 'Loading...'}</span>
+                <span className={styles.workspaceRole}>
+                  {activeWorkspace?.members?.[0]?.role ?
+                    activeWorkspace.members[0].role.charAt(0) + activeWorkspace.members[0].role.slice(1).toLowerCase()
+                    : 'Member'}
+                </span>
+              </div>
+              <ChevronDown size={16} style={{ color: 'var(--text-secondary)', marginLeft: 'auto' }} />
+            </>
+          )}
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
@@ -330,32 +346,30 @@ export default function DashboardLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`${styles.navItem} ${pathname === item.href ? styles.active : ''}`}
-              onClick={() => setIsSidebarOpen(false)}
+              className={`${styles.navItem} ${pathname === item.href ? styles.active : ''} ${isSidebarCollapsed ? styles.collapsedNavItem : ''}`}
+              title={isSidebarCollapsed ? item.label : undefined}
             >
               {item.icon}
-              <span style={{ marginLeft: '12px' }}>{item.label}</span>
+              {!isSidebarCollapsed && <span style={{ marginLeft: '12px' }}>{item.label}</span>}
             </Link>
           ))}
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link 
-            href="/dashboard/profile" 
-            className={`${styles.navItem} ${pathname === '/dashboard/profile' ? styles.active : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <UserCircle size={20} />
-            <span style={{ marginLeft: '12px' }}>Profile</span>
-          </Link>
-          <button
-            className={styles.logoutBtn}
-            onClick={() => {
-              logout();
-              router.push('/login');
-            }}
-          >
-            Log out
+          <div className={`${styles.userProfile} ${isSidebarCollapsed ? styles.collapsedUserProfile : ''}`}>
+            <div className={styles.userAvatar}>
+              {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} /> : <UserCircle size={32} />}
+            </div>
+            {!isSidebarCollapsed && (
+              <div className={styles.userInfo}>
+                <span className={styles.userName}>{user.name || user.email.split('@')[0]}</span>
+                <span className={styles.userEmail}>{user.email}</span>
+              </div>
+            )}
+          </div>
+          <button className={`${styles.logoutBtn} ${isSidebarCollapsed ? styles.collapsedLogoutBtn : ''}`} onClick={() => { logout(); router.push('/login'); }}>
+            {!isSidebarCollapsed && 'Log out'}
+            {isSidebarCollapsed && <X size={20} />}
           </button>
         </div>
       </aside>

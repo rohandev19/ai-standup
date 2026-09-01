@@ -11,8 +11,56 @@
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1rem;
-  transition: transform 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
+  overflow-x: hidden;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  padding: 1.5rem 0.75rem;
+}
+
+.toggleCollapseBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleCollapseBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.collapsedSelector {
+  padding: 0.5rem;
+  justify-content: center;
+}
+
+.collapsedSelector .avatar {
+  margin-right: 0;
+}
+
+.collapsedNavItem {
+  padding: 0.75rem;
+  justify-content: center;
+}
+
+.collapsedUserProfile {
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.collapsedLogoutBtn {
+  padding: 0.75rem;
+  justify-content: center;
 }
 
 .overlay {
@@ -371,6 +419,10 @@
 
   .content {
     padding: 1rem;
+  }
+
+  .toggleCollapseBtn {
+    display: none;
   }
 }
 
