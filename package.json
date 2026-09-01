@@ -12,7 +12,7 @@
     "clean": "turbo run clean",
     "prepare": "husky || true",
     "heroku-postbuild": "if [ \"$PROJECT_TARGET\" = \"api\" ]; then pnpm --filter=api exec prisma generate && pnpm run build --filter=api; else pnpm run build --filter=web; fi",
-    "start": "if [ \"$PROJECT_TARGET\" = \"api\" ]; then pnpm --filter=api run start:prod; else pnpm --filter=web run start; fi"
+    "start": "if [ \"$PROJECT_TARGET\" = \"api\" ]; then node apps/api/dist/main.js; else npm --prefix apps/web run start; fi"
   },
   "dependencies": {
     "turbo": "^2"
