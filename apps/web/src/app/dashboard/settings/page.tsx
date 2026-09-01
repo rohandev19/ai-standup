@@ -59,22 +59,26 @@ export default function SettingsPage() {
       <Card style={{ maxWidth: '600px' }}>
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
           Workspace Preferences
+          {myRole === 'MEMBER' && <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginLeft: '1rem', fontWeight: 'normal' }}>(Admin only)</span>}
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', opacity: myRole === 'MEMBER' ? 0.6 : 1, pointerEvents: myRole === 'MEMBER' ? 'none' : 'auto' }}>
           <Input 
             label="Standup Window Start" 
             type="time" 
             defaultValue={activeWorkspace?.standupWindowStart || '09:00'} 
             id="ws-start"
+            disabled={myRole === 'MEMBER'}
           />
           <Input 
             label="Standup Window End" 
             type="time" 
             defaultValue={activeWorkspace?.standupWindowEnd || '11:00'} 
             id="ws-end"
+            disabled={myRole === 'MEMBER'}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
             <Button 
+              disabled={myRole === 'MEMBER'}
               onClick={async () => {
                 const start = (document.getElementById('ws-start') as HTMLInputElement).value;
                 const end = (document.getElementById('ws-end') as HTMLInputElement).value;
@@ -86,8 +90,8 @@ export default function SettingsPage() {
                   });
                   alert('Settings updated! Please refresh the page to see changes.');
                   window.location.reload();
-                } catch(e) {
-                  alert('Failed to update settings');
+                } catch(e: any) {
+                  alert(e.response?.data?.message || 'Failed to update settings');
                 }
               }}
             >
