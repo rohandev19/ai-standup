@@ -21,7 +21,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  Plus,
+  LogIn
 } from 'lucide-react';
 import styles from './layout.module.css';
 
@@ -44,8 +46,11 @@ export default function DashboardLayout({
   const [joinPassword, setJoinPassword] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   
-  // Create workspace modal (for when user already has workspaces)
+  // Create/Join workspace modal (for when user already has workspaces)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<'create' | 'join'>('create');
+  const [modalError, setModalError] = useState('');
+  const [modalSuccess, setModalSuccess] = useState('');
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -318,6 +323,9 @@ export default function DashboardLayout({
               <button
                 onClick={() => {
                   setIsDropdownOpen(false);
+                  setModalTab('create');
+                  setModalError('');
+                  setModalSuccess('');
                   setIsCreateModalOpen(true);
                 }}
                 style={{
@@ -332,10 +340,43 @@ export default function DashboardLayout({
                   cursor: 'pointer',
                   textAlign: 'left',
                   width: '100%',
-                  fontWeight: 600
+                  fontWeight: 500,
+                  fontSize: '0.875rem'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                + Create New Workspace
+                <Plus size={16} />
+                Create Workspace
+              </button>
+              <button
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  setModalTab('join');
+                  setModalError('');
+                  setModalSuccess('');
+                  setIsCreateModalOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: 500,
+                  fontSize: '0.875rem'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <LogIn size={16} />
+                Join a Room
               </button>
             </div>
           )}
@@ -403,41 +444,141 @@ export default function DashboardLayout({
         </main>
       </div>
 
+      {/* Create / Join Workspace Modal */}
       {isCreateModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', width: '400px', border: '1px solid var(--border-glass)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>Create New Workspace</h3>
-            <input
-              type="text"
-              value={newWorkspaceName}
-              onChange={e => setNewWorkspaceName(e.target.value)}
-              placeholder="e.g. Acme Corp"
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem', marginBottom: '1rem' }}
-            />
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+        <div className={styles.modalOverlay} onClick={() => setIsCreateModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Add Workspace</h3>
               <button
-                onClick={() => setIsCreateModalOpen(false)}
-                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
-                onClick={async () => {
-                  setIsCreatingWorkspace(true);
-                  try {
-                    const { api } = await import('@/lib/api');
-                    await api.post('/workspaces', { name: newWorkspaceName });
-                    window.location.reload();
-                  } catch (err) {
-                    alert('Failed to create workspace');
-                    setIsCreatingWorkspace(false);
-                  }
+                className={styles.modalCloseBtn}
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setModalError('');
+                  setModalSuccess('');
+                  setNewWorkspaceName('');
+                  setJoinCode('');
+                  setJoinPassword('');
                 }}
-                style={{ padding: '0.5rem 1rem', background: 'var(--primary-color, #6366f1)', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', opacity: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 0.5 : 1 }}
               >
-                {isCreatingWorkspace ? 'Creating...' : 'Create'}
+                <X size={20} />
               </button>
+            </div>
+
+            {/* Tabs */}
+            <div className={styles.modalTabs}>
+              <button
+                className={`${styles.modalTab} ${modalTab === 'create' ? styles.modalTabActive : ''}`}
+                onClick={() => { setModalTab('create'); setModalError(''); setModalSuccess(''); }}
+              >
+                <Plus size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                Create New
+              </button>
+              <button
+                className={`${styles.modalTab} ${modalTab === 'join' ? styles.modalTabActive : ''}`}
+                onClick={() => { setModalTab('join'); setModalError(''); setModalSuccess(''); }}
+              >
+                <LogIn size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                Join Room
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className={styles.modalBody}>
+              {modalTab === 'create' ? (
+                <>
+                  <p className={styles.modalHint}>
+                    Create a workspace for your team. You&apos;ll become the Owner and can invite members later.
+                  </p>
+                  <input
+                    className={styles.modalInput}
+                    type="text"
+                    value={newWorkspaceName}
+                    onChange={e => { setNewWorkspaceName(e.target.value); setModalError(''); }}
+                    placeholder="Workspace name, e.g. Acme Corp"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newWorkspaceName.trim() && !isCreatingWorkspace) {
+                        e.preventDefault();
+                        document.getElementById('create-workspace-btn')?.click();
+                      }
+                    }}
+                  />
+                  <button
+                    id="create-workspace-btn"
+                    className={styles.modalPrimaryBtn}
+                    disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
+                    onClick={async () => {
+                      setIsCreatingWorkspace(true);
+                      setModalError('');
+                      try {
+                        const { api } = await import('@/lib/api');
+                        await api.post('/workspaces', { name: newWorkspaceName });
+                        window.location.reload();
+                      } catch (err: any) {
+                        setModalError(err.response?.data?.message || 'Failed to create workspace');
+                        setIsCreatingWorkspace(false);
+                      }
+                    }}
+                  >
+                    {isCreatingWorkspace ? 'Creating...' : 'Create Workspace'}
+                  </button>
+                  {modalError && <div className={styles.modalError}>⚠ {modalError}</div>}
+                </>
+              ) : (
+                <>
+                  <p className={styles.modalHint}>
+                    Have a Room Code and Password from your team admin? Enter them below to join.
+                  </p>
+                  <input
+                    className={styles.modalInput}
+                    type="text"
+                    value={joinCode}
+                    onChange={e => { setJoinCode(e.target.value); setModalError(''); setModalSuccess(''); }}
+                    placeholder="Room Code"
+                    autoFocus
+                  />
+                  <input
+                    className={styles.modalInput}
+                    type="password"
+                    value={joinPassword}
+                    onChange={e => { setJoinPassword(e.target.value); setModalError(''); setModalSuccess(''); }}
+                    placeholder="Password"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && joinCode.trim() && joinPassword.trim() && !isJoining) {
+                        e.preventDefault();
+                        document.getElementById('join-workspace-btn')?.click();
+                      }
+                    }}
+                  />
+                  <button
+                    id="join-workspace-btn"
+                    className={styles.modalSecondaryBtn}
+                    disabled={isJoining || !joinCode.trim() || !joinPassword.trim()}
+                    onClick={async () => {
+                      setIsJoining(true);
+                      setModalError('');
+                      setModalSuccess('');
+                      try {
+                        const { api } = await import('@/lib/api');
+                        await api.post('/workspaces/join-with-code', {
+                          joinCode: joinCode.trim(),
+                          joinPassword: joinPassword.trim()
+                        });
+                        setModalSuccess('Joined successfully! Reloading...');
+                        setTimeout(() => window.location.reload(), 800);
+                      } catch (err: any) {
+                        setModalError(err.response?.data?.message || 'Failed to join workspace. Check your code and password.');
+                        setIsJoining(false);
+                      }
+                    }}
+                  >
+                    {isJoining ? 'Joining...' : 'Join Workspace'}
+                  </button>
+                  {modalError && <div className={styles.modalError}>⚠ {modalError}</div>}
+                  {modalSuccess && <div className={styles.modalSuccess}>✓ {modalSuccess}</div>}
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@
   padding: 1.5rem 1rem;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .sidebar.collapsed {
@@ -110,24 +110,27 @@
   margin-bottom: 2rem;
   cursor: pointer;
   transition: background 0.2s;
+  position: relative;
 }
 
 .workspaceDropdown {
   position: absolute;
-  top: 0;
-  left: 100%;
-  width: 240px;
-  margin-left: 0.5rem;
-  background: #18181b; /* Solid dark color to prevent transparency */
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  width: auto;
+  background: #18181b;
   border: 1px solid var(--border-glass);
   border-radius: 8px;
   padding: 0.5rem;
-  z-index: 50;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   animation: fadeIn 0.15s ease;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .workspaceSelector:hover {
@@ -383,6 +386,203 @@
   color: var(--text-secondary);
 }
 
+/* Create/Join Workspace Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalContent {
+  background: #18181b;
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.modalTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main, #fff);
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main, #fff);
+}
+
+.modalTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.modalTab {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modalTab:hover {
+  color: var(--text-main, #fff);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modalTabActive {
+  color: var(--accent-primary, #8b5cf6);
+  border-bottom-color: var(--accent-primary, #8b5cf6);
+}
+
+.modalBody {
+  padding: 1.5rem;
+}
+
+.modalInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main, #fff);
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.2s;
+  margin-bottom: 0.75rem;
+}
+
+.modalInput:focus {
+  border-color: var(--accent-primary, #8b5cf6);
+  background: rgba(139, 92, 246, 0.04);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.modalInput::placeholder {
+  color: var(--text-secondary);
+}
+
+.modalPrimaryBtn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--gradient-glow, linear-gradient(135deg, #8b5cf6, #6366f1));
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.25rem;
+}
+
+.modalPrimaryBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+}
+
+.modalPrimaryBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modalSecondaryBtn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent-primary, #8b5cf6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.25rem;
+}
+
+.modalSecondaryBtn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
+}
+
+.modalSecondaryBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modalHint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.modalError {
+  font-size: 0.8125rem;
+  color: #ef4444;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.modalSuccess {
+  font-size: 0.8125rem;
+  color: #22c55e;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -390,19 +590,12 @@
     bottom: 0;
     left: 0;
     transform: translateX(-100%);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .sidebar.open {
     transform: translateX(0);
-  }
-
-  .workspaceDropdown {
-    top: 100%;
-    left: 0;
-    right: 0;
-    width: auto;
-    margin-left: 0;
-    margin-top: 0.5rem;
   }
 
   .hamburger {
@@ -423,6 +616,10 @@
 
   .toggleCollapseBtn {
     display: none;
+  }
+
+  .modalContent {
+    width: calc(100vw - 2rem);
   }
 }
 
