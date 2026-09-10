@@ -8,10 +8,12 @@ export class RedisService
 {
   constructor() {
     const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL;
-    
+
     if (redisUrl) {
       super(redisUrl, {
-        tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+        tls: redisUrl.startsWith('rediss://')
+          ? { rejectUnauthorized: false }
+          : undefined,
       });
     } else {
       super({

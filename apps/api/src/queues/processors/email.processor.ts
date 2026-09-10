@@ -109,7 +109,10 @@ export class EmailProcessor extends WorkerHost {
 
       this.logger.log(`Successfully processed email job ${job.id}`);
     } catch (error) {
-      this.logger.error(`Failed to process email job ${job.id}`, error);
+      this.logger.error(`Failed to process email job ${job.id}`);
+      this.logger.error(`Error details: ${error.message}`);
+      this.logger.error(`Error stack: ${error.stack}`);
+      this.logger.error(`Full error object: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
       throw error;
     }
   }

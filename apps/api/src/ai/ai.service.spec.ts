@@ -2,16 +2,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AiService } from './ai.service';
 import { CircuitBreakerService } from './circuit-breaker.service';
 
-// Mock the Anthropic constructor properly
-const mockAnthropicClient = {
-  messages: {
-    create: jest.fn(),
+// Mock the OpenAI constructor properly
+const mockOpenAIClient = {
+  chat: {
+    completions: {
+      create: jest.fn(),
+    },
   },
 };
 
-jest.mock('@anthropic-ai/sdk', () => {
-  return function () {
-    return mockAnthropicClient;
+jest.mock('openai', () => {
+  return {
+    __esModule: true,
+    default: function () {
+      return mockOpenAIClient;
+    },
   };
 });
 
@@ -21,7 +26,7 @@ describe('AiService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    process.env.ANTHROPIC_API_KEY = 'test-key';
+    process.env.EXPLABS_API_KEY = 'test-key';
 
     // We mock CircuitBreakerService to easily throw or execute
     const module: TestingModule = await Test.createTestingModule({
@@ -57,39 +62,56 @@ describe('AiService', () => {
       await expect(
         service.generateDailySummary('Test standups'),
       ).rejects.toThrow('Circuit breaker open');
-      expect(mockAnthropicClient.messages.create).not.toHaveBeenCalled();
+      expect(
+        mockOpenAIClient.chat.completions.create,
+      ).not.toHaveBeenCalled();
     });
   });
 
   describe('Detect Blockers tool parsing', () => {
-    it('handles malformed tool response fallback gracefully', async () => {
-      // Mock a response that DOES NOT use tools, or returns garbage JSON
-      mockAnthropicClient.messages.create.mockResolvedValue({
-        content: [
+    it('handles response without tool_calls gracefully', async () => {
+      // Mock a response that DOES NOT use tools
+      mockOpenAIClient.chat.completions.create.mockResolvedValue({
+        choices: [
           {
-            type: 'text',
-            text: 'I decided not to use tools. Here is some unstructured text.',
+            message: {
+              role: 'assistant',
+              content:
+                'I decided not to use tools. Here is some unstructured text.',
+              tool_calls: undefined,
+            },
+            finish_reason: 'stop',
           },
         ],
-        stop_reason: 'end_turn',
       });
 
       const result = await service.extractBlockers('Test standups');
 
-      // The service should fallback and return the raw text as a 'LOW' severity blocker
       expect(result).toBeNull();
     });
 
-    it('correctly parses tool use block', async () => {
-      mockAnthropicClient.messages.create.mockResolvedValue({
-        content: [
+    it('correctly parses tool_calls response', async () => {
+      mockOpenAIClient.chat.completions.create.mockResolvedValue({
+        choices: [
           {
-            type: 'tool_use',
-            name: 'classify_blocker',
-            input: {
-              severity: 'HIGH',
-              reason: 'Waiting for API design',
+            message: {
+              role: 'assistant',
+              content: null,
+              tool_calls: [
+                {
+                  id: 'call_123',
+                  type: 'function',
+                  function: {
+                    name: 'classify_blocker',
+                    arguments: JSON.stringify({
+                      severity: 'HIGH',
+                      reason: 'Waiting for API design',
+                    }),
+                  },
+                },
+              ],
             },
+            finish_reason: 'tool_calls',
           },
         ],
       });
@@ -98,6 +120,7 @@ describe('AiService', () => {
 
       expect(result).not.toBeNull();
       expect(result?.severity).toBe('HIGH');
+      expect(result?.reason).toBe('Waiting for API design');
     });
   });
 });

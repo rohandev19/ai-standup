@@ -19,7 +19,9 @@ export class RedisIoAdapter extends IoAdapter {
     if (redisUrl) {
       // Heroku provides a full URL for Redis
       this.pubClient = new Redis(redisUrl, {
-        tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+        tls: redisUrl.startsWith('rediss://')
+          ? { rejectUnauthorized: false }
+          : undefined,
       });
     } else {
       // Fallback for local development

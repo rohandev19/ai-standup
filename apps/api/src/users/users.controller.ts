@@ -23,8 +23,7 @@ export class UsersController {
   async getProfile(@Req() req: RequestWithUser) {
     const user = await this.usersService.findById(req.user.id);
     if (!user) return null;
-    const result = { ...user } as any;
-    delete result.passwordHash;
+    const { passwordHash, ...result } = user;
     return result;
   }
 
@@ -35,8 +34,7 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     const user = await this.usersService.update(req.user.id, dto);
-    const result = { ...user } as any;
-    delete result.passwordHash;
+    const { passwordHash, ...result } = user;
     return result;
   }
 
