@@ -92,7 +92,7 @@ export class AuthService {
         
         this.logger.log(`[DEV] Email sent directly to: ${user.email}`);
       }
-    });
+    }
 
     return {
       message:
