@@ -63,12 +63,16 @@ export class AuthService {
     );
 
     // Send verification email via BullMQ
-    await this.emailQueue.add('send-verification', {
-      email: user.email,
-      token: verificationToken,
-    }).catch(async (queueError) => {
-      // Fallback: Send email directly if queue fails (development mode)
-      this.logger.warn('Email queue failed, sending directly:', queueError.message);
+    try {
+      const job = await this.emailQueue.add('send-verification', {
+        email: user.email,
+        token: verificationToken,
+      });
+      this.logger.log(`Verification email job added to queue: ${job.id} for ${user.email}`);
+    } catch (queueError) {
+      // Fallback: Send email directly if queue fails
+      this.logger.error('Email queue failed:', queueError.message);
+      this.logger.error('Queue error stack:', queueError.stack);
       
       if (process.env.NODE_ENV !== 'production') {
         // Direct send for development
