@@ -12,16 +12,19 @@ let redisConnection: any = {
   password: process.env.REDIS_PASSWORD || undefined,
   tls:
     process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
-      ? { rejectUnauthorized: false }
+      ? { 
+          rejectUnauthorized: false,
+          requestCert: true,
+        }
       : undefined,
   enableOfflineQueue: false,
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: null, // Required by BullMQ
   retryStrategy: (times: number) => {
-    if (times > 3) {
-      console.error('Redis connection failed after 3 retries');
+    if (times > 10) {
+      console.error('Redis connection failed after 10 retries');
       return null;
     }
-    return Math.min(times * 100, 2000);
+    return Math.min(times * 100, 3000);
   },
 };
 
@@ -32,11 +35,14 @@ if (redisUrl) {
     port: parseInt(url.port, 10),
     password: url.password ? decodeURIComponent(url.password) : undefined,
     username: url.username ? decodeURIComponent(url.username) : undefined,
-    tls: redisUrl.startsWith('rediss://')
-      ? { rejectUnauthorized: false }
+    tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash')
+      ? { 
+          rejectUnauthorized: false,
+          requestCert: true,
+        }
       : undefined,
     enableOfflineQueue: false,
-    maxRetriesPerRequest: 3,
+    maxRetriesPerRequest: null, // Required by BullMQ
   };
 }
 
