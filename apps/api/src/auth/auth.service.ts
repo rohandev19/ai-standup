@@ -3,7 +3,10 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -14,10 +17,13 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  
   constructor(
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly jwtService: JwtService,
+    @InjectQueue('email') private readonly emailQueue: Queue,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -56,8 +62,33 @@ export class AuthService {
       86400,
     );
 
-    // TODO: Send email via BullMQ (email queue)
-    // await this.emailQueue.add('sendVerification', { to: user.email, token: verificationToken });
+    // Send verification email via BullMQ
+    await this.emailQueue.add('send-verification', {
+      email: user.email,
+      token: verificationToken,
+    }).catch(async (queueError) => {
+      // Fallback: Send email directly if queue fails (development mode)
+      this.logger.warn('Email queue failed, sending directly:', queueError.message);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        // Direct send for development
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'localhost',
+          port: parseInt(process.env.SMTP_PORT || '1025', 10),
+          secure: false,
+        });
+        
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || 'noreply@aistandup.local',
+          to: user.email,
+          subject: 'Verify Your Email Address',
+          text: `Welcome! Please verify your email address by clicking this link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}\n\nThis link will expire in 24 hours.`,
+        });
+        
+        this.logger.log(`[DEV] Email sent directly to: ${user.email}`);
+      }
+    });
 
     return {
       message:
@@ -199,7 +230,32 @@ export class AuthService {
         3600,
       );
 
-      // TODO: Queue email with password reset link
+      // Send password reset email via BullMQ
+      await this.emailQueue.add('send-password-reset', {
+        email: user.email,
+        token: resetToken,
+      }).catch(async (queueError) => {
+        // Fallback: Send email directly if queue fails (development mode)
+        this.logger.warn('Email queue failed for password reset, sending directly:', queueError.message);
+        
+        if (process.env.NODE_ENV !== 'production') {
+          const nodemailer = await import('nodemailer');
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'localhost',
+            port: parseInt(process.env.SMTP_PORT || '1025', 10),
+            secure: false,
+          });
+          
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@aistandup.local',
+            to: user.email,
+            subject: 'Reset Your Password',
+            text: `You requested to reset your password. Click this link to reset it: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`,
+          });
+          
+          this.logger.log(`[DEV] Password reset email sent directly to: ${user.email}`);
+        }
+      });
     }
 
     // Generic response

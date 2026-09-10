@@ -20,21 +20,37 @@ export class EmailProcessor extends WorkerHost {
 
   constructor() {
     super();
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '465', 10),
-        secure: true, // true for 465, false for other ports
-        auth: {
+    const smtpHost = process.env.SMTP_HOST;
+    if (smtpHost) {
+      const port = parseInt(process.env.SMTP_PORT || '465', 10);
+      const transportOptions: nodemailer.TransportOptions & {
+        host: string;
+        port: number;
+        secure: boolean;
+        auth?: { user: string; pass: string };
+      } = {
+        host: smtpHost,
+        port,
+        secure: port === 465, // true for 465 (Gmail etc), false for 1025 (Mailpit) and 587
+      };
+
+      // Only add auth if credentials are provided (Mailpit doesn't need them)
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        transportOptions.auth = {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
-        },
-      });
-      this.logger.log('Nodemailer transporter configured with real SMTP.');
+        };
+      }
+
+      this.transporter = nodemailer.createTransport(transportOptions);
+      this.logger.log(
+        `Nodemailer transporter configured: ${smtpHost}:${port} (secure=${port === 465}, auth=${!!transportOptions.auth})`,
+      );
     } else {
-      this.logger.warn('No SMTP configuration found. Emails will be mocked.');
+      this.logger.warn('No SMTP_HOST configured. Emails will be mocked.');
     }
   }
+
 
   async process(job: Job<EmailJobData, any, string>): Promise<void> {
     this.logger.log(`Processing email job ${job.id} of type ${job.name}`);
@@ -57,6 +73,14 @@ export class EmailProcessor extends WorkerHost {
           subject = `You are invited to join ${job.data.workspaceName}`;
           text = `${job.data.inviterName} has invited you to join ${job.data.workspaceName}. Use this code to join: ${job.data.token}`;
           break;
+        case 'send-verification':
+          subject = 'Verify Your Email Address';
+          text = `Welcome! Please verify your email address by clicking this link: ${process.env.FRONTEND_URL}/verify-email/${job.data.token}\n\nThis link will expire in 24 hours.`;
+          break;
+        case 'send-password-reset':
+          subject = 'Reset Your Password';
+          text = `You requested to reset your password. Click this link to reset it: ${process.env.FRONTEND_URL}/reset-password?token=${job.data.token}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`;
+          break;
         default:
           this.logger.warn(`Unknown email job type: ${job.name}`);
           return;
@@ -65,7 +89,7 @@ export class EmailProcessor extends WorkerHost {
       if (this.transporter) {
         // Send real email
         const mailOptions = {
-          from: process.env.SMTP_USER,
+          from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@aistandup.com',
           to: job.data.email,
           subject,
           text,

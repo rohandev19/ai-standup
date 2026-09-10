@@ -10,15 +10,7 @@
   backdrop-filter: blur(20px);
 }
 
-.authCard::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--gradient-glow);
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
-}
+/* Removed gradient line on top of card */
 
 .header {
   text-align: center;

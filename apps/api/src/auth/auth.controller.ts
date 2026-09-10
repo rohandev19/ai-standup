@@ -88,12 +88,9 @@ export class AuthController {
     return this.authService.requestPasswordReset(dto.email);
   }
 
-  @Post('reset-password/:token')
+  @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(
-    @Param('token') token: string,
-    @Body() dto: ResetPasswordDto,
-  ) {
-    return this.authService.resetPassword(token, dto.newPassword);
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 }

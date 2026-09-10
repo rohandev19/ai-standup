@@ -53,3 +53,17 @@ coverage/
 # Misc
 # ==================
 *.tsbuildinfo
+
+# ==================
+# Testing Scripts & Tools
+# ==================
+*.ps1
+mailpit.exe
+test-*.js
+test-*.json
+scripts/mailpit/
+
+# ==================
+# Documentation Drafts
+# ==================
+COMMIT-SUMMARY.md

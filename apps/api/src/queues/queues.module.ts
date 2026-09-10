@@ -12,8 +12,17 @@ let redisConnection: any = {
   password: process.env.REDIS_PASSWORD || undefined,
   tls:
     process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
-      ? {}
+      ? { rejectUnauthorized: false }
       : undefined,
+  enableOfflineQueue: false,
+  maxRetriesPerRequest: 3,
+  retryStrategy: (times: number) => {
+    if (times > 3) {
+      console.error('Redis connection failed after 3 retries');
+      return null;
+    }
+    return Math.min(times * 100, 2000);
+  },
 };
 
 if (redisUrl) {
@@ -23,9 +32,20 @@ if (redisUrl) {
     port: parseInt(url.port, 10),
     password: url.password ? decodeURIComponent(url.password) : undefined,
     username: url.username ? decodeURIComponent(url.username) : undefined,
-    tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+    tls: redisUrl.startsWith('rediss://')
+      ? { rejectUnauthorized: false }
+      : undefined,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 3,
   };
 }
+
+console.log('[QueuesModule] Redis connection config:', {
+  host: redisConnection.host,
+  port: redisConnection.port,
+  hasTLS: !!redisConnection.tls,
+  hasPassword: !!redisConnection.password,
+});
 
 @Module({
   imports: [
