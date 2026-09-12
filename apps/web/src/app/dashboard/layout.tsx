@@ -106,8 +106,13 @@ export default function DashboardLayout({
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
   }
 
+  // Show loading while fetching workspaces
+  if (isWorkspaceLoading) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading workspace...</div>;
+  }
+
   // Handle case where user has zero workspaces
-  if (!isWorkspaceLoading && workspaces.length === 0) {
+  if (workspaces.length === 0) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -263,7 +268,33 @@ export default function DashboardLayout({
             </div>
 
             {/* Main options */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'relative' }}>
+              {/* Divider with OR text */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '60px',
+                height: '60px',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(99, 102, 241, 0.95))',
+                borderRadius: '50%',
+                boxShadow: '0 8px 32px rgba(139, 92, 246, 0.5)',
+                border: '3px solid rgba(24, 24, 27, 1)',
+              }}>
+                <span style={{ 
+                  fontSize: '1rem', 
+                  fontWeight: 800, 
+                  color: '#fff',
+                  letterSpacing: '0.05em'
+                }}>OR</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
               {/* Create New */}
               <div style={{ 
                 padding: '2rem', 
