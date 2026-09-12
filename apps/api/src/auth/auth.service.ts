@@ -62,27 +62,23 @@ export class AuthService {
       86400,
     );
 
-    // Send verification email via BullMQ
-    try {
-      const job = await this.emailQueue.add('send-verification', {
-        email: user.email,
-        token: verificationToken,
-      });
-      this.logger.log(
-        `Verification email job added to queue: ${job.id} for ${user.email}`,
-      );
-    } catch (queueError) {
-      // Fallback: Send email directly if queue fails
-      this.logger.error('Email queue failed:', queueError.message);
-      this.logger.error('Queue error stack:', queueError.stack);
-
-      if (process.env.NODE_ENV !== 'production') {
-        // Direct send for development
+    // Send verification email
+    // Use direct send in production (single dyno), queue in development/multi-dyno
+    const useDirectEmail = process.env.USE_DIRECT_EMAIL === 'true' || process.env.NODE_ENV === 'production';
+    
+    if (useDirectEmail) {
+      // Send email directly (reliable for single-dyno production)
+      try {
         const nodemailer = await import('nodemailer');
+        const port = parseInt(process.env.SMTP_PORT || '587', 10);
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST || 'localhost',
-          port: parseInt(process.env.SMTP_PORT || '1025', 10),
-          secure: false,
+          port,
+          secure: port === 465,
+          auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          } : undefined,
         });
 
         await transporter.sendMail({
@@ -92,7 +88,24 @@ export class AuthService {
           text: `Welcome! Please verify your email address by clicking this link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}\n\nThis link will expire in 24 hours.`,
         });
 
-        this.logger.log(`[DEV] Email sent directly to: ${user.email}`);
+        this.logger.log(`Email sent directly to: ${user.email}`);
+      } catch (emailError) {
+        this.logger.error('Failed to send verification email:', emailError.message);
+        // Don't throw - user is created, they can request resend
+      }
+    } else {
+      // Use queue for multi-dyno setups
+      try {
+        const job = await this.emailQueue.add('send-verification', {
+          email: user.email,
+          token: verificationToken,
+        });
+        this.logger.log(
+          `Verification email job added to queue: ${job.id} for ${user.email}`,
+        );
+      } catch (queueError) {
+        this.logger.error('Email queue failed:', queueError.message);
+        // Queue failed, don't throw - user can request resend
       }
     }
 
@@ -236,7 +249,8 @@ export class AuthService {
     if (!user) {
       // Generic response to prevent email enumeration
       return {
-        message: 'If the email is valid, check your inbox for verification link.',
+        message:
+          'If the email is valid, check your inbox for verification link.',
       };
     }
 
@@ -263,11 +277,13 @@ export class AuthService {
         email: user.email,
         token: verificationToken,
       });
-      this.logger.log(`Resend verification email job added to queue: ${job.id} for ${user.email}`);
+      this.logger.log(
+        `Resend verification email job added to queue: ${job.id} for ${user.email}`,
+      );
     } catch (queueError) {
       // Fallback: Send email directly if queue fails
       this.logger.error('Email queue failed:', queueError.message);
-      
+
       if (process.env.NODE_ENV !== 'production') {
         const nodemailer = await import('nodemailer');
         const transporter = nodemailer.createTransport({
@@ -275,15 +291,17 @@ export class AuthService {
           port: parseInt(process.env.SMTP_PORT || '1025', 10),
           secure: false,
         });
-        
+
         await transporter.sendMail({
           from: process.env.SMTP_FROM || 'noreply@aistandup.local',
           to: user.email,
           subject: 'Verify Your Email Address',
           text: `Welcome! Please verify your email address by clicking this link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}\n\nThis link will expire in 24 hours.`,
         });
-        
-        this.logger.log(`[DEV] Verification email sent directly to: ${user.email}`);
+
+        this.logger.log(
+          `[DEV] Verification email sent directly to: ${user.email}`,
+        );
       }
     }
 
@@ -306,39 +324,46 @@ export class AuthService {
         3600,
       );
 
-      // Send password reset email via BullMQ
-      await this.emailQueue
-        .add('send-password-reset', {
-          email: user.email,
-          token: resetToken,
-        })
-        .catch(async (queueError) => {
-          // Fallback: Send email directly if queue fails (development mode)
-          this.logger.warn(
-            'Email queue failed for password reset, sending directly:',
-            queueError.message,
-          );
+      // Send password reset email
+      const useDirectEmail = process.env.USE_DIRECT_EMAIL === 'true' || process.env.NODE_ENV === 'production';
+      
+      if (useDirectEmail) {
+        try {
+          const nodemailer = await import('nodemailer');
+          const port = parseInt(process.env.SMTP_PORT || '587', 10);
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'localhost',
+            port,
+            secure: port === 465,
+            auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            } : undefined,
+          });
 
-          if (process.env.NODE_ENV !== 'production') {
-            const nodemailer = await import('nodemailer');
-            const transporter = nodemailer.createTransport({
-              host: process.env.SMTP_HOST || 'localhost',
-              port: parseInt(process.env.SMTP_PORT || '1025', 10),
-              secure: false,
-            });
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@aistandup.local',
+            to: user.email,
+            subject: 'Reset Your Password',
+            text: `You requested to reset your password. Click this link to reset it: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`,
+          });
 
-            await transporter.sendMail({
-              from: process.env.SMTP_FROM || 'noreply@aistandup.local',
-              to: user.email,
-              subject: 'Reset Your Password',
-              text: `You requested to reset your password. Click this link to reset it: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`,
-            });
-
-            this.logger.log(
-              `[DEV] Password reset email sent directly to: ${user.email}`,
-            );
-          }
-        });
+          this.logger.log(`Password reset email sent directly to: ${user.email}`);
+        } catch (emailError) {
+          this.logger.error('Failed to send password reset email:', emailError.message);
+        }
+      } else {
+        // Use queue for multi-dyno setups
+        try {
+          await this.emailQueue.add('send-password-reset', {
+            email: user.email,
+            token: resetToken,
+          });
+          this.logger.log(`Password reset email job added to queue for ${user.email}`);
+        } catch (queueError) {
+          this.logger.error('Password reset queue failed:', queueError.message);
+        }
+      }
     }
 
     // Generic response
