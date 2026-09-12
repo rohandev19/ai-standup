@@ -12,7 +12,7 @@ let redisConnection: any = {
   password: process.env.REDIS_PASSWORD || undefined,
   tls:
     process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
-      ? { 
+      ? {
           rejectUnauthorized: false,
           requestCert: true,
         }
@@ -35,12 +35,13 @@ if (redisUrl) {
     port: parseInt(url.port, 10),
     password: url.password ? decodeURIComponent(url.password) : undefined,
     username: url.username ? decodeURIComponent(url.username) : undefined,
-    tls: redisUrl.startsWith('rediss://') || redisUrl.includes('upstash')
-      ? { 
-          rejectUnauthorized: false,
-          requestCert: true,
-        }
-      : undefined,
+    tls:
+      redisUrl.startsWith('rediss://') || redisUrl.includes('upstash')
+        ? {
+            rejectUnauthorized: false,
+            requestCert: true,
+          }
+        : undefined,
     enableOfflineQueue: false,
     maxRetriesPerRequest: null, // Required by BullMQ
   };

@@ -726,7 +726,9 @@ export class WorkspacesService {
 
     // We need to fetch the users who performed the actions to get their names
     const userIds = Array.from(
-      new Set(data.map((log) => log.userId).filter((id): id is string => Boolean(id))),
+      new Set(
+        data.map((log) => log.userId).filter((id): id is string => Boolean(id)),
+      ),
     );
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },

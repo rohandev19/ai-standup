@@ -64,8 +64,7 @@ Severity guidelines:
                 type: 'function',
                 function: {
                   name: 'classify_blocker',
-                  description:
-                    'Kategorikan blocker dan berikan alasan singkat',
+                  description: 'Kategorikan blocker dan berikan alasan singkat',
                   parameters: {
                     type: 'object',
                     properties: {
@@ -98,10 +97,7 @@ Severity guidelines:
             toolCall.function?.name === 'classify_blocker'
           ) {
             const input = JSON.parse(toolCall.function.arguments);
-            if (
-              input &&
-              ['LOW', 'MEDIUM', 'HIGH'].includes(input.severity)
-            ) {
+            if (input && ['LOW', 'MEDIUM', 'HIGH'].includes(input.severity)) {
               return {
                 severity: input.severity as BlockerSeverity,
                 reason: input.reason || blockerText.slice(0, 100),

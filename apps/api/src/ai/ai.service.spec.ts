@@ -62,9 +62,7 @@ describe('AiService', () => {
       await expect(
         service.generateDailySummary('Test standups'),
       ).rejects.toThrow('Circuit breaker open');
-      expect(
-        mockOpenAIClient.chat.completions.create,
-      ).not.toHaveBeenCalled();
+      expect(mockOpenAIClient.chat.completions.create).not.toHaveBeenCalled();
     });
   });
 

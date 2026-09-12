@@ -52,9 +52,10 @@ export class EmailProcessor extends WorkerHost {
     }
   }
 
-
   async process(job: Job<EmailJobData, any, string>): Promise<void> {
-    this.logger.log(`=== Processing email job ${job.id} of type ${job.name} ===`);
+    this.logger.log(
+      `=== Processing email job ${job.id} of type ${job.name} ===`,
+    );
     this.logger.log(`Job data: ${JSON.stringify(job.data)}`);
 
     try {
@@ -91,7 +92,10 @@ export class EmailProcessor extends WorkerHost {
       if (this.transporter) {
         // Send real email
         const mailOptions = {
-          from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@aistandup.com',
+          from:
+            process.env.SMTP_FROM ||
+            process.env.SMTP_USER ||
+            'noreply@aistandup.com',
           to: job.data.email,
           subject,
           text,
@@ -114,7 +118,9 @@ export class EmailProcessor extends WorkerHost {
       this.logger.error(`Failed to process email job ${job.id}`);
       this.logger.error(`Error details: ${error.message}`);
       this.logger.error(`Error stack: ${error.stack}`);
-      this.logger.error(`Full error object: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+      this.logger.error(
+        `Full error object: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
+      );
       throw error;
     }
   }

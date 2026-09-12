@@ -32,8 +32,7 @@ async function main() {
         },
         {
           role: 'user',
-          content:
-            'Summarize what a daily standup meeting is in 2 sentences.',
+          content: 'Summarize what a daily standup meeting is in 2 sentences.',
         },
       ],
     });
