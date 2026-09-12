@@ -102,25 +102,29 @@
 
 .formGroup label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: #ffffff;
+  letter-spacing: 0.01em;
 }
 
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  transition: all 0.2s;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--accent-primary);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 .textarea {
