@@ -107,112 +107,481 @@ export default function DashboardLayout({
   // Handle case where user has zero workspaces
   if (!isWorkspaceLoading && workspaces.length === 0) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', padding: '2rem' }}>
-        <div style={{ background: 'var(--bg-card)', padding: '3rem', borderRadius: '16px', border: '1px solid var(--border-glass)', width: '100%', maxWidth: '700px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: '50%', background: 'var(--gradient-glow)', marginBottom: '1.5rem' }}>
-              <span style={{ fontSize: '2rem' }}>👋</span>
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+        padding: '2rem',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Animated background elements */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%)',
+          animation: 'pulse 4s ease-in-out infinite',
+        }} />
+        
+        <div style={{ 
+          background: 'rgba(24, 24, 27, 0.95)', 
+          backdropFilter: 'blur(20px)',
+          padding: '0',
+          borderRadius: '24px', 
+          border: '1px solid rgba(139, 92, 246, 0.2)', 
+          width: '100%', 
+          maxWidth: '900px', 
+          boxShadow: '0 20px 80px rgba(0,0,0,0.4), 0 0 1px rgba(139, 92, 246, 0.5)',
+          position: 'relative',
+          zIndex: 1,
+          overflow: 'hidden'
+        }}>
+          {/* Header with gradient */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%)',
+            padding: '3rem 3rem 2rem 3rem',
+            textAlign: 'center',
+            borderBottom: '1px solid rgba(139, 92, 246, 0.2)',
+            position: 'relative'
+          }}>
+            {/* Decorative elements */}
+            <div style={{
+              position: 'absolute',
+              top: '-50px',
+              right: '-50px',
+              width: '200px',
+              height: '200px',
+              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+            }} />
+            
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              width: '80px', 
+              height: '80px', 
+              borderRadius: '20px', 
+              background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+              marginBottom: '1.5rem',
+              boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
+              animation: 'float 3s ease-in-out infinite',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <span style={{ fontSize: '2.5rem' }}>🚀</span>
             </div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.75rem' }}>Welcome to AI Standup!</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6, margin: '0 auto', maxWidth: '450px' }}>
-              Your account is ready, but you need a <strong>Workspace</strong> (your team&apos;s virtual office) to get started.
+            
+            <h1 style={{ 
+              fontSize: '2.25rem', 
+              fontWeight: 800, 
+              background: 'linear-gradient(135deg, #fff 0%, #e0e0ff 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '1rem',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              Welcome to AI Standup!
+            </h1>
+            
+            <p style={{ 
+              color: 'rgba(255, 255, 255, 0.7)', 
+              fontSize: '1.125rem', 
+              lineHeight: 1.6, 
+              margin: '0 auto', 
+              maxWidth: '500px',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              You're all set! Now let's create your team's workspace to get started with daily standups.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem' }}>
-            {/* Option 1: Create New */}
-            <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-glass)', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-main)' }}>Create a New Workspace</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1 }}>
-                Start fresh for your company or project. You will become the Owner and can invite your team later.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <input
-                  type="text"
-                  value={newWorkspaceName}
-                  onChange={e => setNewWorkspaceName(e.target.value)}
-                  placeholder="e.g. Acme Corp"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem' }}
-                />
-                <button
-                  disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
-                  onClick={async () => {
-                    setIsCreatingWorkspace(true);
-                    try {
-                      const { api } = await import('@/lib/api');
-                      await api.post('/workspaces', { name: newWorkspaceName });
-                      window.location.reload();
-                    } catch (err) {
-                      alert('Failed to create workspace');
-                      setIsCreatingWorkspace(false);
-                    }
-                  }}
-                  style={{ width: '100%', padding: '0.75rem', background: 'var(--primary-color, #6366f1)', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 0.5 : 1, transition: 'all 0.2s' }}
-                >
-                  {isCreatingWorkspace ? 'Creating...' : 'Create Workspace'}
-                </button>
+          {/* Content area */}
+          <div style={{ padding: '2.5rem 3rem 3rem 3rem' }}>
+            {/* Info cards */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: '1rem', 
+              marginBottom: '2.5rem'
+            }}>
+              <div style={{
+                padding: '1.25rem',
+                background: 'rgba(139, 92, 246, 0.08)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📝</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', marginBottom: '0.25rem' }}>
+                  Daily Standups
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  Track progress daily
+                </div>
+              </div>
+              
+              <div style={{
+                padding: '1.25rem',
+                background: 'rgba(99, 102, 241, 0.08)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤖</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', marginBottom: '0.25rem' }}>
+                  AI Summaries
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  Auto insights
+                </div>
+              </div>
+              
+              <div style={{
+                padding: '1.25rem',
+                background: 'rgba(139, 92, 246, 0.08)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👥</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', marginBottom: '0.25rem' }}>
+                  Team Collaboration
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  Work together
+                </div>
               </div>
             </div>
 
-            {/* Option 2: Join Existing */}
-            <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-glass)', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-main)' }}>Join an Existing Team</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1 }}>
-                Have a Room Code and Password from your Admin? Enter them below to join immediately.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto' }}>
-                <input
-                  type="text"
-                  value={joinCode}
-                  onChange={e => setJoinCode(e.target.value)}
-                  placeholder="Room Code"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem' }}
-                />
-                <input
-                  type="password"
-                  value={joinPassword}
-                  onChange={e => setJoinPassword(e.target.value)}
-                  placeholder="Password"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-glass)', background: 'var(--bg-input, rgba(255,255,255,0.05))', color: 'var(--text-main)', fontSize: '0.875rem' }}
-                />
-                <button
-                  disabled={isJoining || !joinCode.trim() || !joinPassword.trim()}
-                  onClick={async () => {
-                    setIsJoining(true);
-                    try {
-                      const { api } = await import('@/lib/api');
-                      await api.post('/workspaces/join-with-code', { 
-                        joinCode: joinCode.trim(), 
-                        joinPassword: joinPassword.trim() 
-                      });
-                      window.location.reload();
-                    } catch (err: any) {
-                      alert(err.response?.data?.message || 'Failed to join workspace');
-                      setIsJoining(false);
-                    }
-                  }}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-accent)', borderRadius: '8px', border: '1px solid rgba(99, 102, 241, 0.3)', cursor: 'pointer', fontWeight: 600, opacity: (!joinCode.trim() || !joinPassword.trim() || isJoining) ? 0.5 : 1, transition: 'all 0.2s' }}
-                >
-                  {isJoining ? 'Joining...' : 'Join Workspace'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '2rem', borderTop: '1px solid var(--border-glass)', paddingTop: '1.5rem' }}>
-            <button
-              onClick={() => {
-                logout();
-                router.push('/login');
+            {/* Main options */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+              {/* Create New */}
+              <div style={{ 
+                padding: '2rem', 
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)',
+                border: '2px solid rgba(139, 92, 246, 0.3)', 
+                borderRadius: '16px', 
+                display: 'flex', 
+                flexDirection: 'column',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease'
               }}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}
-            >
-              Log out and try another account
-            </button>
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(139, 92, 246, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '-50%',
+                  right: '-50%',
+                  width: '200px',
+                  height: '200px',
+                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+                  borderRadius: '50%',
+                }} />
+                
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                  boxShadow: '0 4px 16px rgba(139, 92, 246, 0.4)'
+                }}>
+                  <Plus size={24} color="white" />
+                </div>
+                
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>
+                  Create Workspace
+                </h3>
+                <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1, lineHeight: 1.5 }}>
+                  Start fresh for your team. You'll be the Owner and can invite members after setup.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <input
+                    type="text"
+                    value={newWorkspaceName}
+                    onChange={e => setNewWorkspaceName(e.target.value)}
+                    placeholder="e.g. Engineering Team"
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.875rem 1rem', 
+                      borderRadius: '10px', 
+                      border: '1px solid rgba(139, 92, 246, 0.3)', 
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff', 
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'rgba(139, 92, 246, 0.6)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.4)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.3)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  <button
+                    disabled={isCreatingWorkspace || !newWorkspaceName.trim()}
+                    onClick={async () => {
+                      setIsCreatingWorkspace(true);
+                      try {
+                        const { api } = await import('@/lib/api');
+                        await api.post('/workspaces', { name: newWorkspaceName });
+                        window.location.reload();
+                      } catch (err) {
+                        alert('Failed to create workspace');
+                        setIsCreatingWorkspace(false);
+                      }
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.875rem', 
+                      background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                      color: 'white', 
+                      borderRadius: '10px', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      opacity: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 0.5 : 1, 
+                      transition: 'all 0.2s',
+                      boxShadow: (!newWorkspaceName.trim() || isCreatingWorkspace) ? 'none' : '0 4px 16px rgba(139, 92, 246, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (newWorkspaceName.trim() && !isCreatingWorkspace) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 24px rgba(139, 92, 246, 0.4)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(139, 92, 246, 0.3)';
+                    }}
+                  >
+                    {isCreatingWorkspace ? (
+                      <span>Creating... ⏳</span>
+                    ) : (
+                      <span>Create & Continue →</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Join Existing */}
+              <div style={{ 
+                padding: '2rem', 
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '2px solid rgba(255, 255, 255, 0.1)', 
+                borderRadius: '16px', 
+                display: 'flex', 
+                flexDirection: 'column',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  border: '2px solid rgba(99, 102, 241, 0.4)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem'
+                }}>
+                  <LogIn size={24} color="#6366f1" />
+                </div>
+                
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>
+                  Join Existing Team
+                </h3>
+                <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1, lineHeight: 1.5 }}>
+                  Have a Room Code from your admin? Enter the code and password to join immediately.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto' }}>
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={e => setJoinCode(e.target.value)}
+                    placeholder="Room Code (e.g. abc-123-xyz)"
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.875rem 1rem', 
+                      borderRadius: '10px', 
+                      border: '1px solid rgba(255, 255, 255, 0.1)', 
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff', 
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.4)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.3)';
+                    }}
+                  />
+                  <input
+                    type="password"
+                    value={joinPassword}
+                    onChange={e => setJoinPassword(e.target.value)}
+                    placeholder="Password"
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.875rem 1rem', 
+                      borderRadius: '10px', 
+                      border: '1px solid rgba(255, 255, 255, 0.1)', 
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff', 
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.4)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.target.style.background = 'rgba(0, 0, 0, 0.3)';
+                    }}
+                  />
+                  <button
+                    disabled={isJoining || !joinCode.trim() || !joinPassword.trim()}
+                    onClick={async () => {
+                      setIsJoining(true);
+                      try {
+                        const { api } = await import('@/lib/api');
+                        await api.post('/workspaces/join-with-code', { 
+                          joinCode: joinCode.trim(), 
+                          joinPassword: joinPassword.trim() 
+                        });
+                        window.location.reload();
+                      } catch (err: any) {
+                        alert(err.response?.data?.message || 'Failed to join workspace');
+                        setIsJoining(false);
+                      }
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.875rem', 
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      color: '#6366f1', 
+                      borderRadius: '10px', 
+                      border: '1px solid rgba(99, 102, 241, 0.3)', 
+                      cursor: 'pointer', 
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      opacity: (!joinCode.trim() || !joinPassword.trim() || isJoining) ? 0.5 : 1, 
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (joinCode.trim() && joinPassword.trim() && !isJoining) {
+                        e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {isJoining ? 'Joining... ⏳' : 'Join Team →'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Help section */}
+            <div style={{ 
+              marginTop: '2rem',
+              padding: '1.5rem',
+              background: 'rgba(139, 92, 246, 0.05)',
+              border: '1px solid rgba(139, 92, 246, 0.15)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>💡</div>
+              <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.9)', marginBottom: '0.5rem', fontWeight: 600 }}>
+                Not sure which to choose?
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.5 }}>
+                <strong>Create</strong> if you're setting up for your team • <strong>Join</strong> if someone invited you with a code
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ textAlign: 'center', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <button
+                onClick={() => {
+                  logout();
+                  router.push('/login');
+                }}
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'rgba(255, 255, 255, 0.5)', 
+                  cursor: 'pointer', 
+                  fontSize: '0.8125rem',
+                  transition: 'color 0.2s',
+                  fontWeight: 500
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)'}
+              >
+                ← Log out and try another account
+              </button>
+            </div>
           </div>
         </div>
+        
+        {/* CSS Animation */}
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+          }
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+        `}</style>
       </div>
     );
   }
