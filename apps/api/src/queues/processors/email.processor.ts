@@ -73,8 +73,8 @@ export class EmailProcessor extends WorkerHost {
           text = `${job.data.body}`;
           break;
         case 'send-invite':
-          subject = `You are invited to join ${job.data.workspaceName}`;
-          text = `${job.data.inviterName} has invited you to join ${job.data.workspaceName}. Use this code to join: ${job.data.token}`;
+          subject = `You're invited to join ${job.data.workspaceName} on AI Standup`;
+          text = `Hi there!\n\n${job.data.inviterName} has invited you to join the workspace "${job.data.workspaceName}" on AI Standup.\n\nClick the link below to accept the invitation:\n${process.env.FRONTEND_URL}/join?token=${job.data.token}\n\nThis invitation will expire in 7 days.\n\nIf you don't have an account yet, you'll be able to create one when you accept the invitation.\n\nBest regards,\nAI Standup Team`;
           break;
         case 'send-verification':
           subject = 'Verify Your Email Address';
