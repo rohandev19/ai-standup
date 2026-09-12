@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Card } from '@/components/Card/Card';
 import { Button } from '@/components/Button/Button';
 import { api } from '@/lib/api';
-import styles from '../(auth)/auth.module.css';
+import styles from '../../(auth)/auth.module.css';
 
 export default function VerifyEmailPage() {
   const router = useRouter();

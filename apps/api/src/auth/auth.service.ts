@@ -64,8 +64,10 @@ export class AuthService {
 
     // Send verification email
     // Use direct send in production (single dyno), queue in development/multi-dyno
-    const useDirectEmail = process.env.USE_DIRECT_EMAIL === 'true' || process.env.NODE_ENV === 'production';
-    
+    const useDirectEmail =
+      process.env.USE_DIRECT_EMAIL === 'true' ||
+      process.env.NODE_ENV === 'production';
+
     if (useDirectEmail) {
       // Send email directly (reliable for single-dyno production)
       try {
@@ -75,10 +77,13 @@ export class AuthService {
           host: process.env.SMTP_HOST || 'localhost',
           port,
           secure: port === 465,
-          auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          } : undefined,
+          auth:
+            process.env.SMTP_USER && process.env.SMTP_PASS
+              ? {
+                  user: process.env.SMTP_USER,
+                  pass: process.env.SMTP_PASS,
+                }
+              : undefined,
         });
 
         await transporter.sendMail({
@@ -90,7 +95,10 @@ export class AuthService {
 
         this.logger.log(`Email sent directly to: ${user.email}`);
       } catch (emailError) {
-        this.logger.error('Failed to send verification email:', emailError.message);
+        this.logger.error(
+          'Failed to send verification email:',
+          emailError.message,
+        );
         // Don't throw - user is created, they can request resend
       }
     } else {
@@ -325,8 +333,10 @@ export class AuthService {
       );
 
       // Send password reset email
-      const useDirectEmail = process.env.USE_DIRECT_EMAIL === 'true' || process.env.NODE_ENV === 'production';
-      
+      const useDirectEmail =
+        process.env.USE_DIRECT_EMAIL === 'true' ||
+        process.env.NODE_ENV === 'production';
+
       if (useDirectEmail) {
         try {
           const nodemailer = await import('nodemailer');
@@ -335,10 +345,13 @@ export class AuthService {
             host: process.env.SMTP_HOST || 'localhost',
             port,
             secure: port === 465,
-            auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-              user: process.env.SMTP_USER,
-              pass: process.env.SMTP_PASS,
-            } : undefined,
+            auth:
+              process.env.SMTP_USER && process.env.SMTP_PASS
+                ? {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                  }
+                : undefined,
           });
 
           await transporter.sendMail({
@@ -348,9 +361,14 @@ export class AuthService {
             text: `You requested to reset your password. Click this link to reset it: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.`,
           });
 
-          this.logger.log(`Password reset email sent directly to: ${user.email}`);
+          this.logger.log(
+            `Password reset email sent directly to: ${user.email}`,
+          );
         } catch (emailError) {
-          this.logger.error('Failed to send password reset email:', emailError.message);
+          this.logger.error(
+            'Failed to send password reset email:',
+            emailError.message,
+          );
         }
       } else {
         // Use queue for multi-dyno setups
@@ -359,7 +377,9 @@ export class AuthService {
             email: user.email,
             token: resetToken,
           });
-          this.logger.log(`Password reset email job added to queue for ${user.email}`);
+          this.logger.log(
+            `Password reset email job added to queue for ${user.email}`,
+          );
         } catch (queueError) {
           this.logger.error('Password reset queue failed:', queueError.message);
         }

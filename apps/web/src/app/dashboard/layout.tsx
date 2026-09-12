@@ -205,7 +205,7 @@ export default function DashboardLayout({
               position: 'relative',
               zIndex: 1
             }}>
-              You're all set! Now let's create your team's workspace to get started with daily standups.
+              You&apos;re all set! Now let&apos;s create your team&apos;s workspace to get started with daily standups.
             </p>
           </div>
 
@@ -343,7 +343,7 @@ export default function DashboardLayout({
                   Create Workspace
                 </h3>
                 <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', marginBottom: '1.5rem', flex: 1, lineHeight: 1.5 }}>
-                  Start fresh for your team. You'll be the Owner and can invite members after setup.
+                  Start fresh for your team. You&apos;ll be the Owner and can invite members after setup.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -575,7 +575,7 @@ export default function DashboardLayout({
                 Not sure which to choose?
               </div>
               <div style={{ fontSize: '0.8125rem', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.5 }}>
-                <strong>Create</strong> if you're setting up for your team • <strong>Join</strong> if someone invited you with a code
+                <strong>Create</strong> if you&apos;re setting up for your team • <strong>Join</strong> if someone invited you with a code
               </div>
             </div>
 
@@ -605,7 +605,7 @@ export default function DashboardLayout({
         </div>
         
         {/* CSS Animation */}
-        <style>{`
+        <style dangerouslySetInnerHTML={{ __html: `
           @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; }
@@ -614,7 +614,7 @@ export default function DashboardLayout({
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
           }
-        `}</style>
+        `}} />
       </div>
     );
   }
