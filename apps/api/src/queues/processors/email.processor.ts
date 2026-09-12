@@ -20,6 +20,7 @@ export class EmailProcessor extends WorkerHost {
 
   constructor() {
     super();
+    this.logger.log('=== EmailProcessor Constructor Called ===');
     const smtpHost = process.env.SMTP_HOST;
     if (smtpHost) {
       const port = parseInt(process.env.SMTP_PORT || '465', 10);
@@ -53,7 +54,8 @@ export class EmailProcessor extends WorkerHost {
 
 
   async process(job: Job<EmailJobData, any, string>): Promise<void> {
-    this.logger.log(`Processing email job ${job.id} of type ${job.name}`);
+    this.logger.log(`=== Processing email job ${job.id} of type ${job.name} ===`);
+    this.logger.log(`Job data: ${JSON.stringify(job.data)}`);
 
     try {
       let subject = '';
