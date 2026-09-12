@@ -39,6 +39,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Immediately mark as loading so we don't flash the "no workspaces" screen
+    // between renders when user changes from null to a valid user.
+    setIsLoading(true);
+
     const fetchWorkspaces = async () => {
       try {
         const res = await api.get('/workspaces');
