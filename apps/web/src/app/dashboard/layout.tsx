@@ -17,7 +17,6 @@ import {
   Settings,
   UserCircle,
   CreditCard,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -37,7 +36,6 @@ export default function DashboardLayout({
   const { user, accessToken, isLoading: isAuthLoading, logout } = useAuth();
   const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading, setActiveWorkspace } = useWorkspace();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -261,126 +259,76 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div
-          className={`${styles.workspaceSelector} ${isSidebarCollapsed ? styles.collapsedSelector : ''}`}
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          style={{ cursor: 'pointer', position: 'relative' }}
-        >
-          <div className={styles.avatar}>{activeWorkspace ? activeWorkspace.name.charAt(0).toUpperCase() : '?'}</div>
-          {!isSidebarCollapsed && (
-            <>
-              <div className={styles.workspaceInfo}>
-                <span className={styles.workspaceName}>{activeWorkspace ? activeWorkspace.name : 'Loading...'}</span>
-                <span className={styles.workspaceRole}>
-                  {activeWorkspace?.members?.[0]?.role ?
-                    activeWorkspace.members[0].role.charAt(0) + activeWorkspace.members[0].role.slice(1).toLowerCase()
-                    : 'Member'}
-                </span>
-              </div>
-              <ChevronDown size={16} style={{ color: 'var(--text-secondary)', marginLeft: 'auto' }} />
-            </>
-          )}
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className={styles.workspaceDropdown}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', padding: '0.25rem 0.5rem', textTransform: 'uppercase' }}>
-                Your Workspaces
-              </div>
+        {/* Workspaces Section */}
+        {!isSidebarCollapsed && (
+          <div className={styles.workspacesSection}>
+            <div className={styles.workspacesSectionHeader}>
+              <span>Workspaces</span>
+            </div>
+            
+            <div className={styles.workspacesList}>
               {workspaces.map(w => (
                 <button
                   key={w.id}
-                  onClick={() => {
-                    setActiveWorkspace(w);
-                    setIsDropdownOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.5rem',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: w.id === activeWorkspace?.id ? 'rgba(255,255,255,0.05)' : 'transparent',
-                    color: w.id === activeWorkspace?.id ? 'var(--text-main)' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = w.id === activeWorkspace?.id ? 'rgba(255,255,255,0.05)' : 'transparent'}
+                  onClick={() => setActiveWorkspace(w)}
+                  className={`${styles.workspaceItem} ${w.id === activeWorkspace?.id ? styles.workspaceItemActive : ''}`}
+                  title={w.name}
                 >
-                  <div style={{
-                    width: '24px', height: '24px', borderRadius: '4px', background: 'var(--accent-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: 'white', fontWeight: 600
-                  }}>
+                  <div className={styles.workspaceItemAvatar}>
                     {w.name.charAt(0).toUpperCase()}
                   </div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{w.name}</span>
+                  <div className={styles.workspaceItemInfo}>
+                    <span className={styles.workspaceItemName}>{w.name}</span>
+                    <span className={styles.workspaceItemRole}>
+                      {w.members?.[0]?.role?.charAt(0) + w.members?.[0]?.role?.slice(1).toLowerCase() || 'Member'}
+                    </span>
+                  </div>
+                  {w.id === activeWorkspace?.id && (
+                    <div className={styles.workspaceItemCheck}>✓</div>
+                  )}
                 </button>
               ))}
-              <div style={{ height: '1px', background: 'var(--border-glass)', margin: '0.25rem 0' }}></div>
+            </div>
+            
+            <div className={styles.workspaceActions}>
               <button
+                className={styles.workspaceActionBtn}
                 onClick={() => {
-                  setIsDropdownOpen(false);
                   setModalTab('create');
                   setModalError('');
                   setModalSuccess('');
                   setIsCreateModalOpen(true);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.5rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--primary-accent)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                  fontWeight: 500,
-                  fontSize: '0.875rem'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                title="Create Workspace"
               >
                 <Plus size={16} />
-                Create Workspace
+                <span>Create</span>
               </button>
               <button
+                className={styles.workspaceActionBtn}
                 onClick={() => {
-                  setIsDropdownOpen(false);
                   setModalTab('join');
                   setModalError('');
                   setModalSuccess('');
                   setIsCreateModalOpen(true);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.5rem',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                  fontWeight: 500,
-                  fontSize: '0.875rem'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                title="Join Workspace"
               >
                 <LogIn size={16} />
-                Join a Room
+                <span>Join Room</span>
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+        
+        {/* Collapsed Workspace Indicator */}
+        {isSidebarCollapsed && activeWorkspace && (
+          <div className={styles.collapsedWorkspaceIndicator} title={activeWorkspace.name}>
+            <div className={styles.collapsedWorkspaceAvatar}>
+              {activeWorkspace.name.charAt(0).toUpperCase()}
+            </div>
+          </div>
+        )}
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
