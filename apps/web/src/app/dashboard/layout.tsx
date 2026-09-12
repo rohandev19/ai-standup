@@ -103,12 +103,12 @@ export default function DashboardLayout({
   ];
 
   if (isAuthLoading || !user) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)', color: 'white' }}>Loading...</div>;
   }
 
   // Show loading while fetching workspaces
   if (isWorkspaceLoading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading workspace...</div>;
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)', color: 'white' }}>Loading workspace...</div>;
   }
 
   // Handle case where user has zero workspaces
