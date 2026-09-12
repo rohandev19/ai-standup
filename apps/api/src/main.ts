@@ -8,6 +8,47 @@ import { RedisIoAdapter } from './common/redis/redis-io.adapter';
 import helmet from 'helmet';
 
 async function bootstrap() {
+  // ==========================================
+  // SECURITY: Validate Critical Environment Variables
+  // ==========================================
+  const requiredEnvVars = [
+    'JWT_SECRET',
+    'DATABASE_URL',
+  ];
+
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+  
+  if (missingEnvVars.length > 0) {
+    console.error('❌ FATAL ERROR: Missing required environment variables:');
+    missingEnvVars.forEach((envVar) => {
+      console.error(`   - ${envVar}`);
+    });
+    console.error('\nPlease set these variables in your .env file or environment.');
+    console.error('See .env.example for reference.\n');
+    process.exit(1);
+  }
+
+  // Validate JWT_SECRET strength
+  const jwtSecret = process.env.JWT_SECRET!;
+  if (jwtSecret.length < 32) {
+    console.error('❌ FATAL ERROR: JWT_SECRET must be at least 32 characters long for security.');
+    console.error('   Current length:', jwtSecret.length);
+    console.error('\nGenerate a strong secret with: openssl rand -hex 32\n');
+    process.exit(1);
+  }
+
+  if (jwtSecret === 'super-secret' || jwtSecret === 'change-me') {
+    console.error('❌ FATAL ERROR: JWT_SECRET cannot be a default/weak value.');
+    console.error('   Please use a cryptographically secure random string.');
+    console.error('\nGenerate one with: openssl rand -hex 32\n');
+    process.exit(1);
+  }
+
+  console.log('✅ Security: Environment variables validated');
+
+  // ==========================================
+  // APPLICATION BOOTSTRAP
+  // ==========================================
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
     rawBody: true,
