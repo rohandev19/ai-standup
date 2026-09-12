@@ -35,7 +35,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setWorkspaces([]);
       setActiveWorkspaceState(null);
-      setIsLoading(false);
+      // NOTE: Do NOT set isLoading=false here. isLoading starts as true.
+      // The layout already handles the !user case (shows "Loading..." or redirects
+      // to /login) before it ever checks isWorkspaceLoading. If we set false here,
+      // there's a render frame after auth completes (user becomes non-null) but
+      // before this effect re-runs where isLoading=false + workspaces=[] — causing
+      // the "Welcome / no workspaces" screen to flash.
       return;
     }
 
