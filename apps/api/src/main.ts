@@ -11,19 +11,20 @@ async function bootstrap() {
   // ==========================================
   // SECURITY: Validate Critical Environment Variables
   // ==========================================
-  const requiredEnvVars = [
-    'JWT_SECRET',
-    'DATABASE_URL',
-  ];
+  const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'];
 
-  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
-  
+  const missingEnvVars = requiredEnvVars.filter(
+    (envVar) => !process.env[envVar],
+  );
+
   if (missingEnvVars.length > 0) {
     console.error('❌ FATAL ERROR: Missing required environment variables:');
     missingEnvVars.forEach((envVar) => {
       console.error(`   - ${envVar}`);
     });
-    console.error('\nPlease set these variables in your .env file or environment.');
+    console.error(
+      '\nPlease set these variables in your .env file or environment.',
+    );
     console.error('See .env.example for reference.\n');
     process.exit(1);
   }
@@ -31,7 +32,9 @@ async function bootstrap() {
   // Validate JWT_SECRET strength
   const jwtSecret = process.env.JWT_SECRET!;
   if (jwtSecret.length < 32) {
-    console.error('❌ FATAL ERROR: JWT_SECRET must be at least 32 characters long for security.');
+    console.error(
+      '❌ FATAL ERROR: JWT_SECRET must be at least 32 characters long for security.',
+    );
     console.error('   Current length:', jwtSecret.length);
     console.error('\nGenerate a strong secret with: openssl rand -hex 32\n');
     process.exit(1);

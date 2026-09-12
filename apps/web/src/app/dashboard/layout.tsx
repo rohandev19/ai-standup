@@ -96,6 +96,8 @@ export default function DashboardLayout({
     { label: 'History', href: '/dashboard/history', icon: <History size={20} /> },
     { label: 'Analytics', href: '/dashboard/analytics', icon: <TrendingUp size={20} /> },
     { label: 'Activity', href: '/dashboard/activity', icon: <Clock size={20} /> },
+    { label: 'Create Workspace', href: '#', icon: <Plus size={20} />, action: 'create' },
+    { label: 'Join Room', href: '#', icon: <LogIn size={20} />, action: 'join' },
     { label: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
     { label: 'Billing', href: '/dashboard/pricing', icon: <CreditCard size={20} /> },
   ];
@@ -658,35 +660,6 @@ export default function DashboardLayout({
                 </button>
               ))}
             </div>
-            
-            <div className={styles.workspaceActions}>
-              <button
-                className={styles.workspaceActionBtn}
-                onClick={() => {
-                  setModalTab('create');
-                  setModalError('');
-                  setModalSuccess('');
-                  setIsCreateModalOpen(true);
-                }}
-                title="Create Workspace"
-              >
-                <Plus size={16} />
-                <span>Create</span>
-              </button>
-              <button
-                className={styles.workspaceActionBtn}
-                onClick={() => {
-                  setModalTab('join');
-                  setModalError('');
-                  setModalSuccess('');
-                  setIsCreateModalOpen(true);
-                }}
-                title="Join Workspace"
-              >
-                <LogIn size={16} />
-                <span>Join Room</span>
-              </button>
-            </div>
           </div>
         )}
         
@@ -700,17 +673,48 @@ export default function DashboardLayout({
         )}
 
         <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.navItem} ${pathname === item.href ? styles.active : ''} ${isSidebarCollapsed ? styles.collapsedNavItem : ''}`}
-              title={isSidebarCollapsed ? item.label : undefined}
-            >
-              {item.icon}
-              {!isSidebarCollapsed && <span style={{ marginLeft: '12px' }}>{item.label}</span>}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            // If item has action, render as button instead of link
+            if (item.action) {
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                    if (item.action === 'create') {
+                      setModalTab('create');
+                      setModalError('');
+                      setModalSuccess('');
+                      setIsCreateModalOpen(true);
+                    } else if (item.action === 'join') {
+                      setModalTab('join');
+                      setModalError('');
+                      setModalSuccess('');
+                      setIsCreateModalOpen(true);
+                    }
+                  }}
+                  className={`${styles.navItem} ${isSidebarCollapsed ? styles.collapsedNavItem : ''}`}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {item.icon}
+                  {!isSidebarCollapsed && <span style={{ marginLeft: '12px' }}>{item.label}</span>}
+                </button>
+              );
+            }
+            
+            // Regular navigation link
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${styles.navItem} ${pathname === item.href ? styles.active : ''} ${isSidebarCollapsed ? styles.collapsedNavItem : ''}`}
+                title={isSidebarCollapsed ? item.label : undefined}
+              >
+                {item.icon}
+                {!isSidebarCollapsed && <span style={{ marginLeft: '12px' }}>{item.label}</span>}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className={styles.sidebarFooter}>
