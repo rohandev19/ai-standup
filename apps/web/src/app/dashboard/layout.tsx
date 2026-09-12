@@ -112,7 +112,7 @@ export default function DashboardLayout({
   }
 
   // Handle case where user has zero workspaces
-  if (workspaces.length === 0) {
+if (workspaces.length === 0) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -415,7 +415,7 @@ export default function DashboardLayout({
                     {isCreatingWorkspace ? (
                       <span>Creating... ⏳</span>
                     ) : (
-                      <span>Create & Continue →</span>
+                      <span>Create &amp; Continue →</span>
                     )}
                   </button>
                 </div>
@@ -560,6 +560,7 @@ export default function DashboardLayout({
                 </div>
               </div>
             </div>
+            </div>
 
             {/* Help section */}
             <div style={{ 
@@ -604,21 +605,12 @@ export default function DashboardLayout({
           </div>
         </div>
         
-        {/* CSS Animation */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-          }
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-        `}} />
+
       </div>
     );
   }
 
+  
   // Intercept if onboarding is not completed
   if (activeWorkspace && !activeWorkspace.onboardingCompleted) {
     return (
