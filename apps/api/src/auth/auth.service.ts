@@ -122,6 +122,14 @@ export class AuthService {
       }
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      throw new HttpException(
+        'Please verify your email address before logging in. Check your inbox for the verification link.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -220,6 +228,68 @@ export class AuthService {
     await this.redisService.del(`verify-email:${token}`);
 
     return { message: 'Email successfully verified. You can now login.' };
+  }
+
+  async resendVerification(email: string) {
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      // Generic response to prevent email enumeration
+      return {
+        message: 'If the email is valid, check your inbox for verification link.',
+      };
+    }
+
+    if (user.isEmailVerified) {
+      return {
+        message: 'This email is already verified. You can login now.',
+      };
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Store in Redis (expires in 24 hours = 86400 seconds)
+    await this.redisService.set(
+      `verify-email:${verificationToken}`,
+      user.id,
+      'EX',
+      86400,
+    );
+
+    // Send verification email via BullMQ
+    try {
+      const job = await this.emailQueue.add('send-verification', {
+        email: user.email,
+        token: verificationToken,
+      });
+      this.logger.log(`Resend verification email job added to queue: ${job.id} for ${user.email}`);
+    } catch (queueError) {
+      // Fallback: Send email directly if queue fails
+      this.logger.error('Email queue failed:', queueError.message);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'localhost',
+          port: parseInt(process.env.SMTP_PORT || '1025', 10),
+          secure: false,
+        });
+        
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || 'noreply@aistandup.local',
+          to: user.email,
+          subject: 'Verify Your Email Address',
+          text: `Welcome! Please verify your email address by clicking this link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}\n\nThis link will expire in 24 hours.`,
+        });
+        
+        this.logger.log(`[DEV] Verification email sent directly to: ${user.email}`);
+      }
+    }
+
+    return {
+      message: 'If the email is valid, check your inbox for verification link.',
+    };
   }
 
   async requestPasswordReset(email: string) {

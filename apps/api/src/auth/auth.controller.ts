@@ -82,6 +82,13 @@ export class AuthController {
   }
 
   @UseGuards(RateLimitGuard)
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() dto: RequestPasswordResetDto) {
+    return this.authService.resendVerification(dto.email);
+  }
+
+  @UseGuards(RateLimitGuard)
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: RequestPasswordResetDto) {
