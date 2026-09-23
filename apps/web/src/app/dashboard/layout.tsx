@@ -22,7 +22,7 @@ import {
   Menu,
   X,
   Plus,
-  LogIn
+  LogIn,Bot
 } from 'lucide-react';
 import styles from './layout.module.css';
 

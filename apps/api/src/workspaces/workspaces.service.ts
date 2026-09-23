@@ -12,6 +12,8 @@ import { Queue } from 'bullmq';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UpdateOnboardingDto } from './dto/update-onboarding.dto';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { AiService } from '../ai/ai.service';
+import { subDays } from 'date-fns';
 
 @Injectable()
 export class WorkspacesService {
@@ -20,6 +22,7 @@ export class WorkspacesService {
     @InjectQueue('email') private readonly emailQueue: Queue,
     private readonly notificationsService: NotificationsService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly aiService: AiService,
   ) {}
 
   private generateSlug(name: string): string {
@@ -791,5 +794,41 @@ export class WorkspacesService {
         });
       }
     }
+  }
+
+  async askAi(workspaceId: string, question: string, days: number): Promise<{ answer: string }> {
+    // 1. Fetch standups for the last `days`
+    const startDate = subDays(new Date(), days);
+
+    const standups = await this.prisma.standupEntry.findMany({
+      where: {
+        workspaceId,
+        standupDate: { gte: startDate },
+        status: { in: ['SUBMITTED', 'LATE'] },
+      },
+      include: {
+        user: {
+          select: { name: true },
+        },
+      },
+      orderBy: { standupDate: 'asc' },
+    });
+
+    if (standups.length === 0) {
+      return { answer: 'Maaf, tidak ada riwayat standup dalam periode waktu tersebut untuk dianalisis.' };
+    }
+
+    // 2. Format standups into context string
+    const contextData = standups
+      .map((s) => {
+        const dateStr = s.standupDate.toISOString().split('T')[0];
+        return `[${dateStr}] ${s.user.name}:\n- Kemarin: ${s.yesterdayText || '-'}\n- Hari ini: ${s.todayText || '-'}\n- Blocker: ${s.blockerText || '-'}`;
+      })
+      .join('\n\n');
+
+    // 3. Call AI Service
+    const answer = await this.aiService.askTeamQuestion(question, contextData);
+
+    return { answer };
   }
 }

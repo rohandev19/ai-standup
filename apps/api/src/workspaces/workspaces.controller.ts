@@ -242,4 +242,18 @@ export class WorkspacesController {
       limitInt,
     );
   }
+
+  @UseGuards(JwtAuthGuard, WorkspaceMembershipGuard)
+  @Roles('OWNER', 'ADMIN')
+  @Post(':workspaceId/ask-ai')
+  async askAi(
+    @Param('workspaceId') workspaceId: string,
+    @Body('question') question: string,
+    @Body('days') days?: number,
+  ) {
+    if (!question || question.trim().length === 0) {
+      throw new HttpException('Question cannot be empty', HttpStatus.BAD_REQUEST);
+    }
+    return this.workspacesService.askAi(workspaceId, question, days || 30);
+  }
 }
