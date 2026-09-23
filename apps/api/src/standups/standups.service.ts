@@ -183,6 +183,16 @@ export class StandupsService {
       },
     });
 
+    const aiSummary = await this.prisma.aiSummary.findUnique({
+      where: {
+        workspaceId_summaryDate: {
+          workspaceId,
+          summaryDate: today,
+        },
+      },
+      select: { content: true },
+    });
+
     // Window Status Logic (mirroring Scheduler)
     const dayOfWeek = localTime.weekday; // 1 = Monday, 7 = Sunday
     const isWorkingDay = workspace.workingDays.includes(dayOfWeek);
@@ -278,6 +288,7 @@ export class StandupsService {
         windowRemaining,
       },
       members,
+      aiSummary: aiSummary?.content || null,
     };
   }
 

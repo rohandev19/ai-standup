@@ -26,6 +26,7 @@ interface DashboardState {
     today: string | null;
     blocker: { id: string; text: string; isResolved: boolean } | null;
   }[];
+  aiSummary?: string | null;
 }
 
 export default function DashboardClient() {
@@ -153,7 +154,7 @@ export default function DashboardClient() {
     .filter(m => m.status === 'submitted' || m.status === 'late')
     .sort((a, b) => (b.time || '').localeCompare(a.time || '')); 
 
-  const mockSummary = "The team made strong progress today. AI summary feature is pending Phase 6 implementation.";
+  const aiSummaryText = state.aiSummary || "No AI summary has been generated for today yet. It will be generated automatically when the standup window closes.";
   
   const activeBlockersList = state.members.filter(m => m.blocker && !m.blocker.isResolved);
 
@@ -211,7 +212,7 @@ export default function DashboardClient() {
             </div>
             <Card glow className={styles.aiCard}>
               <div className={styles.aiContent}>
-                <p>{mockSummary}</p>
+                <p>{aiSummaryText}</p>
               </div>
 
               {/* Blockers */}
