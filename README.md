@@ -1,124 +1,276 @@
 <h1 align="center">
-  Mailpit - email testing for developers
+  🤖 AI Standup
 </h1>
 
-<div align="center">
-    <a href="https://github.com/axllent/mailpit/actions/workflows/tests.yml"><img src="https://github.com/axllent/mailpit/actions/workflows/tests.yml/badge.svg" alt="CI Tests status"></a>
-    <a href="https://github.com/axllent/mailpit/actions/workflows/build-release.yml"><img src="https://github.com/axllent/mailpit/actions/workflows/build-release.yml/badge.svg" alt="CI build status"></a>
-    <a href="https://github.com/axllent/mailpit/actions/workflows/build-docker.yml"><img src="https://github.com/axllent/mailpit/actions/workflows/build-docker.yml/badge.svg" alt="CI Docker build status"></a>
-    <a href="https://github.com/axllent/mailpit/actions/workflows/codeql-analysis.yml"><img src="https://github.com/axllent/mailpit/actions/workflows/codeql-analysis.yml/badge.svg" alt="Code quality"></a>
-    <a href="https://goreportcard.com/report/github.com/axllent/mailpit"><img src="https://goreportcard.com/badge/github.com/axllent/mailpit" alt="Go Report Card"></a>
-    <br>
-    <a href="https://github.com/axllent/mailpit/releases/latest"><img src="https://img.shields.io/github/v/release/axllent/mailpit.svg" alt="Latest release"></a>
-    <a href="https://hub.docker.com/r/axllent/mailpit"><img src="https://img.shields.io/docker/pulls/axllent/mailpit.svg" alt="Docker pulls"></a>
-</div>
-<br>
 <p align="center">
-  <a href="https://mailpit.axllent.org">Website</a>  •
-  <a href="https://mailpit.axllent.org/docs/">Documentation</a>  •
-  <a href="https://mailpit.axllent.org/docs/api-v1/">API</a>
+  <strong>Async Team Standup Platform with AI-Powered Summaries & Real-Time Dashboard</strong>
 </p>
 
-<hr>
+<p align="center">
+  A multi-tenant SaaS platform that replaces synchronous daily standups with async submissions,<br/>
+  real-time presence tracking via WebSocket, and AI-generated team summaries using Claude API.
+</p>
 
-**Mailpit** is a small, fast, low memory, zero-dependency, multi-platform email testing tool & API for developers.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs" alt="NestJS 11" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io" alt="Socket.io" />
+  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma" alt="Prisma 6" />
+  <img src="https://img.shields.io/badge/Claude_API-Haiku-D4A574" alt="Claude API" />
+</p>
 
-It acts as an SMTP server, provides a modern web interface to view & test captured emails, and includes an API for automated integration testing.
+---
 
-Mailpit was originally **inspired** by MailHog which is [no longer maintained](https://github.com/mailhog/MailHog/issues/442#issuecomment-1493415258) and hasn't seen active development or security updates for a few years now.
+## 📋 Overview
 
-![Mailpit](https://raw.githubusercontent.com/axllent/mailpit/develop/server/ui-src/screenshot.png)
+Remote/hybrid teams (5–30 people) often skip daily standups due to timezone conflicts and meeting fatigue. Managers lose visibility into daily progress, and blockers surface too late.
 
+**AI Standup** solves this by letting team members submit updates asynchronously within a configurable time window. An AI (Claude) automatically summarizes the entire team's updates into a single narrative report and flags blockers by severity — so managers get a complete picture without reading every individual entry.
 
-## Features
+### Key Differentiators
 
-- Runs entirely from a single [static binary](https://mailpit.axllent.org/docs/install/) or multi-architecture [Docker images](https://mailpit.axllent.org/docs/install/docker/)
-- Modern web UI with advanced [mail search](https://mailpit.axllent.org/docs/usage/search-filters/) to view emails (formatted HTML, highlighted HTML source, text, headers, raw source, and MIME attachments
-including image thumbnails), including optional [HTTPS](https://mailpit.axllent.org/docs/configuration/http/) & [authentication](https://mailpit.axllent.org/docs/configuration/http/)
-- [SMTP server](https://mailpit.axllent.org/docs/configuration/smtp/) with optional STARTTLS or SSL/TLS, authentication (including an "accept any" mode)
-- A [REST API](https://mailpit.axllent.org/docs/api-v1/) for integration testing
-- Real-time web UI updates using web sockets for new mail & optional [browser notifications](https://mailpit.axllent.org/docs/usage/notifications/) when new mail is received
-- Optional [POP3 server](https://mailpit.axllent.org/docs/configuration/pop3/) to download captured message directly into your email client
-- [HTML check](https://mailpit.axllent.org/docs/usage/html-check/) to test & score mail client compatibility with HTML emails
-- [Link check](https://mailpit.axllent.org/docs/usage/link-check/) to test message links (HTML & text) & linked images
-- [Spam check](https://mailpit.axllent.org/docs/usage/spamassassin/) to test message "spamminess" using a running SpamAssassin server
-- [Create screenshots](https://mailpit.axllent.org/docs/usage/html-screenshots/) of HTML messages via web UI
-- Mobile and tablet HTML preview toggle in desktop mode
-- [Message tagging](https://mailpit.axllent.org/docs/usage/tagging/) including manual tagging or automated tagging using filtering and "plus addressing"
-- [SMTP relaying](https://mailpit.axllent.org/docs/configuration/smtp-relay/) (message release) - relay messages via a different SMTP server including an optional allowlist of accepted recipients
-- [SMTP forwarding](https://mailpit.axllent.org/docs/configuration/smtp-forward/) - automatically forward messages via a different SMTP server to predefined email addresses
-- Fast message [storing & processing](https://mailpit.axllent.org/docs/configuration/email-storage/) - ingesting 200-300 emails per second over SMTP depending on CPU, network speed & email size,
-easily handling tens of thousands of emails, with automatic email pruning by volume or message age (by default keeping the most recent 500 emails)
-- [Chaos](https://mailpit.axllent.org/docs/integration/chaos/) feature to enable configurable SMTP errors to test application resilience
-- `List-Unsubscribe` syntax validation
-- Optional [webhook](https://mailpit.axllent.org/docs/integration/webhook/) for received messages
+- **Multi-tenant architecture** — one deployment serves multiple isolated workspaces (companies/teams)
+- **Real-time WebSocket dashboard** — see who has/hasn't submitted without refreshing
+- **AI daily summaries** — Claude generates a single narrative from all team entries (batched, not per-entry)
+- **Automated blocker detection** — AI classifies blocker severity (Low/Medium/High) with reasoning
+- **Weekly digest** — AI-generated weekly trend reports for managers
 
+---
 
-## Installation
+## ✨ Features
 
-The Mailpit web UI listens by default on `http://0.0.0.0:8025` and the SMTP port on `0.0.0.0:1025`.
+### Core
+| Feature | Description |
+|---|---|
+| **Async Standup Submission** | 3-field form (Yesterday / Today / Blockers) with configurable submission window per workspace |
+| **Real-Time Presence Dashboard** | WebSocket-powered live view of who submitted, with animated status transitions |
+| **AI Daily Summary** | One Claude API call per workspace/day — generates narrative summary with metadata |
+| **AI Blocker Detection** | Batch analysis with severity classification (Low/Medium/High) using Claude tool use |
+| **AI Weekly Digest** | End-of-week automated report with trends, participation rates, and recurring blocker patterns |
 
-Mailpit runs as a single binary and can be installed in different ways:
+### Platform
+| Feature | Description |
+|---|---|
+| **Multi-Tenant Isolation** | Every query scoped by `workspaceId`, WebSocket rooms isolated per workspace |
+| **Role-Based Access Control** | Owner → Admin → Member hierarchy with granular endpoint guards |
+| **Onboarding Wizard** | Guided 5-step setup: name → timezone → working days → invite team → dashboard |
+| **Team Analytics** | Submission rate charts, blocker trends, member streaks, Team Health Score |
+| **Notification Center** | In-app bell + email notifications with real-time badge count via WebSocket |
+| **History & Search** | Full-text search across standup entries, date/member filtering, paginated results |
+| **Data Export** | CSV export of entries and summaries (Owner only, rate-limited) |
 
+### Security & Reliability
+| Feature | Description |
+|---|---|
+| **Tenant Isolation Guards** | `WorkspaceMembershipGuard` on every workspace-scoped endpoint + WebSocket `join_workspace` |
+| **Auth Hardening** | Account lockout, brute-force protection, rate limiting per IP & email, password reset with token invalidation |
+| **Circuit Breaker** | AI API failures handled gracefully — 5 failures → 5 min cooldown, submissions never blocked |
+| **Graceful Degradation** | AI down → submissions still accepted; Redis down → fallback to in-process events |
+| **Audit Trail** | Immutable log of all admin actions (role changes, member removal, settings updates) |
 
-### Install via package managers
+---
 
-- **Mac**: `brew install mailpit` (to run automatically in the background: `brew services start mailpit`)
-- **Arch Linux**: available in the AUR as `mailpit`
-- **FreeBSD**: `pkg install mailpit`
+## 🏗️ Architecture
 
-
-### Install via script (Linux & Mac)
-
-Linux & Mac users can install it directly to `/usr/local/bin/mailpit` with:
-
-```shell
-sudo sh < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
+```
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│   Next.js 16 (App Router)       │     │   NestJS 11 (Backend API)       │
+│                                 │     │                                 │
+│   Server Components (SSR)       │REST │   REST Controllers + Guards     │
+│   Client Components (Socket.io) ├────►│   WebSocket Gateway (Socket.io) │
+│   Onboarding Wizard             │WSS  │   Scheduled Cron Jobs           │
+│   Recharts Analytics            │     │   BullMQ Job Processors         │
+└─────────────────────────────────┘     └──────────┬──────────────────────┘
+                                                   │
+                                        ┌──────────┴──────────┐
+                                        │   Application Layer  │
+                                        │   Use Cases + Events │
+                                        │   EventEmitter Bus   │
+                                        └──┬──────┬────────┬───┘
+                                           │      │        │
+                                    ┌──────┘      │        └───────┐
+                                    ▼             ▼                ▼
+                             ┌───────────┐ ┌───────────┐   ┌────────────┐
+                             │PostgreSQL │ │   Redis    │   │ Claude API │
+                             │(Prisma)   │ │           │   │ (Haiku)    │
+                             │           │ │• Socket.io│   │            │
+                             │• Users    │ │  adapter  │   │• Summary   │
+                             │• Workspaces│ │• BullMQ   │   │• Blockers  │
+                             │• Standups │ │• Rate limit│   │• Digest    │
+                             │• Summaries│ │• Circuit  │   └────────────┘
+                             │• Audit    │ │  breaker  │
+                             └───────────┘ └───────────┘
 ```
 
-You can also change the install path to something else by setting the `INSTALL_PATH` environment, for example:
+### Key Architecture Decisions
 
-```shell
-sudo INSTALL_PATH=/usr/bin sh < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
+- **Separate NestJS process** (not Next.js API Routes) — WebSocket needs persistent connections and its own lifecycle; crash isolation between FE/BE
+- **Server Components + Client Components boundary** — SSR for initial data fetch, `'use client'` only for WebSocket-connected components
+- **Event-driven decoupling** — standup submission emits events → listeners handle WebSocket broadcast, audit logging, email sending independently
+- **BullMQ job queues** — AI calls and email sending are async with retry, backoff, and dead-letter queue support
+- **Single AI call per workspace/day** — all entries batched into one API call, not per-member (cost control)
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript 5 |
+| **Backend** | NestJS 11, TypeScript 5 |
+| **Database** | PostgreSQL (via Prisma 6 ORM) |
+| **Cache / Pub-Sub** | Redis (Socket.io adapter, BullMQ, rate limiting, circuit breaker) |
+| **Real-Time** | Socket.io 4 (with Redis adapter for multi-instance) |
+| **AI** | Claude API (Haiku) — tool use for structured blocker classification |
+| **Job Queue** | BullMQ (email, AI summary, AI blocker, weekly digest queues) |
+| **Email** | Nodemailer (configurable SMTP provider) |
+| **Auth** | JWT (access + refresh token rotation), bcrypt, Passport.js |
+| **Charts** | Recharts |
+| **Icons** | Lucide React |
+| **Monorepo** | Turborepo + pnpm workspaces |
+| **Testing** | Jest, Supertest, Testing Library |
+| **Linting** | ESLint 9, Prettier |
+
+---
+
+## 📁 Project Structure
+
+```
+ai-standup/
+├── apps/
+│   ├── api/                    # NestJS backend
+│   │   ├── prisma/             # Schema & migrations
+│   │   └── src/
+│   │       ├── ai/             # Claude API integration, circuit breaker
+│   │       ├── analytics/      # Team health score, submission trends
+│   │       ├── auth/           # JWT, guards, login/register/reset
+│   │       ├── common/         # Shared guards, decorators, filters
+│   │       ├── events/         # Event emitter listeners
+│   │       ├── notifications/  # In-app + email notification system
+│   │       ├── queues/         # BullMQ processors (email, AI jobs)
+│   │       ├── scheduler/      # Cron jobs (window-close, reminders)
+│   │       ├── standups/       # Core submission logic
+│   │       ├── summaries/      # AI daily/weekly summary generation
+│   │       ├── users/          # Profile, preferences
+│   │       └── workspaces/     # Multi-tenant workspace management
+│   │
+│   └── web/                    # Next.js frontend
+│       └── src/
+│           ├── app/            # App Router pages & layouts
+│           ├── components/     # Reusable UI components
+│           ├── contexts/       # React context (auth, socket)
+│           ├── hooks/          # Custom hooks (useSocket, useAuth)
+│           └── lib/            # API client, utilities
+│
+├── packages/
+│   └── shared/                 # Shared types, enums, WebSocket events
+│
+├── design.md                   # Full architecture & schema design
+├── requirements.md             # 22 requirements in EARS format
+└── tasks.md                    # Implementation task checklist
 ```
 
+---
 
-### Download static binary (Windows, Linux and Mac)
+## 🚀 Getting Started
 
-Static binaries can always be found on the [releases](https://github.com/axllent/mailpit/releases/latest). The `mailpit` binary can be extracted and copied to your `$PATH`, or simply run as `./mailpit`.
+### Prerequisites
 
+- **Node.js** 20.x
+- **pnpm** 9.x
+- **PostgreSQL** 16+
+- **Redis** 7+
 
-### Docker
+### Installation
 
-See [Docker instructions](https://mailpit.axllent.org/docs/install/docker/) for 386, amd64 & arm64 images.
+```bash
+# Clone the repository
+git clone https://github.com/rohandev19/ai-standup.git
+cd ai-standup
 
+# Install dependencies
+pnpm install
 
-### Compile from source
+# Setup environment variables
+cp apps/api/.env.example apps/api/.env
+# Edit .env with your database, Redis, and API credentials
 
-To build Mailpit from source, see [Building from source](https://mailpit.axllent.org/docs/install/source/).
+# Run database migrations
+pnpm --filter api exec prisma migrate dev
 
+# Start development servers (API + Web concurrently)
+pnpm dev
+```
 
-## Usage
+The web app runs on `http://localhost:3000` and the API on `http://localhost:3001`.
 
-Run `mailpit -h` to see options. More information can be seen in [the docs](https://mailpit.axllent.org/docs/configuration/runtime-options/).
+### Environment Variables
 
-If installed using homebrew, you may run `brew services start mailpit` to always run mailpit automatically.
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_URL` | Redis connection string |
+| `ANTHROPIC_API_KEY` | Claude API key for AI features |
+| `JWT_SECRET` | Secret for JWT token signing |
+| `JWT_REFRESH_SECRET` | Secret for refresh token signing |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Email service configuration |
+| `FRONTEND_URL` | Frontend URL for CORS and email links |
 
+---
 
-### Testing Mailpit
+## 🔒 Security Model
 
-Please refer to [the documentation](https://mailpit.axllent.org/docs/install/testing/) on how to easily test email delivery to Mailpit.
+This is a multi-tenant platform — tenant isolation is the #1 security priority:
 
+1. **Every database query** on workspace-owned data includes `WHERE workspaceId = ?`
+2. **Every REST endpoint** behind `WorkspaceMembershipGuard` verifies the user is an active member — a valid JWT alone is not sufficient
+3. **Every WebSocket room join** verifies active workspace membership before allowing connection
+4. **Member removal** immediately disconnects the user's WebSocket and revokes API access
+5. **Violation attempts** are logged as security events with user ID and target workspace ID
 
-### Configuring sendmail
+---
 
-Mailpit's SMTP server (default on port 1025), so you will likely need to configure your sending application to deliver mail via that port. 
-A common MTA (Mail Transfer Agent) that delivers system emails to an SMTP server is `sendmail`, used by many applications, including PHP. 
-Mailpit can also act as substitute for sendmail. For instructions on how to set this up, please refer to the [sendmail documentation](https://mailpit.axllent.org/docs/install/sendmail/).
+## 📊 AI Pipeline Design
+
+```
+Standup Window Closes (Cron)
+        │
+        ├──► BullMQ: ai-summary job
+        │         │
+        │         └──► Claude API (1 call, all entries batched)
+        │                  │
+        │                  └──► AiSummary saved + WebSocket broadcast
+        │
+        └──► BullMQ: ai-blocker job
+                  │
+                  └──► Claude API (1 call, tool use for structured output)
+                           │
+                           └──► BlockerFlags saved + HIGH severity alert
+
+Weekly (Last Working Day):
+        └──► BullMQ: ai-weekly-digest job
+                  │
+                  └──► Claude API (aggregates daily summaries)
+                           │
+                           └──► WeeklyDigest saved + email to Owner/Admin
+```
+
+- **Max 3 AI calls per workspace per day** (1 summary + 1 blocker + 1 manual trigger)
+- **Circuit breaker** prevents cost hemorrhage during API outages
+- **Submissions never blocked** by AI failures — AI is fully decoupled from submission flow
+
+---
+
+## 📄 License
+
+MIT
 
 ---
 
 <p align="center">
-  For team features, multiple inboxes, and a hosted setup, try
-  <a href="https://mailtrap.io/?ref=mailpit">Mailtrap</a>, our friendly companion.
+  Built by <a href="https://github.com/rohandev19">Rohan</a> as a production-grade portfolio project<br/>
+  demonstrating multi-tenant SaaS architecture, real-time WebSocket systems, and AI API integration.
 </p>
