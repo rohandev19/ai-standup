@@ -22,7 +22,9 @@ import {
   Menu,
   X,
   Plus,
-  LogIn,Bot
+  LogIn,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import styles from './layout.module.css';
 
@@ -95,6 +97,7 @@ export default function DashboardLayout({
     { label: 'Teams', href: '/dashboard/teams', icon: <Users size={20} /> },
     { label: 'History', href: '/dashboard/history', icon: <History size={20} /> },
     { label: 'Analytics', href: '/dashboard/analytics', icon: <TrendingUp size={20} /> },
+    { label: 'Ask AI', href: '/dashboard/ask-ai', icon: <Sparkles size={20} color="#a855f7" /> },
     { label: 'Activity', href: '/dashboard/activity', icon: <Clock size={20} /> },
     { label: 'Create Workspace', href: '#', icon: <Plus size={20} />, action: 'create' },
     { label: 'Join Room', href: '#', icon: <LogIn size={20} />, action: 'join' },
