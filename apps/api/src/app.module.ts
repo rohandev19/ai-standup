@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -19,11 +19,17 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { BillingModule } from './billing/billing.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { Request } from 'express';
 
 @Module({
   imports: [
     LoggerModule.forRoot({
       pinoHttp: {
+        genReqId: (req: Request) => (req as any).id,
+        customProps: (req: Request, res) => ({
+          reqId: (req as any).id,
+        }),
         transport:
           process.env.NODE_ENV !== 'production'
             ? { target: 'pino-pretty', options: { colorize: true } }
@@ -63,4 +69,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

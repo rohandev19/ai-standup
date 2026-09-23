@@ -1,28 +1,28 @@
 /**
- * Quick test: Verify DeepSeek via Experiential Labs gateway works.
+ * Quick test: Verify Gemini API via Google AI Studio works.
  * Run: npx ts-node src/test-deepseek.ts
  */
 import 'dotenv/config';
 import OpenAI from 'openai';
 
 async function main() {
-  const apiKey = process.env.EXPLABS_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error('❌ EXPLABS_API_KEY is not set in .env');
+    console.error('❌ GEMINI_API_KEY is not set in .env');
     process.exit(1);
   }
-  console.log(`✅ EXPLABS_API_KEY found (${apiKey.slice(0, 8)}...)`);
+  console.log(`✅ GEMINI_API_KEY found (${apiKey.slice(0, 8)}...)`);
 
   const client = new OpenAI({
     apiKey,
-    baseURL: 'https://api.experientiallabs.ai/v1',
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
   });
 
-  console.log('\n📡 Calling deepseek-v4.1-flash via Experiential Labs...\n');
+  console.log('\n📡 Calling gemini-3.6-flash via Google AI Studio...\n');
 
   try {
     const response = await client.chat.completions.create({
-      model: 'deepseek-v4.1-flash',
+      model: 'gemini-3.6-flash',
       max_tokens: 200,
       temperature: 0.2,
       messages: [
@@ -49,7 +49,7 @@ async function main() {
     console.log(`\n--- MODEL ---`);
     console.log(`  Model: ${response.model}`);
     console.log(`  ID:    ${response.id}`);
-    console.log('\n✅ DeepSeek API call successful!');
+    console.log('\n✅ Gemini API call successful!');
   } catch (error: any) {
     console.error('\n❌ API call failed:');
     console.error(`  Status: ${error.status}`);

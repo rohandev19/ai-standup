@@ -67,3 +67,12 @@ scripts/mailpit/
 # Documentation Drafts
 # ==================
 COMMIT-SUMMARY.md
+
+# ==================
+# AI Prompts & Instructions
+# ==================
+GEMINI.md
+design.md
+requirements.md
+tasks.md
+.agents/

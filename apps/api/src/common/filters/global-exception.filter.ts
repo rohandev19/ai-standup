@@ -53,7 +53,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message: message,
       timestamp: new Date().toISOString(),
       path: request.url,
-      // We can add requestId if we have request-id middleware
+      requestId: (request as any).id, // Inject requestId from middleware
     });
   }
 }

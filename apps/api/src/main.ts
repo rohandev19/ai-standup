@@ -1,13 +1,25 @@
 import { NestFactory } from '@nestjs/core';
+import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { SentryInterceptor } from './common/interceptors/sentry.interceptor';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from './common/redis/redis-io.adapter';
 import helmet from 'helmet';
 
 async function bootstrap() {
+  // Initialize Sentry before anything else
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [nodeProfilingIntegration()],
+      tracesSampleRate: 1.0, 
+    });
+  }
+
   // ==========================================
   // SECURITY: Validate Critical Environment Variables
   // ==========================================
@@ -59,6 +71,9 @@ async function bootstrap() {
 
   // Use Pino logger
   app.useLogger(app.get(Logger));
+
+  // Global Interceptors
+  app.useGlobalInterceptors(new SentryInterceptor());
 
   // Global Exception Filter
   app.useGlobalFilters(new GlobalExceptionFilter());

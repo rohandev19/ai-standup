@@ -7,22 +7,22 @@ import { CircuitBreakerService } from './circuit-breaker.service';
 export class AiService {
   private openai: OpenAI | null = null;
   private readonly logger = new Logger(AiService.name);
-  private readonly MODEL = 'deepseek-v4.1-flash';
+  private readonly MODEL = 'gemini-3.6-flash';
 
   constructor(private readonly circuitBreaker: CircuitBreakerService) {
-    const apiKey = process.env.EXPLABS_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey) {
       this.openai = new OpenAI({
         apiKey,
-        baseURL: 'https://api.experientiallabs.ai/v1',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
       });
       this.logger.log(
-        'OpenAI client configured via Experiential Labs gateway (DeepSeek).',
+        'OpenAI client configured for Google Gemini (AI Studio).',
       );
     } else {
       this.logger.warn(
-        'EXPLABS_API_KEY is not set. AI extraction will gracefully degrade (skip). ' +
-          'Create one at Settings -> API Keys on platform.experientiallabs.ai',
+        'GEMINI_API_KEY is not set. AI features will gracefully degrade (skip). ' +
+          'Get one free at https://aistudio.google.com/apikey',
       );
     }
   }

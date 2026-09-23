@@ -26,7 +26,7 @@ describe('AiService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    process.env.EXPLABS_API_KEY = 'test-key';
+    process.env.GEMINI_API_KEY = 'test-key';
 
     // We mock CircuitBreakerService to easily throw or execute
     const module: TestingModule = await Test.createTestingModule({
