@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#7c3aed"/>
+  <!-- Chat bubble -->
+  <path d="M128 144 h224 q32 0 32 32 v160 q0 32 -32 32 h-144 l-64 48 v-48 h-16 q-32 0 -32 -32 v-160 q0 -32 32 -32z" fill="white"/>
+  <!-- Lightning bolt -->
+  <path d="M280 164 l-56 100 h40 l-16 84 72 -108 h-44 z" fill="#7c3aed"/>
+</svg>
