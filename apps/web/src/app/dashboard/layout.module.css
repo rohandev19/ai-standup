@@ -383,6 +383,7 @@
   border-radius: var(--radius-sm);
   transition: background 0.2s;
   overflow: hidden;
+  text-decoration: none;
 }
 
 .userProfile:hover {

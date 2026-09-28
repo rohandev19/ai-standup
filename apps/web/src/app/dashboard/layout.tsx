@@ -744,7 +744,7 @@ if (workspaces.length === 0) {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <div className={`${styles.userProfile} ${isSidebarCollapsed ? styles.collapsedUserProfile : ''}`}>
+          <Link href="/dashboard/profile" className={`${styles.userProfile} ${isSidebarCollapsed ? styles.collapsedUserProfile : ''}`} title="View Profile">
             <div className={styles.userAvatar}>
               {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} /> : <UserCircle size={32} />}
             </div>
@@ -754,7 +754,7 @@ if (workspaces.length === 0) {
                 <span className={styles.userEmail}>{user.email}</span>
               </div>
             )}
-          </div>
+          </Link>
           <button className={`${styles.logoutBtn} ${isSidebarCollapsed ? styles.collapsedLogoutBtn : ''}`} onClick={() => { logout(); router.push('/login'); }}>
             {!isSidebarCollapsed && 'Log out'}
             {isSidebarCollapsed && <X size={20} />}
