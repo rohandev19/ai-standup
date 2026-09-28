@@ -98,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        const res = await api.post('/auth/refresh');
         const newToken = res.data.accessToken;
         tokenRef.current = newToken;
         setAccessToken(newToken);

@@ -107,7 +107,8 @@ export function ThreeBackground() {
       canvas: HTMLCanvasElement;
       canvasWidth: number;
       canvasHeight: number;
-      uniforms: Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      uniforms: any;
       stage: Stage;
       mesh: THREE.Mesh | null;
       xScale: number;
