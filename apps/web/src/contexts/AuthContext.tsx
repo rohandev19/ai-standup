@@ -48,10 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const originalRequest = error.config;
         
         // Prevent infinite loops if /auth/refresh itself returns 401
+        // Also don't attempt to refresh if login/register fails with 401
         if (
           error.response?.status === 401 && 
           !originalRequest._retry && 
-          originalRequest.url !== '/auth/refresh'
+          !['/auth/refresh', '/auth/login', '/auth/register', '/auth/logout'].includes(originalRequest.url)
         ) {
           originalRequest._retry = true;
           
