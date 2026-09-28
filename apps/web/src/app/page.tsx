@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from './page.module.css';
 import { Button } from '@/components/Button/Button';
+import { ThreeBackground } from '@/components/ThreeBackground';
 import { 
   Zap, 
   Bot, 
@@ -49,6 +50,7 @@ export default function LandingPage() {
 
   return (
     <main className={styles.main}>
+      <ThreeBackground />
       {/* Navigation */}
       <nav className={styles.nav}>
         <div className={styles.logo}>
