@@ -95,7 +95,7 @@ export default function LandingPage() {
                 <span className={styles.dot}></span>
                 <span className={styles.dot}></span>
               </div>
-              <div className={styles.mockupUrl}>app.aistandup.com</div>
+              <div className={styles.mockupUrl}>aistandup.app</div>
             </div>
             <div className={styles.mockupBody}>
               <div className={styles.mockupSidebar}>

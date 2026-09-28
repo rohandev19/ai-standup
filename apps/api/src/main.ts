@@ -69,6 +69,10 @@ async function bootstrap() {
     rawBody: true,
   });
 
+  // Enable trust proxy for Heroku / load balancers
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   // Use Pino logger
   app.useLogger(app.get(Logger));
 

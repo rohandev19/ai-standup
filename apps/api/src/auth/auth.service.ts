@@ -39,7 +39,7 @@ export class AuthService {
       };
     }
 
-    const saltRounds = 10;
+    const saltRounds = 12; // Increased from 10 for better security against brute-force
     const passwordHash = await bcrypt.hash(password, saltRounds);
     const consentDate = new Date(consentGivenAt);
 
@@ -403,7 +403,7 @@ export class AuthService {
       );
     }
 
-    const saltRounds = 10;
+    const saltRounds = 12; // Increased for better security
     const passwordHash = await bcrypt.hash(newPassword, saltRounds);
 
     await this.usersService.update(userId, { passwordHash });

@@ -219,24 +219,44 @@ export function ThreeBackground() {
       }
     }
 
+    const isWebGLAvailable = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (!isWebGLAvailable()) {
+      console.warn('WebGL is not supported on this device. Disabling 3D background.');
+      return;
+    }
+
     const stage = new Stage();
-    stage.init(canvasRef.current);
-
-    const mesh = new Mesh(stage, canvasRef.current);
-    mesh.init();
-
+    let mesh: Mesh | null = null;
     let animationFrameId: number;
     let isVisible = true;
+    let observer: IntersectionObserver | null = null;
+
+    try {
+      stage.init(canvasRef.current);
+      mesh = new Mesh(stage, canvasRef.current);
+      mesh.init();
+    } catch (e) {
+      console.warn('WebGL is not supported or failed to initialize on this device. Disabling background animation.', e);
+      return; // Exit early so we don't crash the app or run the animation loop
+    }
 
     const handleResize = () => {
       stage.onResize();
-      mesh.onResize();
+      if (mesh) mesh.onResize();
     };
 
     window.addEventListener("resize", handleResize);
 
     // Optimization: Only animate when the canvas is actually visible on screen
-    const observer = new IntersectionObserver((entries) => {
+    observer = new IntersectionObserver((entries) => {
       isVisible = entries[0].isIntersecting;
     });
     observer.observe(canvasRef.current);
@@ -245,7 +265,7 @@ export function ThreeBackground() {
       animationFrameId = window.requestAnimationFrame(() => {
         if (isVisible) {
           stage.onRaf();
-          mesh.onRaf();
+          if (mesh) mesh.onRaf();
         }
         _raf();
       });
@@ -255,11 +275,12 @@ export function ThreeBackground() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      window.cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      if (observer && canvasRef.current) observer.unobserve(canvasRef.current);
       if (stage.renderer) {
           stage.renderer.dispose();
       }
-      if (mesh.mesh) {
+      if (mesh && mesh.mesh) {
           mesh.mesh.geometry.dispose();
           (mesh.mesh.material as THREE.Material).dispose();
       }
