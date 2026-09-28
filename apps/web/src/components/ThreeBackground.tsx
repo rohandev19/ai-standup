@@ -107,7 +107,7 @@ export function ThreeBackground() {
       canvas: HTMLCanvasElement;
       canvasWidth: number;
       canvasHeight: number;
-      uniforms: any;
+      uniforms: Record<string, unknown>;
       stage: Stage;
       mesh: THREE.Mesh | null;
       xScale: number;
@@ -223,7 +223,7 @@ export function ThreeBackground() {
       try {
         const canvas = document.createElement('canvas');
         return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-      } catch (e) {
+      } catch {
         return false;
       }
     };
@@ -239,9 +239,11 @@ export function ThreeBackground() {
     let isVisible = true;
     let observer: IntersectionObserver | null = null;
 
+    const currentCanvas = canvasRef.current;
+
     try {
-      stage.init(canvasRef.current);
-      mesh = new Mesh(stage, canvasRef.current);
+      stage.init(currentCanvas);
+      mesh = new Mesh(stage, currentCanvas);
       mesh.init();
     } catch (e) {
       console.warn('WebGL is not supported or failed to initialize on this device. Disabling background animation.', e);
@@ -259,7 +261,7 @@ export function ThreeBackground() {
     observer = new IntersectionObserver((entries) => {
       isVisible = entries[0].isIntersecting;
     });
-    observer.observe(canvasRef.current);
+    observer.observe(currentCanvas);
 
     const _raf = () => {
       animationFrameId = window.requestAnimationFrame(() => {
@@ -276,7 +278,7 @@ export function ThreeBackground() {
     return () => {
       window.removeEventListener("resize", handleResize);
       if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
-      if (observer && canvasRef.current) observer.unobserve(canvasRef.current);
+      if (observer && currentCanvas) observer.unobserve(currentCanvas);
       if (stage.renderer) {
           stage.renderer.dispose();
       }

@@ -27,10 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Use a ref to keep the latest token without dealing with useEffect firing order
   const tokenRef = React.useRef<string | null>(null);
   
-  // Sync token to ref
-  useEffect(() => {
-    tokenRef.current = accessToken;
-  }, [accessToken]);
+  // Sync token to ref without mutating during render.
+  // We update this ref in the state setter functions (initAuth, login, logout)
+  // so it's always ready before child components mount and make API calls.
 
   // Setup interceptor dinamis (hanya sekali saat mount)
   useEffect(() => {
@@ -41,8 +40,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return config;
     });
 
+    let refreshPromise: Promise<string> | null = null;
+
+    const responseInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        
+        // Prevent infinite loops if /auth/refresh itself returns 401
+        if (
+          error.response?.status === 401 && 
+          !originalRequest._retry && 
+          originalRequest.url !== '/auth/refresh'
+        ) {
+          originalRequest._retry = true;
+          
+          try {
+            if (!refreshPromise) {
+              refreshPromise = api.post('/auth/refresh').then(res => {
+                const newToken = res.data.accessToken;
+                // Update token in state and ref
+                setAccessToken(newToken);
+                tokenRef.current = newToken;
+                return newToken;
+              }).finally(() => {
+                refreshPromise = null; // Reset when done
+              });
+            }
+
+            // Await the shared refresh promise
+            const newToken = await refreshPromise;
+            
+            // Update the failed request's header and retry it
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          } catch (refreshError) {
+            // Refresh failed (e.g. refresh token expired)
+            // Log out user by clearing state
+            setAccessToken(null);
+            setUser(null);
+            tokenRef.current = null;
+            return Promise.reject(refreshError);
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
+
     return () => {
       api.interceptors.request.eject(requestInterceptor);
+      api.interceptors.response.eject(responseInterceptor);
     };
   }, []);
 
@@ -50,11 +98,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const res = await api.post('/auth/refresh');
-        setAccessToken(res.data.accessToken);
+        const newToken = res.data.accessToken;
+        tokenRef.current = newToken;
+        setAccessToken(newToken);
         setUser(res.data.user);
       } catch {
         // Refresh token invalid atau tidak ada
+        tokenRef.current = null;
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -65,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (token: string, userData: User) => {
+    tokenRef.current = token;
     setAccessToken(token);
     setUser(userData);
   };
@@ -75,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+    tokenRef.current = null;
     setAccessToken(null);
     setUser(null);
   };

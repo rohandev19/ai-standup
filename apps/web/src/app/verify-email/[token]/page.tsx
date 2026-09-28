@@ -12,16 +12,12 @@ export default function VerifyEmailPage() {
   const params = useParams();
   const token = params.token as string;
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(!!token);
+  const [error, setError] = useState(!token ? 'Invalid verification link' : '');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid verification link');
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
 
     const verifyEmail = async () => {
       try {

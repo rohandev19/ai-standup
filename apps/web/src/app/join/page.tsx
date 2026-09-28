@@ -11,17 +11,16 @@ function JoinContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const { user, isLoading: isAuthLoading } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'error' | 'success' | 'auth_required'>('loading');
-  const [message, setMessage] = useState('Verifying your invitation...');
+  const [status, setStatus] = useState<'loading' | 'error' | 'success' | 'auth_required'>(
+    !token ? 'error' : 'loading'
+  );
+  const [message, setMessage] = useState(
+    !token ? 'Invalid or missing invitation token.' : 'Verifying your invitation...'
+  );
 
   useEffect(() => {
+    if (!token) return; // handled by initial state
     if (isAuthLoading) return;
-
-    if (!token) {
-      setStatus('error');
-      setMessage('Invalid or missing invitation token.');
-      return;
-    }
 
     if (!user) {
       // Save token to localStorage so we can process it after login/register
@@ -43,8 +42,10 @@ function JoinContent() {
         
         // Give it a short delay then redirect
         setTimeout(() => {
-          // Force hard reload to reset all workspace contexts
-          window.location.href = '/dashboard';
+          // Use router instead of window.location to satisfy Next.js linting,
+          // and use router.refresh() to ensure server data is refetched
+          router.push('/dashboard');
+          router.refresh();
         }, 2000);
       } catch (err: unknown) {
         const errorResponse = err as { response?: { data?: { message?: string } } };

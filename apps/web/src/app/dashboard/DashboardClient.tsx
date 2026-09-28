@@ -42,19 +42,21 @@ export default function DashboardClient() {
   const fetchDashboardState = async () => {
     if (!activeWorkspaceId) return;
     try {
-      setLoading(true);
       const res = await api.get(`/workspaces/${activeWorkspaceId}/standups/dashboard-state`);
       setState(res.data);
       setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load dashboard state');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { message?: string } } };
+      setError(apiError.response?.data?.message || 'Failed to load dashboard state');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchDashboardState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeWorkspaceId]);
 
   // 2. WebSocket Connection and Listeners
@@ -90,7 +92,9 @@ export default function DashboardClient() {
             const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             return {
               ...m,
-              status: data.status === 'SUBMITTED' || data.status === 'PENDING_AI' ? 'submitted' : data.status as any,
+              status: (data.status === 'SUBMITTED' || data.status === 'PENDING_AI' 
+                ? 'submitted' 
+                : data.status.toLowerCase()) as 'submitted' | 'late' | 'not_yet' | 'missed',
               time: timeStr,
             };
           }
@@ -125,7 +129,7 @@ export default function DashboardClient() {
        });
     });
 
-    socket.on('member_joined', (data: { member: any }) => {
+    socket.on('member_joined', () => {
        fetchDashboardState(); 
     });
 
@@ -246,6 +250,7 @@ export default function DashboardClient() {
                 <Card key={s.id} className={styles.feedItem}>
                   <div className={styles.feedHeader}>
                     <div className={styles.feedAvatar}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} /> : s.name.charAt(0)}
                     </div>
                     <div>
@@ -312,6 +317,7 @@ export default function DashboardClient() {
                       fontSize: '0.8125rem', fontWeight: 600,
                       transition: 'background 0.3s ease',
                     }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       {m.avatarUrl ? <img src={m.avatarUrl} alt={m.name} style={{width:'100%', height:'100%', borderRadius:'50%'}}/> : m.name.charAt(0)}
                     </div>
                     <div>
