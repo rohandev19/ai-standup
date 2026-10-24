@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Card } from '@/components/Card/Card';
 import { Badge } from '@/components/Badge/Badge';
+import { Button } from '@/components/Button/Button';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
@@ -13,12 +15,13 @@ import {
   getStatusPresentation,
   hasSubmitted,
 } from '@/lib/status';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 interface DashboardState {
   stats: {
-    submitted: number;
     totalMembers: number;
+    submitted: number;
     activeBlockers: number;
     windowStatus: 'open' | 'closed';
     windowRemaining: string;
@@ -42,6 +45,7 @@ export default function DashboardClient() {
   const activeWorkspaceId = activeWorkspace?.id;
   const [state, setState] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const loadingRef = useRef(loading);
   useEffect(() => {
     loadingRef.current = loading;
@@ -53,9 +57,10 @@ export default function DashboardClient() {
   const fetchDashboardState = useCallback(async () => {
     if (!activeWorkspaceId) return;
     try {
+      setLoading(true);
+      setError(null);
       const res = await api.get(`/workspaces/${activeWorkspaceId}/standups/dashboard-state`);
       setState(res.data);
-      setError(null);
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { message?: string } } };
       setError(apiError.response?.data?.message || 'Failed to load dashboard state');
@@ -95,33 +100,36 @@ export default function DashboardClient() {
   useEffect(() => {
     if (!accessToken || !activeWorkspaceId) return;
 
-    // Connect to proxy /socket.io or directly. For now, since Next.js rewrites /api, we should use the backend URL for socket.io if we don't have a rewrite for /socket.io.
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    
-    const socket = io(backendUrl, {
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const socket = io(socketUrl, {
       auth: { token: accessToken },
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
     });
-    
     socketRef.current = socket;
 
     socket.on('connect', () => {
+      setIsConnected(true);
       // 5.9 Auto-reconnect + resync full state via REST
       if (!loadingRef.current) { 
         fetchDashboardState();
       }
 
+      // Join Workspace Room
       socket.emit('join_workspace', { workspaceId: activeWorkspaceId });
     });
 
-    socket.on('presence_update', (data: { userId: string; status: string }) => {
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socket.on('standup_submitted', (data: { memberId: string; status: string; time: string }) => {
+      const timeStr = data.time ? new Date(data.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+
       setState((prev) => {
         if (!prev) return prev;
-        
-        // Re-calculate stats and update member status
         const newMembers = prev.members.map((m) => {
-          if (m.id === data.userId) {
-            const now = new Date();
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+          if (m.id === data.memberId) {
             return {
               ...m,
               status: (data.status === 'SUBMITTED' || data.status === 'PENDING_AI' 
@@ -137,32 +145,36 @@ export default function DashboardClient() {
 
         return {
           ...prev,
+          members: newMembers,
           stats: {
             ...prev.stats,
             submitted: newSubmitted,
           },
-          members: newMembers,
         };
       });
     });
 
-    socket.on('member_removed', (data: { userId: string }) => {
-       setState((prev) => {
+    socket.on('blocker_detected', () => {
+      setState((prev) => {
         if (!prev) return prev;
-        const newMembers = prev.members.filter(m => m.id !== data.userId);
         return {
           ...prev,
           stats: {
             ...prev.stats,
-            totalMembers: newMembers.length,
+            activeBlockers: prev.stats.activeBlockers + 1,
           },
-          members: newMembers,
         };
-       });
+      });
     });
 
-    socket.on('member_joined', () => {
-       fetchDashboardState(); 
+    socket.on('summary_generated', (data: { summary: string }) => {
+      setState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          aiSummary: data.summary,
+        };
+      });
     });
 
     return () => {
@@ -171,15 +183,34 @@ export default function DashboardClient() {
   }, [accessToken, activeWorkspaceId, fetchDashboardState]);
 
   if (!activeWorkspaceId) {
-    return <div style={{ padding: '2rem' }}>Please select a workspace.</div>;
+    return (
+      <div style={{ padding: '2rem' }}>
+        <EmptyState title="No workspace selected" description="Please select a workspace from the sidebar to view the dashboard." tone="calm" />
+      </div>
+    );
   }
 
   if (loading && !state) {
-    return <div style={{ padding: '2rem' }}>Loading dashboard...</div>;
+    return (
+      <div style={{ padding: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+        <RefreshCw size={16} className="animate-spin" />
+        <span>Loading dashboard...</span>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div style={{ padding: '2rem', color: 'red' }}>Error: {error}</div>;
+  if (error && !state) {
+    return (
+      <div className={styles.errorCard}>
+        <div>
+          <div className={styles.errorTitle}>Failed to load dashboard</div>
+          <div className={styles.errorDesc}>{error}</div>
+        </div>
+        <Button variant="secondary" onClick={fetchDashboardState}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   if (!state) return null;
@@ -196,183 +227,212 @@ export default function DashboardClient() {
 
   return (
     <div className={styles.dashboard}>
-      {/* Stats Row */}
-      <div className={styles.statsGrid}>
-        <Card>
+      {/* Secondary Compact Stats Strip */}
+      <div className={styles.statsStrip}>
+        <Card className={styles.statCard}>
           <div className={styles.statLabel}>Submission Rate</div>
-          <div className={styles.statValue}>
-            {submissionRate}<span className={styles.statMuted}>%</span>
+          <div className={styles.statValueRow}>
+            <span className={styles.statValue}>{submissionRate}%</span>
           </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+          <div className={styles.statSubtext}>
             {state.stats.submitted} of {state.stats.totalMembers} submitted
           </div>
         </Card>
-        <Card>
+
+        <Card className={styles.statCard}>
           <div className={styles.statLabel}>Team Members</div>
-          <div className={styles.statValue}>{state.stats.totalMembers}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Active this workspace
+          <div className={styles.statValueRow}>
+            <span className={styles.statValue}>{state.stats.totalMembers}</span>
+          </div>
+          <div className={styles.statSubtext}>
+            Active in workspace
           </div>
         </Card>
-        <Card>
+
+        <Card className={styles.statCard}>
           <div className={styles.statLabel}>Active Blockers</div>
-          <div className={state.stats.activeBlockers > 0 ? styles.statValueError : styles.statValue}>
-            {state.stats.activeBlockers}
+          <div className={styles.statValueRow}>
+            <span className={state.stats.activeBlockers > 0 ? styles.statValueError : styles.statValue}>
+              {state.stats.activeBlockers}
+            </span>
           </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Needs attention
+          <div className={styles.statSubtext}>
+            {state.stats.activeBlockers > 0 ? 'Needs team attention' : 'No blockers'}
           </div>
         </Card>
-        <Card>
-          <div className={styles.statLabel}>Window Status</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+
+        <Card className={styles.statCard}>
+          <div className={styles.statLabel}>Standup Window</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
             <Badge variant={state.stats.windowStatus === 'open' ? 'success' : 'neutral'} dot>
-               {state.stats.windowStatus === 'open' ? 'Active' : 'Closed'}
+              {state.stats.windowStatus === 'open' ? 'Open' : 'Closed'}
             </Badge>
           </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          <div className={styles.statSubtext}>
             {state.stats.windowRemaining} remaining
           </div>
         </Card>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Main Grid: Presence Dominan di Kiri, AI Summary & Submissions di Kanan */}
       <div className={styles.mainGrid}>
-        {/* Left Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* AI Summary */}
+        {/* Left Column — Team Presence (Primary Anchor) */}
+        <div className={styles.primaryColumn}>
+          {/* Active Blockers Alert Box if any */}
+          {activeBlockersList.length > 0 && (
+            <div className={styles.blockerAlert}>
+              <div className={styles.blockerAlertTitle}>
+                <AlertTriangle size={16} />
+                <span>Active Blockers ({activeBlockersList.length})</span>
+              </div>
+              <ul className={styles.blockerList}>
+                {activeBlockersList.map((m) => (
+                  <li key={m.id} className={styles.blockerItem}>
+                    <div className={styles.blockerAuthorRow}>
+                      <strong>{m.name}</strong>
+                      {m.blocker && (
+                        <Badge variant={getSeverityPresentation(m.blocker.severity).variant} size="sm">
+                          {getSeverityPresentation(m.blocker.severity).label}
+                        </Badge>
+                      )}
+                    </div>
+                    {m.blocker?.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Team Presence Section */}
           <section>
             <div className={styles.sectionHeader}>
-              <h2>Today&apos;s AI Summary</h2>
-              <Badge variant="purple">AI Generated</Badge>
+              <div className={styles.sectionTitleGroup}>
+                <h2>Team Presence</h2>
+                {isConnected ? (
+                  <Badge variant="success" dot size="sm">Live</Badge>
+                ) : (
+                  <Badge variant="warning" dot size="sm">Reconnecting…</Badge>
+                )}
+              </div>
             </div>
-            <Card glow className={styles.aiCard}>
+
+            {/* Progress Bar Card */}
+            <Card className={styles.progressCard}>
+              <div className={styles.progressHeader}>
+                <span style={{ color: 'var(--text-secondary)' }}>Today&apos;s Participation</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {state.stats.submitted}/{state.stats.totalMembers}
+                </span>
+              </div>
+              <div className={styles.progressTrack}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${submissionRate}%` }}
+                />
+              </div>
+            </Card>
+
+            {/* Members List */}
+            <div className={styles.memberList}>
+              {state.members.map((m) => {
+                const isSub = m.status === 'submitted';
+                const isLate = m.status === 'late';
+                const isMissed = m.status === 'missed';
+
+                const avatarClass = isSub
+                  ? styles.avatarSubmitted
+                  : isLate
+                  ? styles.avatarLate
+                  : isMissed
+                  ? styles.avatarMissed
+                  : '';
+
+                return (
+                  <Card key={m.id} className={styles.memberCard}>
+                    <div className={styles.memberRow}>
+                      <div className={styles.memberInfo}>
+                        <div className={`${styles.avatar} ${avatarClass}`}>
+                          {m.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={m.avatarUrl} alt={m.name} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                          ) : (
+                            m.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <div className={styles.memberName}>{m.name}</div>
+                          {m.time && (
+                            <div className={styles.memberTime}>{m.time}</div>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={getStatusPresentation(m.status).variant}
+                        dot={m.status === 'submitted'}
+                      >
+                        {getStatusPresentation(m.status).label}
+                      </Badge>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        {/* Right Column — AI Summary & Recent Submissions */}
+        <div className={styles.secondaryColumn}>
+          {/* AI Summary Card (No purple glow slop) */}
+          <section>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <h2>AI Summary</h2>
+                <Badge variant="purple">AI-generated</Badge>
+              </div>
+            </div>
+            <Card className={styles.aiCard}>
               <div className={styles.aiContent}>
                 <p>{aiSummaryText}</p>
               </div>
-
-              {/* Blockers */}
-              {activeBlockersList.length > 0 && (
-                <div className={styles.blockerAlert}>
-                  <h4>⚠ Active Blockers ({activeBlockersList.length})</h4>
-                  <ul>
-                    {activeBlockersList.map((m) => (
-                      <li key={m.id}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <strong>{m.name}</strong>
-                          {m.blocker && (
-                            <Badge variant={getSeverityPresentation(m.blocker.severity).variant} size="sm">
-                              {getSeverityPresentation(m.blocker.severity).label}
-                            </Badge>
-                          )}
-                        </div>
-                        {m.blocker?.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </Card>
           </section>
 
-          {/* Recent Submissions */}
+          {/* Recent Submissions Feed */}
           <section>
             <div className={styles.sectionHeader}>
-              <h2>Recent Submissions</h2>
-              <Badge variant="success" dot>Live</Badge>
+              <div className={styles.sectionTitleGroup}>
+                <h2>Recent Submissions</h2>
+              </div>
             </div>
             <div className={styles.feedList}>
               {recentSubmissions.map((s) => (
                 <Card key={s.id} className={styles.feedItem}>
                   <div className={styles.feedHeader}>
-                    <div className={styles.feedAvatar}>
+                    <div className={styles.avatar}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} /> : s.name.charAt(0)}
+                      {s.avatarUrl ? <img src={s.avatarUrl} alt={s.name} /> : s.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <div className={styles.feedName}>{s.name}</div>
-                      <div className={styles.feedTime}>{s.time}</div>
+                      <div className={styles.memberName}>{s.name}</div>
+                      <div className={styles.memberTime}>{s.time}</div>
                     </div>
                   </div>
                   <div className={styles.feedText}>
                     {s.yesterday && <p><strong>Yesterday:</strong> {s.yesterday}</p>}
                     {s.today && <p><strong>Today:</strong> {s.today}</p>}
-                    {s.blocker && <p style={{ color: '#f87171' }}><strong>Blocker:</strong> {s.blocker.text}</p>}
+                    {s.blocker && <p className={styles.feedBlocker}><strong>Blocker:</strong> {s.blocker.text}</p>}
                   </div>
                 </Card>
               ))}
               {recentSubmissions.length === 0 && (
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No submissions yet today.</div>
+                <EmptyState
+                  title="No submissions yet"
+                  description="Updates will appear here as soon as team members submit."
+                  tone="calm"
+                />
               )}
             </div>
           </section>
-        </div>
-
-        {/* Right Column — Presence */}
-        <div>
-          <div className={styles.sectionHeader}>
-            <h2>Team Presence</h2>
-          </div>
-
-          {/* Progress bar */}
-          <Card style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Progress</span>
-              <span style={{ fontWeight: 600 }}>{state.stats.submitted}/{state.stats.totalMembers}</span>
-            </div>
-            <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'var(--border-glass)', overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${submissionRate}%`,
-                  height: '100%',
-                  background: 'var(--gradient-glow)',
-                  borderRadius: '4px',
-                  transition: 'width 0.5s ease',
-                }}
-              />
-            </div>
-          </Card>
-
-          {/* Member list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {state.members.map((m) => (
-              <Card 
-                key={m.id} 
-                style={{ 
-                  padding: '1rem 1.25rem',
-                  transition: 'all 0.3s ease', 
-                  transform: m.status === 'submitted' ? 'translateY(0)' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '50%',
-                      background: m.status === 'submitted' ? 'var(--gradient-glow)' : 'var(--border-glass)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.8125rem', fontWeight: 600,
-                      transition: 'background 0.3s ease',
-                    }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {m.avatarUrl ? <img src={m.avatarUrl} alt={m.name} style={{width:'100%', height:'100%', borderRadius:'50%'}}/> : m.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{m.name}</div>
-                      {m.time && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{m.time}</div>
-                      )}
-                    </div>
-                  </div>
-                  <Badge
-                    variant={getStatusPresentation(m.status).variant}
-                    dot={m.status === 'submitted'}
-                  >
-                    {getStatusPresentation(m.status).label}
-                  </Badge>
-                </div>
-              </Card>
-            ))}
-          </div>
         </div>
       </div>
     </div>
