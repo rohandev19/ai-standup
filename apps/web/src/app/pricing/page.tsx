@@ -1,53 +1,53 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Button } from '@/components/Button/Button';
+import { Check } from 'lucide-react';
 import styles from './pricing.module.css';
 
 export const metadata: Metadata = {
   title: 'Pricing | AI Standup',
-  description: 'Simple, transparent pricing for AI Standup. Start free with all features. Upgrade when your team grows.',
+  description: 'Simple, transparent pricing for AI Standup. Start free with all core features during public beta.',
 };
 
 export default function PricingPage() {
   const faqs = [
     {
-      q: 'Is the Free plan really free forever?',
-      a: 'Yes. The Free plan includes all current features with no time limit. We believe in letting teams experience the full product before considering an upgrade.',
+      q: 'Is the Free plan really free?',
+      a: 'Yes. The Free plan includes all core standup features without a time limit. We believe in letting teams experience the product before considering paid plans.',
     },
     {
       q: 'What happens when Pro launches?',
-      a: 'Your Free plan stays free. Pro will add advanced features like custom standup questions, Slack integration, and voice input. Free users will not lose any existing functionality.',
+      a: 'Your Free plan stays free. Pro will add enterprise features like custom question workflows and Slack integrations. Free workspaces retain full functionality.',
     },
     {
       q: 'Can I switch plans later?',
-      a: 'Absolutely. When paid plans launch, you\'ll be able to upgrade or downgrade at any time. Your data is always preserved regardless of plan changes.',
+      a: 'Yes. When paid tiers open, you can upgrade or downgrade at any time. Your standup history is preserved.',
     },
     {
       q: 'Is there a limit on team members?',
-      a: 'The Free plan supports up to 30 members per workspace. If you need more, the upcoming Pro and Enterprise plans will offer higher limits.',
+      a: 'The Free tier supports up to 5 members per workspace. Pro plans support growing teams with higher limits.',
     },
   ];
 
   return (
     <div className={styles.pricingPage}>
       <nav className={styles.nav}>
-        <Link href="/">
-          <span className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>AI Standup</span>
+        <Link href="/" className={styles.logo}>
+          AI Standup
         </Link>
         <div className={styles.navLinks}>
           <Link href="/#features" className={styles.link}>Features</Link>
-          <Link href="/login" className={styles.link}>Login</Link>
+          <Link href="/login" className={styles.link}>Log in</Link>
           <Link href="/register">
-            <Button variant="glass">Get Started</Button>
+            <Button variant="primary">Get started</Button>
           </Link>
         </div>
       </nav>
 
       <section className={styles.heroSection}>
-        <span className={styles.label}>Pricing</span>
-        <h1 className={styles.title}>Simple, transparent pricing</h1>
+        <h1 className={styles.title}>Simple, transparent plans</h1>
         <p className={styles.subtitle}>
-          Start free with every feature. No credit card required. Upgrade when paid plans launch.
+          Start free with all core capabilities during our public beta. No credit card required.
         </p>
       </section>
 
@@ -56,7 +56,7 @@ export default function PricingPage() {
           {/* Free */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h3>Free</h3>
+              <h3 className={styles.cardTitle}>Free</h3>
               <div className={styles.amount}>
                 <span className={styles.currency}>$</span>
                 <span className={styles.value}>0</span>
@@ -65,67 +65,59 @@ export default function PricingPage() {
               <p className={styles.cardDesc}>Everything you need for a small team</p>
             </div>
             <ul className={styles.featureList}>
-              <li>Up to 30 team members</li>
-              <li>AI daily summaries (Claude-powered)</li>
-              <li>AI blocker detection &amp; severity</li>
-              <li>Real-time presence dashboard</li>
-              <li>Automatic weekly digests</li>
-              <li>Team analytics &amp; health score</li>
-              <li>Email notifications &amp; reminders</li>
-              <li>Standup history &amp; search</li>
-              <li>Data export (CSV)</li>
-              <li>Activity audit log</li>
+              <li><Check size={16} className={styles.checkIcon} /> Up to 5 team members</li>
+              <li><Check size={16} className={styles.checkIcon} /> Daily standup submissions</li>
+              <li><Check size={16} className={styles.checkIcon} /> Real-time presence dashboard</li>
+              <li><Check size={16} className={styles.checkIcon} /> Email reminders & notifications</li>
+              <li><Check size={16} className={styles.checkIcon} /> Standup history & search</li>
             </ul>
             <Link href="/register">
-              <Button variant="primary" fullWidth>Start for free</Button>
+              <Button variant="secondary" fullWidth>Get started free</Button>
             </Link>
           </div>
 
           {/* Pro */}
           <div className={`${styles.card} ${styles.cardFeatured}`}>
-            <div className={styles.badge}>Coming Soon</div>
+            <div className={styles.badge}>Free during beta</div>
             <div className={styles.cardHeader}>
-              <h3>Pro</h3>
+              <h3 className={styles.cardTitle}>Pro</h3>
               <div className={styles.amount}>
                 <span className={styles.currency}>$</span>
-                <span className={styles.value}>8</span>
-                <span className={styles.period}>/user/month</span>
+                <span className={styles.value}>0</span>
+                <span className={styles.period}>/month</span>
               </div>
-              <p className={styles.cardDesc}>Advanced features for growing teams</p>
+              <p className={styles.cardDesc}>For growing engineering teams requiring AI synthesis</p>
             </div>
             <ul className={styles.featureList}>
-              <li>Everything in Free</li>
-              <li className={styles.featureNew}>Custom standup questions</li>
-              <li className={styles.featureNew}>Slack &amp; Microsoft Teams integration</li>
-              <li className={styles.featureNew}>Voice input with AI transcription</li>
-              <li className={styles.featureNew}>Multi-language AI summaries</li>
-              <li className={styles.featureNew}>Advanced analytics &amp; trends</li>
-              <li className={styles.featureNew}>Priority email support</li>
-              <li>Unlimited team members</li>
+              <li><Check size={16} className={styles.checkIcon} /> Everything in Free</li>
+              <li><Check size={16} className={styles.checkIcon} /> Unlimited team members</li>
+              <li><Check size={16} className={styles.checkIcon} /> AI daily summaries (Claude)</li>
+              <li><Check size={16} className={styles.checkIcon} /> AI blocker detection & severity</li>
+              <li><Check size={16} className={styles.checkIcon} /> Team health & participation metrics</li>
             </ul>
-            <Button variant="secondary" fullWidth disabled>Notify me when available</Button>
+            <Link href="/register">
+              <Button variant="primary" fullWidth>Get started free</Button>
+            </Link>
           </div>
 
           {/* Enterprise */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h3>Enterprise</h3>
+              <h3 className={styles.cardTitle}>Enterprise</h3>
               <div className={styles.amount}>
-                <span className={styles.value} style={{ fontSize: '2rem' }}>Custom</span>
+                <span className={styles.value} style={{ fontSize: '2.5rem' }}>Custom</span>
               </div>
-              <p className={styles.cardDesc}>For organizations with specific requirements</p>
+              <p className={styles.cardDesc}>For organizations with specific compliance requirements</p>
             </div>
             <ul className={styles.featureList}>
-              <li>Everything in Pro</li>
-              <li className={styles.featureNew}>SSO / SAML authentication</li>
-              <li className={styles.featureNew}>Jira, GitHub &amp; Linear integrations</li>
-              <li className={styles.featureNew}>Dedicated instance</li>
-              <li className={styles.featureNew}>Custom AI model configuration</li>
-              <li className={styles.featureNew}>SLA guarantee (99.9%)</li>
-              <li className={styles.featureNew}>Dedicated onboarding &amp; support</li>
-              <li className={styles.featureNew}>Custom data retention policies</li>
+              <li><Check size={16} className={styles.checkIcon} /> Everything in Pro</li>
+              <li><Check size={16} className={styles.checkIcon} /> Weekly synthesized AI digests</li>
+              <li><Check size={16} className={styles.checkIcon} /> Full CSV data exports</li>
+              <li><Check size={16} className={styles.checkIcon} /> Priority technical support</li>
             </ul>
-            <Button variant="secondary" fullWidth disabled>Contact sales</Button>
+            <Link href="/register">
+              <Button variant="secondary" fullWidth>Contact team</Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -17,7 +17,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/three": "^0.186.0",
     "axios": "^1.19.0",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
@@ -27,7 +26,6 @@
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
     "socket.io-client": "^4.8.3",
-    "three": "^0.186.1",
     "typescript": "^5"
   },
   "devDependencies": {

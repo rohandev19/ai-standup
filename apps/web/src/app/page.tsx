@@ -2,24 +2,24 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from './page.module.css';
 import { Button } from '@/components/Button/Button';
-import { ThreeBackground } from '@/components/ThreeBackground';
+import { LandingNav } from '@/components/LandingNav';
 import { 
-  Zap, 
+  Users, 
   Bot, 
-  Rocket, 
-  BarChart3, 
-  Bell, 
-  Lock, 
-  ClipboardList, 
-  TrendingUp 
+  AlertTriangle, 
+  CheckCircle2, 
+  Clock, 
+  XCircle,
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'AI Standup | Automate your daily standups with AI',
-  description: 'Replace boring Zoom meetings. Async team standups with AI-powered summaries and blocker detection.',
+  title: 'AI Standup | Async Team Standups and AI Summaries',
+  description: 'Async team standups with automated AI summaries and real-time blocker detection for remote engineering teams.',
   openGraph: {
-    title: 'AI Standup | Automate your daily standups with AI',
-    description: 'Replace boring Zoom meetings. Async team standups with AI-powered summaries and blocker detection.',
+    title: 'AI Standup | Async Team Standups and AI Summaries',
+    description: 'Async team standups with automated AI summaries and real-time blocker detection for remote engineering teams.',
     type: 'website',
   }
 };
@@ -28,302 +28,318 @@ export default function LandingPage() {
   const faqs = [
     {
       q: 'How does the AI summary work?',
-      a: 'When your team\'s submission window closes each day, our AI (powered by Claude) reads all standup entries and generates a concise narrative summary highlighting key progress, blockers, and patterns — so managers don\'t have to read every entry individually.',
+      a: 'When your team submission window closes each day, Claude AI reads all standup entries and generates a concise narrative summary highlighting accomplishments, blockers, and participation metrics. Leads read one synthesized digest instead of chasing individual updates.',
     },
     {
-      q: 'Is my team\'s data private?',
-      a: 'Absolutely. Every workspace is fully isolated — your data is never visible to other workspaces. Standup content is only sent to our AI provider (Anthropic Claude) for summarization and is not stored by them. See our Privacy Policy for full details.',
+      q: 'Is my team data private?',
+      a: 'Yes. Every workspace is completely isolated at the database level. Your data is never accessible to other organizations. Standup entries are sent to Anthropic Claude strictly for summarization under enterprise data protection standards.',
     },
     {
-      q: 'Do we need to install anything?',
-      a: 'No. AI Standup is a web app that works in any modern browser. No desktop app, no browser extension, no Slack bot required. Just open the URL, log in, and submit your standup.',
+      q: 'Do we need to install browser extensions or bots?',
+      a: 'No. AI Standup works entirely in any modern browser. There are no bots to configure, no extensions to maintain, and no complex integrations required to get started.',
     },
     {
-      q: 'Can team members submit at different times?',
-      a: 'Yes — that\'s the whole point! Each workspace has a configurable submission window (e.g., 8 AM to 11 AM). Members can submit anytime within that window, or even outside it (marked as "Late"). No more scheduling conflicts.',
+      q: 'Can teammates submit at different times?',
+      a: 'Yes. Each workspace defines a custom window (for example, 08:00 to 11:00 AM in your team timezone). Teammates submit whenever they start their day, and any late submissions are clearly tagged without blocking the team.',
     },
     {
       q: 'What happens if someone forgets to submit?',
-      a: 'Members get an automated reminder 30 minutes before the window closes. If they still don\'t submit, their status is marked as "Missed" on the dashboard. Managers can see participation trends in the Analytics view.',
+      a: 'Members receive an automated reminder 30 minutes before the window closes. If they still do not submit, their status is marked as Missed on the live presence board, giving leads clear visibility without manual check-ins.',
     },
   ];
 
   return (
-    <main className={styles.main}>
-      <ThreeBackground />
-      {/* Navigation */}
-      <nav className={styles.nav}>
-        <div className={styles.logo}>
-          <span className="text-gradient">AI Standup</span>
-        </div>
-        <div className={styles.navLinks}>
-          <Link href="#features" className={styles.link}>Features</Link>
-          <Link href="#pricing" className={styles.link}>Pricing</Link>
-          <Link href="/login" className={styles.link}>Login</Link>
-          <Link href="/register">
-            <Button variant="glass">Get Started</Button>
-          </Link>
-        </div>
-      </nav>
+    <div className={styles.container}>
+      <LandingNav />
 
       {/* Hero Section */}
       <section className={styles.hero}>
-        <div className={`${styles.heroContent} animate-slide-up`}>
+        <div className={styles.heroContent}>
           <h1 className={styles.title}>
-            Automate your daily standups with <span className="text-gradient">AI.</span>
+            Async daily standups with automated summaries and blocker detection.
           </h1>
           <p className={styles.subtitle}>
-            Replace boring Zoom meetings. Team members drop quick async updates, 
-            and our AI summarizes progress, highlights blockers, and delivers a daily digest.
+            Replace synchronous status calls. Team members share quick updates on their own schedule, and Claude AI generates daily digests and flags blockers in real time.
           </p>
           <div className={styles.ctaGroup}>
             <Link href="/register">
               <Button variant="primary">Start for free</Button>
             </Link>
             <Link href="#how-it-works">
-              <Button variant="secondary">Learn more</Button>
+              <Button variant="secondary">See how it works</Button>
             </Link>
           </div>
         </div>
 
-        {/* Dashboard Mockup */}
-        <div className={styles.heroImageWrapper}>
-          <div className={styles.dashboardMockup}>
-            <div className={styles.mockupHeader}>
-              <div className={styles.mockupDots}>
-                <span className={styles.dot}></span>
-                <span className={styles.dot}></span>
-                <span className={styles.dot}></span>
+        {/* Real Product Preview */}
+        <div className={styles.productPreviewWrapper}>
+          <div className={styles.productPreviewCard}>
+            <div className={styles.previewHeader}>
+              <div className={styles.previewTeamInfo}>
+                <span className={styles.previewTeamName}>Platform Engineering</span>
+                <span className={styles.previewMeta}>Window: 09:00 – 11:00 AM</span>
               </div>
-              <div className={styles.mockupUrl}>aistandup.app</div>
+              <div className={styles.liveIndicator}>
+                <span className={styles.liveDot} /> Live
+              </div>
             </div>
-            <div className={styles.mockupBody}>
-              <div className={styles.mockupSidebar}>
-                <div className={styles.mockupSidebarItem}></div>
-                <div className={styles.mockupSidebarItem}></div>
-                <div className={styles.mockupSidebarItem}></div>
+
+            <div className={styles.previewStats}>
+              <div className={styles.previewStatItem}>
+                <span className={styles.previewStatLabel}>Submissions</span>
+                <span className={styles.previewStatValue}>4 of 5 (80%)</span>
               </div>
-              <div className={styles.mockupContent}>
-                <div className={styles.mockupTitle}>Today&apos;s AI Summary</div>
-                <div className={styles.mockupStats}>
-                  <div className={styles.mockupStatCard}></div>
-                  <div className={styles.mockupStatCard}></div>
-                  <div className={styles.mockupStatCard}></div>
+              <div className={styles.previewStatItem}>
+                <span className={styles.previewStatLabel}>Active Blockers</span>
+                <span className={styles.previewStatValue} style={{ color: 'var(--sev-high)' }}>1 High Severity</span>
+              </div>
+            </div>
+
+            <div className={styles.previewGrid}>
+              {/* Presence List */}
+              <div className={styles.previewPresence}>
+                <div className={styles.previewSectionTitle}>Team Presence</div>
+                <div className={styles.previewPresenceItem}>
+                  <div className={styles.previewAvatar}>AC</div>
+                  <div className={styles.previewMemberInfo}>
+                    <span className={styles.previewMemberName}>Alex Chen</span>
+                    <span className={styles.previewMemberTime}>Submitted 09:14</span>
+                  </div>
+                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
+                    <CheckCircle2 size={12} /> Submitted
+                  </span>
                 </div>
-                <div className={styles.mockupTextLine}></div>
-                <div className={styles.mockupTextLine}></div>
-                <div className={styles.mockupTextLine} style={{width: '60%'}}></div>
+                <div className={styles.previewPresenceItem}>
+                  <div className={styles.previewAvatar}>SJ</div>
+                  <div className={styles.previewMemberInfo}>
+                    <span className={styles.previewMemberName}>Sara Jenkins</span>
+                    <span className={styles.previewMemberTime}>Submitted 09:42</span>
+                  </div>
+                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
+                    <CheckCircle2 size={12} /> Submitted
+                  </span>
+                </div>
+                <div className={styles.previewPresenceItem}>
+                  <div className={styles.previewAvatar}>DK</div>
+                  <div className={styles.previewMemberInfo}>
+                    <span className={styles.previewMemberName}>David Kim</span>
+                    <span className={styles.previewMemberTime}>Submitted 10:15</span>
+                  </div>
+                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
+                    <CheckCircle2 size={12} /> Submitted
+                  </span>
+                </div>
+                <div className={styles.previewPresenceItem}>
+                  <div className={styles.previewAvatar}>MV</div>
+                  <div className={styles.previewMemberInfo}>
+                    <span className={styles.previewMemberName}>Marcus Vance</span>
+                    <span className={styles.previewMemberTime}>Submitted 11:18</span>
+                  </div>
+                  <span className={`${styles.statusChip} ${styles.statusLate}`}>
+                    <Clock size={12} /> Late
+                  </span>
+                </div>
+                <div className={styles.previewPresenceItem}>
+                  <div className={styles.previewAvatar}>ER</div>
+                  <div className={styles.previewMemberInfo}>
+                    <span className={styles.previewMemberName}>Elena Rostova</span>
+                    <span className={styles.previewMemberTime}>Not submitted</span>
+                  </div>
+                  <span className={`${styles.statusChip} ${styles.statusMissed}`}>
+                    <XCircle size={12} /> Missed
+                  </span>
+                </div>
+              </div>
+
+              {/* AI Summary Panel */}
+              <div className={styles.previewAiPanel}>
+                <div className={styles.previewSectionTitle}>
+                  <Bot size={15} /> AI Daily Summary
+                </div>
+                <div className={styles.aiBadge}>AI-generated digest</div>
+                <p className={styles.aiContent}>
+                  The team made solid progress on database index tuning and WebSocket event testing. Alex and Sara completed PR reviews for the billing module.
+                </p>
+                <div className={styles.blockerCard}>
+                  <div className={styles.blockerHeader}>
+                    <AlertTriangle size={14} color="var(--sev-high)" />
+                    <span className={styles.blockerTitle}>High Blocker — Marcus Vance</span>
+                  </div>
+                  <p className={styles.blockerDesc}>
+                    Staging deployment is held up waiting on Auth0 token expiry config changes.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Decorative Background Elements */}
-        <div className={styles.glowBlob1}></div>
-        <div className={styles.glowBlob2}></div>
       </section>
 
-      {/* Features Preview */}
-      <section id="features" className={styles.features}>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '0.2s' }}>
-          <div className={styles.featureIcon}><Zap size={40} color="var(--accent-primary)" /></div>
-          <h3>Async Updates</h3>
-          <p>Drop your updates anytime within your team&apos;s submission window. No more timezone conflicts or delayed meetings.</p>
+      {/* Core Capabilities */}
+      <section id="features" className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionHeading}>Built for async engineering teams</h2>
+          <p className={styles.sectionLead}>
+            Three focused tools that keep your team synchronized without scheduling friction.
+          </p>
         </div>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '0.4s' }}>
-          <div className={styles.featureIcon}><Bot size={40} color="var(--accent-primary)" /></div>
-          <h3>AI Summaries</h3>
-          <p>Get instant daily digests and weekly reports generated by AI. Managers read one summary instead of 10+ updates.</p>
-        </div>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '0.6s' }}>
-          <div className={styles.featureIcon}><Rocket size={40} color="var(--accent-primary)" /></div>
-          <h3>Blocker Detection</h3>
-          <p>AI automatically detects blockers from text, assigns severity, and notifies managers in real-time.</p>
-        </div>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '0.8s' }}>
-          <div className={styles.featureIcon}><BarChart3 size={40} color="var(--accent-primary)" /></div>
-          <h3>Team Analytics</h3>
-          <p>Track submission rates, blocker trends, and team health scores. Spot participation issues early.</p>
-        </div>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '1.0s' }}>
-          <div className={styles.featureIcon}><Bell size={40} color="var(--accent-primary)" /></div>
-          <h3>Smart Reminders</h3>
-          <p>Automatic reminders 30 minutes before the window closes. No one forgets to submit again.</p>
-        </div>
-        <div className={`${styles.featureCard} animate-slide-up`} style={{ animationDelay: '1.2s' }}>
-          <div className={styles.featureIcon}><Lock size={40} color="var(--accent-primary)" /></div>
-          <h3>Multi-Tenant Isolation</h3>
-          <p>Every workspace is fully isolated. Your team&apos;s data is never visible to other organizations.</p>
+
+        <div className={styles.capabilitiesGrid}>
+          <div className={styles.capabilityCard}>
+            <div className={styles.capabilityIcon}>
+              <Users size={24} />
+            </div>
+            <h3 className={styles.capabilityTitle}>Live Team Presence</h3>
+            <p className={styles.capabilityDesc}>
+              A real-time dashboard showing who has submitted, who is running late, and who missed their window. WebSocket updates keep the status board fresh without refreshing.
+            </p>
+          </div>
+
+          <div className={styles.capabilityCard}>
+            <div className={styles.capabilityIcon}>
+              <Bot size={24} />
+            </div>
+            <h3 className={styles.capabilityTitle}>Automated Daily Summaries</h3>
+            <p className={styles.capabilityDesc}>
+              As soon as the submission window closes, Claude AI synthesizes all updates into a coherent, 30-second daily briefing. Leads review one clear summary instead of fragmented Slack threads.
+            </p>
+          </div>
+
+          <div className={styles.capabilityCard}>
+            <div className={styles.capabilityIcon}>
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className={styles.capabilityTitle}>Blocker Detection & Severity</h3>
+            <p className={styles.capabilityDesc}>
+              AI extracts impediments automatically, tags severity levels (High, Medium, Low), and highlights urgent bottlenecks so managers can unblock engineers immediately.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className={styles.howItWorks}>
+      <section id="how-it-works" className={styles.sectionAlt}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionLabel}>How It Works</span>
-          <h2 className={styles.sectionTitle}>Three steps to better standups</h2>
-          <p className={styles.sectionSubtitle}>
-            Replace your daily standup meeting with a simple async workflow that takes less than 2 minutes.
+          <h2 className={styles.sectionHeading}>How it works</h2>
+          <p className={styles.sectionLead}>
+            A simple 3-step workflow designed to take less than 2 minutes of each member day.
           </p>
         </div>
 
-        <div className={styles.stepsGrid}>
-          <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>1</div>
-            <div className={styles.stepIconLg}><ClipboardList size={48} color="var(--accent-primary)" /></div>
-            <h3>Team Members Submit</h3>
-            <p>Each member answers three simple questions: What did you do yesterday? What will you do today? Any blockers?</p>
+        <div className={styles.stepsTimeline}>
+          <div className={styles.stepItem}>
+            <div className={styles.stepBadge}>1</div>
+            <h3 className={styles.stepTitle}>Submit updates within your window</h3>
+            <p className={styles.stepDesc}>
+              Each teammate answers three concise prompts: What did you accomplish yesterday? What are you working on today? Are there any blockers?
+            </p>
           </div>
-          <div className={styles.stepArrow}>→</div>
-          <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>2</div>
-            <div className={styles.stepIconLg}><Bot size={48} color="var(--accent-primary)" /></div>
-            <h3>AI Summarizes</h3>
-            <p>When the window closes, AI reads all entries and generates a concise team summary with blocker severity analysis.</p>
-          </div>
-          <div className={styles.stepArrow}>→</div>
-          <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>3</div>
-            <div className={styles.stepIconLg}><TrendingUp size={48} color="var(--accent-primary)" /></div>
-            <h3>Managers Review</h3>
-            <p>One summary replaces 10+ individual reads. Blockers are flagged, trends are tracked, weekly digests arrive automatically.</p>
-          </div>
-        </div>
-      </section>
 
-      {/* Testimonials / Social Proof */}
-      <section className={styles.testimonials}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionLabel}>What Teams Say</span>
-          <h2 className={styles.sectionTitle}>Trusted by remote teams</h2>
-        </div>
+          <div className={styles.stepConnector}>
+            <ArrowRight size={20} className={styles.connectorIcon} />
+          </div>
 
-        <div className={styles.testimonialGrid}>
-          <div className={styles.testimonialCard}>
-            <p className={styles.testimonialText}>
-              &ldquo;We switched from Zoom standups and saved 25 minutes per day for the entire team. The AI summary is surprisingly accurate.&rdquo;
+          <div className={styles.stepItem}>
+            <div className={styles.stepBadge}>2</div>
+            <h3 className={styles.stepTitle}>Presence updates in real time</h3>
+            <p className={styles.stepDesc}>
+              Live presence chips turn from gray to green across the team dashboard. Submissions received after the deadline are tracked as Late.
             </p>
-            <div className={styles.testimonialAuthor}>
-              <div className={styles.testimonialAvatar}>AR</div>
-              <div>
-                <strong>Andi Raharjo</strong>
-                <span>Engineering Lead, 12-person team</span>
-              </div>
-            </div>
           </div>
-          <div className={styles.testimonialCard}>
-            <p className={styles.testimonialText}>
-              &ldquo;The blocker detection caught a dependency issue that would have cost us 3 days. It flagged it the same morning it was reported.&rdquo;
-            </p>
-            <div className={styles.testimonialAuthor}>
-              <div className={styles.testimonialAvatar}>SW</div>
-              <div>
-                <strong>Siti Wulandari</strong>
-                <span>Product Manager, distributed team</span>
-              </div>
-            </div>
+
+          <div className={styles.stepConnector}>
+            <ArrowRight size={20} className={styles.connectorIcon} />
           </div>
-          <div className={styles.testimonialCard}>
-            <p className={styles.testimonialText}>
-              &ldquo;Finally, a standup tool that doesn&apos;t require a Slack bot or complex setup. My team was onboarded in under 5 minutes.&rdquo;
+
+          <div className={styles.stepItem}>
+            <div className={styles.stepBadge}>3</div>
+            <h3 className={styles.stepTitle}>AI generates the workspace digest</h3>
+            <p className={styles.stepDesc}>
+              When the window closes, the workspace digest is ready. Blockers are categorized by severity and archived into searchable history.
             </p>
-            <div className={styles.testimonialAuthor}>
-              <div className={styles.testimonialAvatar}>BK</div>
-              <div>
-                <strong>Budi Kurniawan</strong>
-                <span>CTO, startup with 3 timezone coverage</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className={styles.pricingSection}>
+      <section id="pricing" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionLabel}>Pricing</span>
-          <h2 className={styles.sectionTitle}>Simple, transparent pricing</h2>
-          <p className={styles.sectionSubtitle}>
-            Currently in Beta. All features are 100% free for early adopters.
+          <h2 className={styles.sectionHeading}>Simple, transparent plans</h2>
+          <p className={styles.sectionLead}>
+            Currently in public beta. All core features are free for early adopting teams.
           </p>
         </div>
 
         <div className={styles.pricingGrid}>
+          {/* Free Tier */}
           <div className={styles.pricingCard}>
-            <div className={styles.pricingHeader}>
-              <h3>Free</h3>
-              <div className={styles.pricingAmount}>
-                <span className={styles.pricingCurrency}>$</span>
-                <span className={styles.pricingValue}>0</span>
-                <span className={styles.pricingPeriod}>/month</span>
+            <div className={styles.pricingTop}>
+              <h3 className={styles.planName}>Free</h3>
+              <div className={styles.planPrice}>
+                <span className={styles.priceAmount}>$0</span>
+                <span className={styles.pricePeriod}>/month</span>
               </div>
-              <p className={styles.pricingDesc}>Perfect for small teams getting started</p>
+              <p className={styles.planDesc}>Ideal for small teams exploring async standups</p>
             </div>
-            <ul className={styles.pricingFeatures}>
-              <li>Max 5 team members</li>
-              <li>Daily Standup submissions</li>
-              <li>Real-time presence dashboard</li>
-              <li>Email notifications</li>
+            <ul className={styles.featureList}>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Up to 5 team members</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Daily standup submissions</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Real-time presence dashboard</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Email reminders & notifications</li>
+            </ul>
+            <Link href="/register">
+              <Button variant="secondary" fullWidth>Get started free</Button>
+            </Link>
+          </div>
+
+          {/* Pro Tier */}
+          <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
+            <div className={styles.pricingBadge}>Free during beta</div>
+            <div className={styles.pricingTop}>
+              <h3 className={styles.planName}>Pro</h3>
+              <div className={styles.planPrice}>
+                <span className={styles.priceAmount}>$0</span>
+                <span className={styles.pricePeriod}>/month</span>
+              </div>
+              <p className={styles.planDesc}>For growing engineering teams requiring AI summaries</p>
+            </div>
+            <ul className={styles.featureList}>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Unlimited team members</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Automated AI daily summaries</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> AI blocker detection & severity tagging</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Team health and participation analytics</li>
             </ul>
             <Link href="/register">
               <Button variant="primary" fullWidth>Get started free</Button>
             </Link>
           </div>
 
-          <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
-            <div className={styles.comingSoonBadge}>100% Free During Beta</div>
-            <div className={styles.pricingHeader}>
-              <h3>Pro</h3>
-              <div className={styles.pricingAmount}>
-                <span className={styles.pricingCurrency}>$</span>
-                <span className={styles.pricingValue}>
-                  <s style={{opacity: 0.5, fontSize: '2rem'}}>12</s> 0
-                </span>
-                <span className={styles.pricingPeriod}>/month</span>
-              </div>
-              <p className={styles.pricingDesc}>For growing teams that need more power</p>
-            </div>
-            <ul className={styles.pricingFeatures}>
-              <li>Unlimited team members</li>
-              <li>AI Daily Summaries</li>
-              <li>AI Blocker Detection</li>
-              <li>Basic Team Analytics</li>
-            </ul>
-            <Link href="/register">
-              <Button variant="secondary" fullWidth>Get started for free</Button>
-            </Link>
-          </div>
-
+          {/* Enterprise Tier */}
           <div className={styles.pricingCard}>
-            <div className={styles.pricingHeader}>
-              <h3>Enterprise</h3>
-              <div className={styles.pricingAmount}>
-                <span className={styles.pricingCurrency}>$</span>
-                <span className={styles.pricingValue}>
-                  <s style={{opacity: 0.5, fontSize: '2rem'}}>29</s> 0
-                </span>
-                <span className={styles.pricingPeriod}>/month</span>
+            <div className={styles.pricingTop}>
+              <h3 className={styles.planName}>Enterprise</h3>
+              <div className={styles.planPrice}>
+                <span className={styles.priceAmount}>Custom</span>
               </div>
-              <p className={styles.pricingDesc}>For organizations with specific needs</p>
+              <p className={styles.planDesc}>For organizations with specific compliance requirements</p>
             </div>
-            <ul className={styles.pricingFeatures}>
-              <li>Everything in Pro</li>
-              <li>Weekly AI Digests</li>
-              <li>CSV Data Exports</li>
-              <li>Priority support</li>
+            <ul className={styles.featureList}>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Everything in Pro</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Weekly synthesized AI digests</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Full CSV data export capabilities</li>
+              <li><CheckCircle2 size={16} color="var(--status-submitted)" /> Dedicated priority support</li>
             </ul>
             <Link href="/register">
-              <Button variant="secondary" fullWidth>Get started for free</Button>
+              <Button variant="secondary" fullWidth>Get started free</Button>
             </Link>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className={styles.faqSection}>
+      <section className={styles.sectionAlt}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionLabel}>FAQ</span>
-          <h2 className={styles.sectionTitle}>Frequently asked questions</h2>
+          <h2 className={styles.sectionHeading}>Frequently asked questions</h2>
         </div>
 
         <div className={styles.faqList}>
@@ -338,44 +354,46 @@ export default function LandingPage() {
 
       {/* Final CTA */}
       <section className={styles.finalCta}>
-        <div className={styles.ctaContent}>
-          <h2 className={styles.ctaTitle}>Ready to transform your standups?</h2>
-          <p className={styles.ctaSubtitle}>
-            Join teams who replaced their daily meetings with a 2-minute async workflow.
+        <div className={styles.finalCtaInner}>
+          <h2 className={styles.finalCtaTitle}>Replace status calls with a 2-minute async flow</h2>
+          <p className={styles.finalCtaSubtitle}>
+            Give your engineers uninterrupted focus time while keeping leadership fully informed.
           </p>
-          <div className={styles.ctaGroup}>
-            <Link href="/register">
-              <Button variant="primary">Start for free — no credit card</Button>
-            </Link>
-          </div>
+          <Link href="/register">
+            <Button variant="primary">Start for free without a credit card</Button>
+          </Link>
         </div>
-        <div className={styles.glowBlob3}></div>
       </section>
 
       {/* Footer */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
-            <span className="text-gradient" style={{ fontSize: '1.25rem', fontWeight: 700 }}>AI Standup</span>
-            <p>Async team standups with AI-powered summaries and blocker detection.</p>
+            <span className={styles.footerLogo}>AI Standup</span>
+            <p className={styles.footerTagline}>
+              Async team standups with automated summaries and blocker detection.
+            </p>
+            <div className={styles.securityBadge}>
+              <ShieldCheck size={16} /> Multi-tenant isolated workspace
+            </div>
           </div>
 
           <div className={styles.footerLinks}>
             <div className={styles.footerColumn}>
-              <h4>Product</h4>
+              <p className={styles.footerColumnTitle}>Product</p>
               <Link href="#features">Features</Link>
               <Link href="/pricing">Pricing</Link>
-              <Link href="#how-it-works">How It Works</Link>
+              <Link href="#how-it-works">How it works</Link>
             </div>
             <div className={styles.footerColumn}>
-              <h4>Legal</h4>
+              <p className={styles.footerColumnTitle}>Legal</p>
               <Link href="/privacy">Privacy Policy</Link>
               <Link href="/terms">Terms of Service</Link>
             </div>
             <div className={styles.footerColumn}>
-              <h4>Account</h4>
-              <Link href="/login">Login</Link>
-              <Link href="/register">Sign Up</Link>
+              <p className={styles.footerColumnTitle}>Account</p>
+              <Link href="/login">Log in</Link>
+              <Link href="/register">Create account</Link>
             </div>
           </div>
         </div>
@@ -384,6 +402,6 @@ export default function LandingPage() {
           <p>&copy; {new Date().getFullYear()} AI Standup. All rights reserved.</p>
         </div>
       </footer>
-    </main>
+    </div>
   );
 }
