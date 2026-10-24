@@ -252,7 +252,10 @@ export class WorkspacesController {
     @Body('days') days?: number,
   ) {
     if (!question || question.trim().length === 0) {
-      throw new HttpException('Question cannot be empty', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Question cannot be empty',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.workspacesService.askAi(workspaceId, question, days || 30);
   }

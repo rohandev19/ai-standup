@@ -796,7 +796,11 @@ export class WorkspacesService {
     }
   }
 
-  async askAi(workspaceId: string, question: string, days: number): Promise<{ answer: string }> {
+  async askAi(
+    workspaceId: string,
+    question: string,
+    days: number,
+  ): Promise<{ answer: string }> {
     // 1. Fetch standups for the last `days`
     const startDate = subDays(new Date(), days);
 
@@ -815,7 +819,10 @@ export class WorkspacesService {
     });
 
     if (standups.length === 0) {
-      return { answer: 'Maaf, tidak ada riwayat standup dalam periode waktu tersebut untuk dianalisis.' };
+      return {
+        answer:
+          'Maaf, tidak ada riwayat standup dalam periode waktu tersebut untuk dianalisis.',
+      };
     }
 
     // 2. Format standups into context string

@@ -30,7 +30,7 @@ export class SentryInterceptor implements NestInterceptor {
                     id: req.user.id,
                   });
                 }
-                
+
                 // If a workspaceId is passed in params, attach it
                 if (req.params && req.params.id) {
                   scope.setTag('workspaceId', req.params.id as string);

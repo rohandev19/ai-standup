@@ -5,6 +5,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { BadRequestException } from '@nestjs/common';
+import { AiService } from '../ai/ai.service';
 
 describe('WorkspacesService', () => {
   let service: WorkspacesService;
@@ -82,6 +83,10 @@ describe('WorkspacesService', () => {
         {
           provide: EventEmitter2,
           useValue: { emit: jest.fn() },
+        },
+        {
+          provide: AiService,
+          useValue: { askAi: jest.fn() },
         },
       ],
     }).compile();

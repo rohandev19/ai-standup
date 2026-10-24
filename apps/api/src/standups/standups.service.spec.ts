@@ -170,15 +170,14 @@ describe('StandupsService', () => {
     });
 
     it('scopes standup and summary queries to the requested workspace', async () => {
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       await service.getDashboardState('ws-1');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(prisma.standupEntry.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ workspaceId: 'ws-1' }),
         }),
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(prisma.aiSummary.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
@@ -188,7 +187,6 @@ describe('StandupsService', () => {
           },
         }),
       );
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment */
     });
   });
 });

@@ -15,7 +15,9 @@ export class RateLimitGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     // Support Heroku/Load balancers by reading x-forwarded-for
     const xForwardedFor = req.headers['x-forwarded-for'];
-    const ip = xForwardedFor ? xForwardedFor.split(',')[0].trim() : req.ip || req.connection?.remoteAddress;
+    const ip = xForwardedFor
+      ? xForwardedFor.split(',')[0].trim()
+      : req.ip || req.connection?.remoteAddress;
     const path = req.route.path;
 
     // We can use a sliding window or simple token bucket. A simple fixed window is easiest.
