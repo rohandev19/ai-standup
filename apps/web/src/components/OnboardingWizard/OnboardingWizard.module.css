@@ -30,12 +30,10 @@
 }
 
 .header h2 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .header p {
@@ -200,14 +198,14 @@
 }
 
 .btnPrimary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border: none;
-  color: white;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: #ffffff;
 }
 
 .btnPrimary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btnPrimary:disabled {

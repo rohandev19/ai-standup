@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
+import { Bell, Inbox, Check } from 'lucide-react';
 import styles from './NotificationBell.module.css';
 
 type Notification = {
@@ -23,13 +24,13 @@ export default function NotificationBell({
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(initialCount);
+  const [prevInitialCount, setPrevInitialCount] = useState(initialCount);
+  if (initialCount !== prevInitialCount) {
+    setPrevInitialCount(initialCount);
+    setUnreadCount(initialCount);
+  }
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUnreadCount(initialCount);
-  }, [initialCount]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +95,7 @@ export default function NotificationBell({
         className={styles.notifBtn}
         aria-label="Notifications"
       >
-        🔔
+        <Bell size={18} />
         {unreadCount > 0 && (
           <span className={styles.notifBadge}>
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -123,7 +124,9 @@ export default function NotificationBell({
               </div>
             ) : notifications.length === 0 ? (
               <div className={styles.emptyState}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
+                  <Inbox size={32} />
+                </div>
                 <p>No notifications yet</p>
               </div>
             ) : (
@@ -147,7 +150,7 @@ export default function NotificationBell({
                           className={styles.markReadBtn}
                           title="Mark as read"
                         >
-                          ✓
+                          <Check size={14} />
                         </button>
                       )}
                     </div>

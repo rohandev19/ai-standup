@@ -27,7 +27,8 @@ describe('DashboardLayout (Protected Route)', () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (useWorkspace as jest.Mock).mockReturnValue({
-      activeWorkspace: { name: 'Test Workspace', members: [{ role: 'ADMIN' }] },
+      workspaces: [{ id: 'w1', name: 'Test Workspace' }],
+      activeWorkspace: { name: 'Test Workspace', members: [{ role: 'ADMIN' }], onboardingCompleted: true },
       isLoading: false,
     });
   });

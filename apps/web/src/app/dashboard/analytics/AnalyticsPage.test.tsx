@@ -1,37 +1,87 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import AnalyticsPage from './page';
+import { api } from '@/lib/api';
 
-// Mock the WorkspaceContext since AnalyticsPage likely uses it, 
-// though right now it uses static mock data.
+const mockActiveWorkspace = { id: 'w1', name: 'Test Workspace' };
+
 jest.mock('@/contexts/WorkspaceContext', () => ({
   useWorkspace: () => ({
-    activeWorkspace: { id: 'w1', name: 'Test Workspace' },
+    activeWorkspace: mockActiveWorkspace,
   }),
 }));
 
+jest.mock('@/lib/api', () => ({
+  api: jest.fn(),
+}));
+
+jest.mock('recharts', () => {
+  const OriginalModule = jest.requireActual('recharts');
+  return {
+    ...OriginalModule,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div style={{ width: 500, height: 300 }}>{children}</div>
+    ),
+  };
+});
+
 describe('Analytics Page', () => {
-  it('renders the page title and description', () => {
-    render(<AnalyticsPage />);
-    expect(screen.getByText('Team Analytics')).toBeInTheDocument();
-    expect(screen.getByText(/Insights into your team's standup participation/i)).toBeInTheDocument();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (api as unknown as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/health')) {
+        return Promise.resolve({ data: { score: 82, submissionRate: 90, resolutionRate: 85 } });
+      }
+      if (url.includes('/submission-rate')) {
+        return Promise.resolve({ data: [{ date: '2026-10-01', rate: 85 }] });
+      }
+      if (url.includes('/blocker-trend')) {
+        return Promise.resolve({ data: [{ date: '2026-10-01', HIGH: 1, MEDIUM: 2, LOW: 0 }] });
+      }
+      if (url.includes('/member-streaks')) {
+        return Promise.resolve({
+          data: [
+            {
+              userId: '1',
+              name: 'Linda Oktavia',
+              currentStreak: 2,
+              totalMissed30d: 4,
+              needsAttention: true,
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: {} });
+    });
   });
 
-  it('renders the mocked health score', () => {
+  it('renders the page title', async () => {
     render(<AnalyticsPage />);
-    expect(screen.getByText('82%')).toBeInTheDocument();
-    expect(screen.getByText('Team Health Score')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Team Analytics')).toBeInTheDocument();
+    });
   });
 
-  it('renders the custom bar chart data', () => {
+  it('renders the health score and title', async () => {
     render(<AnalyticsPage />);
-    expect(screen.getByText('Daily Submission Rate (Last 30 Days)')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('82')).toBeInTheDocument();
+      expect(screen.getByText('Team Health Score')).toBeInTheDocument();
+    });
   });
 
-  it('renders the needs attention section if members missed standups', () => {
+  it('renders the chart card title', async () => {
     render(<AnalyticsPage />);
-    expect(screen.getByText(/Needs Attention/i)).toBeInTheDocument();
-    // Assuming Linda Oktavia is in the needs attention mock data as well as the main table
-    expect(screen.getAllByText('Linda Oktavia').length).toBeGreaterThan(1);
+    await waitFor(() => {
+      expect(screen.getByText('Submission Rate Trend (%)')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the needs attention section when members missed standups', async () => {
+    render(<AnalyticsPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Needs Attention').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Linda Oktavia').length).toBeGreaterThan(0);
+    });
   });
 });

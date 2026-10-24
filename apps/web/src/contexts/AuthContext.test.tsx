@@ -12,6 +12,10 @@ jest.mock('@/lib/api', () => ({
         use: jest.fn(),
         eject: jest.fn(),
       },
+      response: {
+        use: jest.fn(),
+        eject: jest.fn(),
+      },
     },
   },
 }));

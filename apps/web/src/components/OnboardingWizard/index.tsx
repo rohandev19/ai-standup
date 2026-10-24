@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '@/lib/api';
+import { Check } from 'lucide-react';
 import styles from './OnboardingWizard.module.css';
 
 interface OnboardingWizardProps {
@@ -94,7 +95,7 @@ export default function OnboardingWizard({ workspace, onComplete }: OnboardingWi
               key={i} 
               className={`${styles.progressStep} ${step === i ? styles.active : ''} ${step > i ? styles.completed : ''}`}
             >
-              {step > i ? '✓' : i}
+              {step > i ? <Check size={14} /> : i}
             </div>
           ))}
         </div>
