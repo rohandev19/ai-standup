@@ -11,8 +11,8 @@ export default function TermsOfServicePage() {
   return (
     <div className={styles.legalPage}>
       <nav className={styles.legalNav}>
-        <Link href="/">
-          <span className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>AI Standup</span>
+        <Link href="/" className={styles.legalLogo}>
+          AI Standup
         </Link>
         <Link href="/privacy">Privacy Policy</Link>
       </nav>
@@ -46,7 +46,7 @@ export default function TermsOfServicePage() {
         <ul>
           <li>Each workspace has exactly one Owner, who has full administrative control</li>
           <li>Owners can appoint Admins and invite Members via email</li>
-          <li>Workspace data (standup entries, summaries, member lists) is strictly isolated — no cross-workspace data access is permitted</li>
+          <li>Workspace data (standup entries, summaries, member lists) is strictly isolated: no cross-workspace data access is permitted</li>
           <li>When a member is removed from a workspace, their historical standup data is retained (soft removal) for team continuity</li>
           <li>The Owner must transfer ownership before leaving a workspace</li>
         </ul>
@@ -76,7 +76,7 @@ export default function TermsOfServicePage() {
         </p>
         <ul>
           <li>Your standup text is processed by Anthropic&apos;s Claude API to generate AI summaries and blocker detection</li>
-          <li>AI outputs are automated and may not always be perfectly accurate — they should be reviewed by humans before making critical decisions</li>
+          <li>AI outputs are automated and may not always be perfectly accurate; they should be reviewed by humans before making critical decisions</li>
           <li>We batch AI API calls per workspace per day to optimize cost and performance</li>
           <li>We do not send your content to any AI service other than the configured provider</li>
         </ul>
@@ -96,7 +96,7 @@ export default function TermsOfServicePage() {
         <h2>9. Service Availability</h2>
         <ul>
           <li>We aim for high availability but do not guarantee 100% uptime</li>
-          <li>The service is designed to degrade gracefully — if the AI API is unavailable, standup submissions continue to work normally</li>
+          <li>The service is designed to degrade gracefully: if the AI API is unavailable, standup submissions continue to work normally</li>
           <li>We may perform scheduled maintenance with advance notice when possible</li>
         </ul>
 

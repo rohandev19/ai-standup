@@ -11,8 +11,8 @@ export default function PrivacyPolicyPage() {
   return (
     <div className={styles.legalPage}>
       <nav className={styles.legalNav}>
-        <Link href="/">
-          <span className="text-gradient" style={{ fontSize: '1.5rem', fontWeight: 700 }}>AI Standup</span>
+        <Link href="/" className={styles.legalLogo}>
+          AI Standup
         </Link>
         <Link href="/terms">Terms of Service</Link>
       </nav>
@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
         <p>
           AI Standup (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) is committed to protecting the privacy and security of
           your personal data. This Privacy Policy describes what data we collect, how we use it, and your rights
-          regarding that data — in accordance with Indonesia&apos;s Personal Data Protection Law (UU PDP No. 27/2022)
+          regarding that data, in accordance with Indonesia&apos;s Personal Data Protection Law (UU PDP No. 27/2022)
           and international best practices.
         </p>
 
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li>Full name (display name)</li>
           <li>Email address</li>
-          <li>Password (stored as a bcrypt hash — we never store plaintext passwords)</li>
+          <li>Password (stored as a bcrypt hash; we never store plaintext passwords)</li>
           <li>Profile avatar (optional)</li>
           <li>Timestamp of your consent to this policy</li>
         </ul>
@@ -53,7 +53,7 @@ export default function PrivacyPolicyPage() {
         <p>We automatically collect basic usage information:</p>
         <ul>
           <li>Browser timezone (for workspace timezone detection)</li>
-          <li>Login timestamps and IP addresses (for security — rate limiting and abuse prevention)</li>
+          <li>Login timestamps and IP addresses (for rate limiting and abuse prevention)</li>
           <li>WebSocket connection events (for real-time dashboard functionality)</li>
         </ul>
 
@@ -80,7 +80,7 @@ export default function PrivacyPolicyPage() {
 
         <h2>4. Data Isolation &amp; Security</h2>
         <p>
-          AI Standup is a multi-tenant platform. Every workspace is fully isolated — your team&apos;s data
+          AI Standup is a multi-tenant platform. Every workspace is fully isolated: your team&apos;s data
           (standup entries, summaries, blocker flags, member lists, audit logs) is <strong>never visible to or
           accessible by other workspaces</strong>. We enforce this at the database query level, API authorization
           level, and WebSocket channel level.
@@ -100,9 +100,9 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li><strong>Access</strong> your personal data through your profile and standup history</li>
           <li><strong>Export</strong> your workspace data as CSV (available to Workspace Owners)</li>
-          <li><strong>Delete</strong> your account and all associated personal data — contact us at <a href="mailto:privacy@aistandup.com">privacy@aistandup.com</a> to request full data deletion</li>
+          <li><strong>Delete</strong> your account and all associated personal data: contact us at <a href="mailto:privacy@aistandup.com">privacy@aistandup.com</a> to request full data deletion</li>
           <li><strong>Withdraw consent</strong> at any time by deleting your account</li>
-          <li><strong>Control notifications</strong> — you can mute email reminders per workspace without affecting other members</li>
+          <li><strong>Control notifications:</strong> you can mute email reminders per workspace without affecting other members</li>
         </ul>
 
         <h2>7. Cookies &amp; Local Storage</h2>

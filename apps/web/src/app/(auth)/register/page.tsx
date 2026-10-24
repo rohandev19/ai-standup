@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consent) {
-      setError('You must agree to the Terms & Privacy Policy to register.');
+      setError('You must agree to the Terms and Privacy Policy to register.');
       return;
     }
 
@@ -48,13 +48,13 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <Card className={styles.authCard}>
         <div className={styles.header}>
           <h2>Check your email</h2>
           <p>We&apos;ve sent a verification link to {email}.</p>
         </div>
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Redirecting to login...</p>
+          <p style={{ color: 'var(--text-2)', marginBottom: '1rem', fontSize: '0.875rem' }}>Redirecting to login...</p>
           <Button onClick={() => router.push('/login')}>Go to Login</Button>
         </div>
       </Card>
@@ -62,13 +62,17 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className={`${styles.authCard} animate-fade-in`} glow>
+    <Card className={styles.authCard}>
       <div className={styles.header}>
         <h2>Create an account</h2>
         <p>Start automating your team&apos;s standup today.</p>
       </div>
 
-      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
+      {error && (
+        <div style={{ color: 'var(--sev-high)', marginBottom: '1.25rem', textAlign: 'center', background: 'rgba(244, 63, 94, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(244, 63, 94, 0.2)', fontSize: '0.875rem' }}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input 
@@ -105,15 +109,15 @@ export default function RegisterPage() {
             <li>One number (0-9)</li>
           </ul>
         </div>
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.875rem' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', fontSize: '0.8125rem' }}>
           <input 
             type="checkbox" 
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
-            style={{ marginTop: '0.2rem' }}
+            style={{ marginTop: '0.15rem' }}
           />
-          <span style={{ color: 'var(--text-secondary)' }}>
-            I agree to the <Link href="/terms" style={{ color: 'var(--text)' }}>Terms of Service</Link> and <Link href="/privacy" style={{ color: 'var(--text)' }}>Privacy Policy</Link>, and consent to the processing of my personal data.
+          <span style={{ color: 'var(--text-2)', lineHeight: 1.5 }}>
+            I agree to the <Link href="/terms" style={{ color: 'var(--text-1)', textDecoration: 'underline' }}>Terms of Service</Link> and <Link href="/privacy" style={{ color: 'var(--text-1)', textDecoration: 'underline' }}>Privacy Policy</Link>, and consent to the processing of my personal data.
           </span>
         </label>
 
@@ -123,7 +127,7 @@ export default function RegisterPage() {
       </form>
 
       <p className={styles.footerText}>
-        Already have an account? <Link href="/login" className="text-gradient">Sign in</Link>
+        Already have an account? <Link href="/login">Sign in</Link>
       </p>
     </Card>
   );

@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <Card className={styles.authCard}>
         <div className={styles.header}>
           <h2>Check your email</h2>
           <p>
@@ -50,13 +50,13 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className={`${styles.authCard} animate-fade-in`} glow>
+    <Card className={styles.authCard}>
       <div className={styles.header}>
         <h2>Forgot password?</h2>
         <p>Enter your email and we&apos;ll send you a reset link.</p>
       </div>
 
-      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ color: 'var(--sev-high)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.875rem' }}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
       </form>
 
       <p className={styles.footerText}>
-        Remember your password? <Link href="/login" className="text-gradient">Sign in</Link>
+        Remember your password? <Link href="/login">Sign in</Link>
       </p>
     </Card>
   );

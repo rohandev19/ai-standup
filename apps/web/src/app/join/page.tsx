@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { Button } from '@/components/Button/Button';
 import { Card } from '@/components/Card/Card';
+import { Clock, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 
 function JoinContent() {
   const router = useRouter();
@@ -19,14 +20,16 @@ function JoinContent() {
   );
 
   useEffect(() => {
-    if (!token) return; // handled by initial state
+    if (!token) return;
     if (isAuthLoading) return;
 
     if (!user) {
       // Save token to localStorage so we can process it after login/register
       localStorage.setItem('pending_invite_token', token);
-      setStatus('auth_required');
-      setMessage('You must log in or create an account to accept this invitation.');
+      queueMicrotask(() => {
+        setStatus('auth_required');
+        setMessage('You must log in or create an account to accept this invitation.');
+      });
       return;
     }
 
@@ -40,10 +43,7 @@ function JoinContent() {
         setStatus('success');
         setMessage('Successfully joined the workspace! Redirecting to dashboard...');
         
-        // Give it a short delay then redirect
         setTimeout(() => {
-          // Use router instead of window.location to satisfy Next.js linting,
-          // and use router.refresh() to ensure server data is refetched
           router.push('/dashboard');
           router.refresh();
         }, 2000);
@@ -58,20 +58,20 @@ function JoinContent() {
   }, [token, user, isAuthLoading, router]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
-      <Card style={{ maxWidth: '450px', width: '100%', textAlign: 'center', padding: '3rem 2rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          {status === 'loading' && <span style={{ fontSize: '3rem' }}>⏳</span>}
-          {status === 'success' && <span style={{ fontSize: '3rem' }}>🎉</span>}
-          {status === 'error' && <span style={{ fontSize: '3rem' }}>⚠️</span>}
-          {status === 'auth_required' && <span style={{ fontSize: '3rem' }}>🔐</span>}
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-0)', padding: '1rem' }}>
+      <Card style={{ maxWidth: '440px', width: '100%', textAlign: 'center', padding: '2.5rem 2rem' }}>
+        <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+          {status === 'loading' && <Clock size={44} color="var(--accent)" />}
+          {status === 'success' && <CheckCircle2 size={44} color="var(--status-submitted)" />}
+          {status === 'error' && <AlertTriangle size={44} color="var(--sev-high)" />}
+          {status === 'auth_required' && <Lock size={44} color="var(--accent)" />}
         </div>
         
-        <h2 style={{ marginBottom: '1rem', color: 'var(--text-main)' }}>Workspace Invitation</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.6 }}>{message}</p>
+        <h2 style={{ marginBottom: '0.75rem', color: 'var(--text-1)', fontSize: '1.5rem', fontWeight: 700 }}>Workspace Invitation</h2>
+        <p style={{ color: 'var(--text-2)', marginBottom: '2rem', lineHeight: 1.6, fontSize: '0.9375rem' }}>{message}</p>
         
         {status === 'auth_required' && (
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
             <Button onClick={() => router.push('/login')} variant="primary" style={{ flex: 1 }}>Log In</Button>
             <Button onClick={() => router.push('/register')} variant="ghost" style={{ flex: 1 }}>Sign Up</Button>
           </div>
@@ -89,7 +89,7 @@ function JoinContent() {
 
 export default function JoinPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
       <JoinContent />
     </Suspense>
   );

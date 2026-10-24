@@ -37,8 +37,8 @@ export default function VerifyEmailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <Card className={styles.authCard}>
           <div className={styles.header}>
             <h2>Verifying your email...</h2>
             <p>Please wait while we verify your email address.</p>
@@ -50,8 +50,8 @@ export default function VerifyEmailPage() {
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <Card className={styles.authCard}>
           <div className={styles.header}>
             <h2>Verification failed</h2>
             <p>{error}</p>
@@ -68,10 +68,10 @@ export default function VerifyEmailPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <Card className={styles.authCard}>
           <div className={styles.header}>
-            <h2>Email verified! 🎉</h2>
+            <h2>Email verified!</h2>
             <p>Your email has been successfully verified. You can now log in to your account.</p>
           </div>
           <div style={{ marginTop: '1.5rem' }}>
@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
               <Button variant="primary" fullWidth>Go to login</Button>
             </Link>
           </div>
-          <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+          <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-2)', fontSize: '0.875rem' }}>
             Redirecting in 3 seconds...
           </p>
         </Card>

@@ -22,7 +22,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <Card className={styles.authCard}>
         <div className={styles.header}>
           <h2>Invalid reset link</h2>
           <p>This password reset link is invalid or has expired. Please request a new one.</p>
@@ -70,7 +70,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <Card className={styles.authCard}>
         <div className={styles.header}>
           <h2>Password reset!</h2>
           <p>Your password has been successfully changed. You can now log in with your new password.</p>
@@ -80,7 +80,7 @@ function ResetPasswordForm() {
             <Button variant="primary" fullWidth>Go to login</Button>
           </Link>
         </div>
-        <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+        <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-2)', fontSize: '0.875rem' }}>
           Redirecting in 3 seconds...
         </p>
       </Card>
@@ -88,13 +88,13 @@ function ResetPasswordForm() {
   }
 
   return (
-    <Card className={`${styles.authCard} animate-fade-in`} glow>
+    <Card className={styles.authCard}>
       <div className={styles.header}>
         <h2>Set new password</h2>
         <p>Enter your new password below. Must be at least 8 characters with uppercase, lowercase, and a digit.</p>
       </div>
 
-      {error && <div style={{ color: '#ef4444', marginBottom: '1rem', textAlign: 'center', fontSize: '0.875rem' }}>{error}</div>}
+      {error && <div style={{ color: 'var(--sev-high)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.875rem' }}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
@@ -125,7 +125,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <Card className={`${styles.authCard} animate-fade-in`} glow>
+      <Card className={styles.authCard}>
         <div className={styles.header}>
           <h2>Loading...</h2>
         </div>

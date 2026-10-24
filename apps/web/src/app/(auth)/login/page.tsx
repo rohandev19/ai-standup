@@ -40,13 +40,17 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className={`${styles.authCard} animate-fade-in`} glow>
+    <Card className={styles.authCard}>
       <div className={styles.header}>
         <h2>Welcome back</h2>
         <p>Enter your details to access your dashboard.</p>
       </div>
 
-      {error && <div style={{ color: 'var(--accent-red)', marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
+      {error && (
+        <div style={{ color: 'var(--sev-high)', marginBottom: '1.25rem', textAlign: 'center', background: 'rgba(244, 63, 94, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(244, 63, 94, 0.2)', fontSize: '0.875rem' }}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input 
@@ -76,7 +80,7 @@ export default function LoginPage() {
       </form>
 
       <p className={styles.footerText}>
-        Don&apos;t have an account? <Link href="/register" className="text-gradient">Sign up</Link>
+        Don&apos;t have an account? <Link href="/register">Sign up</Link>
       </p>
     </Card>
   );
