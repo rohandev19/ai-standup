@@ -1,3 +1,4 @@
+import '../common/load-env';
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ExpressAdapter } from '@bull-board/express';

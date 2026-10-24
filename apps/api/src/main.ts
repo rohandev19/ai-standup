@@ -1,3 +1,4 @@
+import './common/load-env';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
