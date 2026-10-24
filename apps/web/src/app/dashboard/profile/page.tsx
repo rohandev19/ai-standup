@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [notifPref, setNotifPref] = useState('immediate'); // Just mock state for now, or update if we have it in DB
+  const [notifPref, setNotifPref] = useState('immediate');
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
   
@@ -99,14 +99,11 @@ export default function ProfilePage() {
         {/* Left Column */}
         <div className={styles.leftCol}>
           {/* Profile Info */}
-          <Card glow>
+          <Card>
             <h3 className={styles.cardTitle}>Profile Details</h3>
 
             <div className={styles.avatarSection}>
               <div className={styles.avatarLg}>{name?.charAt(0)?.toUpperCase() || 'U'}</div>
-              <Button variant="secondary" onClick={() => alert('Avatar upload — coming soon')}>
-                Change avatar
-              </Button>
             </div>
 
             <div className={styles.formFields}>
@@ -163,7 +160,7 @@ export default function ProfilePage() {
 
           {/* Danger Zone */}
           <Card>
-            <h3 className={styles.cardTitle} style={{ color: '#f87171' }}>Danger Zone</h3>
+            <h3 className={styles.cardTitle} style={{ color: 'var(--sev-high)' }}>Danger Zone</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
               Request full account deletion. This will permanently remove your personal data.
               Historical standup entries in workspaces you belonged to will be anonymized.
@@ -171,8 +168,8 @@ export default function ProfilePage() {
             </p>
             <Button
               variant="secondary"
-              onClick={() => alert('Account deletion request — contact privacy@aistandup.com')}
-              style={{ borderColor: 'rgba(239, 68, 68, 0.3)', color: '#f87171' }}
+              onClick={() => alert('Account deletion request: contact privacy@aistandup.com')}
+              style={{ borderColor: 'rgba(244, 63, 94, 0.3)', color: 'var(--sev-high)' }}
             >
               Request Account Deletion
             </Button>
@@ -220,7 +217,7 @@ export default function ProfilePage() {
                     <div className={styles.wsMeta}>Workspace</div>
                   </div>
                   <Badge
-                    variant={ws.role === 'OWNER' ? 'purple' : ws.role === 'ADMIN' ? 'info' : 'neutral'}
+                    variant={ws.role === 'OWNER' ? 'info' : ws.role === 'ADMIN' ? 'info' : 'neutral'}
                   >
                     {ws.role}
                   </Badge>

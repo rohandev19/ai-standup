@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  animation: fadeIn 0.5s ease;
 }
 
 .headerRow {
@@ -15,10 +14,11 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--text-1);
 }
 
 .pageDesc {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* Filters */
@@ -40,37 +40,37 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 0.875rem;
+  color: var(--text-2);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-glass);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: var(--text-1);
   font-family: inherit;
   font-size: 0.9375rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--dur-fast) ease;
 }
 
 .searchInput:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--focus-ring);
 }
 
 .searchInput::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-3);
 }
 
 .filterSelect {
   padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-glass);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: var(--text-1);
   font-family: inherit;
   font-size: 0.9375rem;
   outline: none;
@@ -79,7 +79,7 @@
 }
 
 .filterSelect:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--focus-ring);
 }
 
 .dateInput {
@@ -102,16 +102,14 @@
 .dateLabel {
   font-size: 0.8125rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  color: var(--text-2);
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* Summary Cards */
 .summaryCard {
-  border-left: 3px solid var(--accent-primary);
+  border-left: 3px solid var(--accent);
 }
 
 .summaryHeader {
@@ -123,14 +121,13 @@
 
 .summaryMeta {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .summaryText {
-  color: var(--text-secondary);
+  color: var(--text-2);
   line-height: 1.7;
   font-size: 0.9375rem;
-  font-style: italic;
 }
 
 /* Standup Cards */
@@ -155,23 +152,25 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--gradient-glow);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 0.8125rem;
-  color: white;
+  color: var(--text-1);
 }
 
 .authorName {
   font-weight: 600;
   font-size: 0.9375rem;
+  color: var(--text-1);
 }
 
 .authorTime {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .standupContent {
@@ -179,19 +178,19 @@
   flex-direction: column;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
   line-height: 1.6;
 }
 
 .fieldLabel {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-1);
   font-size: 0.8125rem;
 }
 
 .blockerField {
-  background: rgba(239, 68, 68, 0.06);
-  border-left: 3px solid #f87171;
+  background: rgba(244, 63, 94, 0.08);
+  border-left: 3px solid var(--sev-high);
   padding: 0.5rem 0.75rem;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
@@ -207,7 +206,7 @@
 
 .pageInfo {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* Responsive */

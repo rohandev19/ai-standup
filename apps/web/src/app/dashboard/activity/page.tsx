@@ -5,13 +5,14 @@ import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
+import { Mail, Key, UserMinus, CheckCircle2, PlusCircle, Check, UserPlus, Activity } from 'lucide-react';
 import styles from './activity.module.css';
 
 interface AuditLog {
   id: string;
   action: string;
   actorName: string;
-  metadataJson: any;
+  metadataJson: Record<string, unknown> | null;
   createdAt: string;
 }
 
@@ -26,15 +27,26 @@ const actionLabels: Record<string, string> = {
   'member.joined': 'Member Joined',
 };
 
-const actionIcons: Record<string, string> = {
-  'member.invited': '📧',
-  'member.bulk_invited': '📧',
-  'member.role_updated': '🔑',
-  'member.removed': '👋',
-  'blocker.resolved': '✅',
-  'workspace.created': '✨',
-  'workspace.onboarding_completed': '🚀',
-  'member.joined': '🎉',
+const getActionIcon = (action: string) => {
+  switch (action) {
+    case 'member.invited':
+    case 'member.bulk_invited':
+      return <Mail size={14} />;
+    case 'member.role_updated':
+      return <Key size={14} />;
+    case 'member.removed':
+      return <UserMinus size={14} />;
+    case 'blocker.resolved':
+      return <CheckCircle2 size={14} />;
+    case 'workspace.created':
+      return <PlusCircle size={14} />;
+    case 'workspace.onboarding_completed':
+      return <Check size={14} />;
+    case 'member.joined':
+      return <UserPlus size={14} />;
+    default:
+      return <Activity size={14} />;
+  }
 };
 
 const actionVariants: Record<string, 'info' | 'success' | 'warning' | 'danger' | 'purple' | 'neutral'> = {
@@ -68,7 +80,8 @@ export default function ActivityPage() {
         const res = await api.get(`/workspaces/${activeWorkspace.id}/activity?page=${page}&limit=${perPage}`);
         setLogs(res.data.data);
         setTotalPages(res.data.meta.totalPages);
-      } catch (err: any) {
+      } catch (e: unknown) {
+        const err = e as { response?: { status?: number } };
         if (err.response?.status === 403) {
           setError('You must be an Owner or Admin to view the Activity Log.');
         } else {
@@ -99,32 +112,32 @@ export default function ActivityPage() {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const getActionDetail = (entry: AuditLog) => {
+  const getActionDetail = (entry: AuditLog): string => {
     const meta = entry.metadataJson || {};
     switch (entry.action) {
       case 'member.invited':
-        return `Sent invitation to ${meta.email}`;
+        return `Sent invitation to ${String(meta.email || '')}`;
       case 'member.bulk_invited':
-        return `Sent ${meta.count} invitations`;
+        return `Sent ${String(meta.count || 0)} invitations`;
       case 'member.role_updated':
-        return `Changed role to ${meta.newRole}`;
+        return `Changed role to ${String(meta.newRole || '')}`;
       case 'blocker.resolved':
-        return `Resolved blocker`;
+        return 'Resolved blocker';
       case 'member.removed':
-        return `Removed member from workspace`;
+        return 'Removed member from workspace';
       case 'workspace.created':
-        return `Created the workspace`;
+        return 'Created the workspace';
       case 'member.joined':
-        return `Joined the workspace`;
+        return 'Joined the workspace';
       default:
         return 'Performed an action';
     }
   };
 
-  const getActionTarget = (entry: AuditLog) => {
+  const getActionTarget = (entry: AuditLog): string => {
     const meta = entry.metadataJson || {};
-    if (meta.email) return meta.email;
-    if (meta.targetUserId) return 'Member'; // We don't fetch target user names in this simple implementation, just their ID
+    if (typeof meta.email === 'string') return meta.email;
+    if (typeof meta.targetUserId === 'string') return 'Member';
     return '';
   };
 
@@ -177,7 +190,7 @@ export default function ActivityPage() {
               <div key={entry.id} className={styles.timelineItem}>
                 <div className={styles.timelineLine}>
                   <div className={styles.timelineDot}>
-                    {actionIcons[entry.action] || '📌'}
+                    {getActionIcon(entry.action)}
                   </div>
                   {i < filteredLogs.length - 1 && <div className={styles.timelineConnector} />}
                 </div>

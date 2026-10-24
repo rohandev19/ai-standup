@@ -5,7 +5,8 @@ import { Button } from '@/components/Button/Button';
 import { Input } from '@/components/Input/Input';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
-import { User, X, Mail } from 'lucide-react';
+import { X, Mail } from 'lucide-react';
+import styles from './teams.module.css';
 
 interface Member {
   id: string;
@@ -31,21 +32,23 @@ export default function TeamsPage() {
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
-  const fetchMembers = async () => {
-    if (!activeWorkspace) return;
-    try {
-      setIsLoading(true);
-      const res = await api.get(`/workspaces/${activeWorkspace.id}/members`);
-      setMembers(res.data);
-    } catch (err) {
-      console.error('Failed to fetch members:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchMembers();
+    let ignore = false;
+    if (activeWorkspace) {
+      api.get(`/workspaces/${activeWorkspace.id}/members`)
+        .then((res) => {
+          if (!ignore) setMembers(res.data);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch members:', err);
+        })
+        .finally(() => {
+          if (!ignore) setIsLoading(false);
+        });
+    }
+    return () => {
+      ignore = true;
+    };
   }, [activeWorkspace]);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -62,9 +65,8 @@ export default function TeamsPage() {
       });
       setInviteSuccess(true);
       setInviteEmail('');
-      // Optionally re-fetch members if we wanted to show pending invites, 
-      // but for now pending invites are separate from active members.
-    } catch (err: any) {
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
       setInviteError(err.response?.data?.message || 'Failed to send invite');
     } finally {
       setInviteLoading(false);
@@ -74,44 +76,37 @@ export default function TeamsPage() {
   if (!activeWorkspace) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.5s ease', position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className={styles.container}>
+      <div className={styles.header}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Teams</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage your workspace members.</p>
+          <h2 className={styles.title}>Teams</h2>
+          <p className={styles.description}>Manage your workspace members.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
-          <Mail size={16} style={{ marginRight: '0.5rem' }} /> Invite Member
+          <Mail size={16} /> Invite Member
         </Button>
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-2)' }}>
           Loading members...
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {members.map(member => (
-            <Card key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--gradient-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+        <div className={styles.grid}>
+          {members.map((member) => (
+            <Card key={member.id} className={styles.memberCard}>
+              <div className={styles.avatar}>
                 {member.user.name.charAt(0).toUpperCase()}
               </div>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <h4 style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className={styles.memberInfo}>
+                <h4 className={styles.memberName}>
                   {member.user.name}
                 </h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{member.user.email}</p>
+                <p className={styles.memberEmail}>{member.user.email}</p>
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                fontSize: '0.75rem',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                background: member.role === 'OWNER' ? 'var(--accent-primary)' : 'var(--border-glass)',
-                color: member.role === 'OWNER' ? '#fff' : 'var(--text-secondary)'
-              }}>
+              <div
+                className={`${styles.roleBadge} ${member.role === 'OWNER' ? styles.roleBadgeOwner : ''}`}
+              >
                 {member.role}
               </div>
             </Card>
@@ -121,26 +116,22 @@ export default function TeamsPage() {
 
       {/* Invite Modal */}
       {isModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <Card glow style={{ width: '100%', maxWidth: '400px', margin: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Invite Member</h3>
+        <div className={styles.modalBackdrop}>
+          <Card className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Invite Member</h3>
               <button 
+                type="button"
                 onClick={() => { setIsModalOpen(false); setInviteSuccess(false); setInviteError(''); }}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                className={styles.closeButton}
+                aria-label="Close modal"
               >
                 <X size={20} />
               </button>
             </div>
             
             <form onSubmit={handleInvite}>
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div className={styles.formGroup}>
                 <Input 
                   label="Email Address"
                   type="email" 
@@ -152,13 +143,13 @@ export default function TeamsPage() {
               </div>
 
               {inviteError && (
-                <div style={{ padding: '0.75rem', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                <div className={styles.errorMessage}>
                   {inviteError}
                 </div>
               )}
 
               {inviteSuccess && (
-                <div style={{ padding: '0.75rem', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                <div className={styles.successMessage}>
                   Invitation sent successfully!
                 </div>
               )}

@@ -2,27 +2,26 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  animation: fadeIn 0.5s ease;
 }
 
 .pageTitle {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  color: var(--text-1);
 }
 
 .pageDesc {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .savedToast {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--status-submitted);
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-sm);
   font-weight: 500;
   font-size: 0.875rem;
-  animation: fadeIn 0.3s ease;
 }
 
 .grid {
@@ -42,7 +41,8 @@
   font-weight: 600;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-1);
 }
 
 /* Avatar */
@@ -50,20 +50,21 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .avatarLg {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: var(--gradient-glow);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-1);
   flex-shrink: 0;
 }
 
@@ -85,35 +86,36 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem;
-  border: 1px solid var(--border-glass);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color var(--dur-fast) ease;
 }
 
 .notifOption:hover {
-  background: var(--bg-glass);
+  background: var(--surface-hover);
 }
 
 .notifActive {
-  border-color: var(--accent-primary);
-  background: rgba(139, 92, 246, 0.06);
+  border-color: var(--accent);
+  background: var(--surface-2);
 }
 
 .notifRadio {
   margin-top: 0.15rem;
-  accent-color: var(--accent-primary);
+  accent-color: var(--accent);
 }
 
 .notifLabel {
   font-weight: 600;
   font-size: 0.9375rem;
   margin-bottom: 0.25rem;
+  color: var(--text-1);
 }
 
 .notifDesc {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* Workspaces List */
@@ -129,24 +131,25 @@
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: var(--radius-sm);
-  transition: background 0.2s;
+  transition: background var(--dur-fast) ease;
 }
 
 .workspaceItem:hover {
-  background: var(--bg-glass);
+  background: var(--surface-hover);
 }
 
 .wsAvatar {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: var(--gradient-glow);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 0.875rem;
-  color: white;
+  color: var(--text-1);
   flex-shrink: 0;
 }
 
@@ -157,11 +160,12 @@
 .wsName {
   font-weight: 500;
   font-size: 0.9375rem;
+  color: var(--text-1);
 }
 
 .wsMeta {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* Responsive */

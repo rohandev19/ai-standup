@@ -33,14 +33,12 @@ export default function PricingPage() {
         </div>
 
         <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
-          <div className={styles.comingSoonBadge}>100% Free During Beta</div>
+          <div className={styles.comingSoonBadge}>Free during beta</div>
           <div className={styles.pricingHeader}>
             <h3>Pro</h3>
             <div className={styles.pricingAmount}>
               <span className={styles.pricingCurrency}>$</span>
-              <span className={styles.pricingValue}>
-                <s style={{opacity: 0.5, fontSize: '2rem'}}>12</s> 0
-              </span>
+              <span className={styles.pricingValue}>0</span>
               <span className={styles.pricingPeriod}>/month</span>
             </div>
             <p className={styles.pricingDesc}>For growing teams that need more power</p>
@@ -59,9 +57,7 @@ export default function PricingPage() {
             <h3>Enterprise</h3>
             <div className={styles.pricingAmount}>
               <span className={styles.pricingCurrency}>$</span>
-              <span className={styles.pricingValue}>
-                <s style={{opacity: 0.5, fontSize: '2rem'}}>29</s> 0
-              </span>
+              <span className={styles.pricingValue}>0</span>
               <span className={styles.pricingPeriod}>/month</span>
             </div>
             <p className={styles.pricingDesc}>For organizations with specific needs</p>

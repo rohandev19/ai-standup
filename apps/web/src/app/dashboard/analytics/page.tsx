@@ -15,7 +15,7 @@ import {
   Bar,
   Legend
 } from 'recharts';
-import { RefreshCw, Download, Filter, TrendingUp, AlertTriangle, Users, Trophy } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import styles from './analytics.module.css';
 
 interface StreakMember {
@@ -77,7 +77,7 @@ export default function AnalyticsPage() {
   if (error) {
     return (
       <div className={styles.container}>
-        <div style={{ padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+        <div style={{ padding: '2rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--sev-high)', borderRadius: '8px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
           <h3>Access Denied</h3>
           <p>{error}</p>
         </div>
@@ -139,20 +139,20 @@ export default function AnalyticsPage() {
           <h2 className={styles.chartTitle}>Submission Rate Trend (%)</h2>
           <ResponsiveContainer width="100%" height="85%">
             <LineChart data={submissionRate}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
               <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} />
               <YAxis stroke="var(--text-secondary)" fontSize={12} domain={[0, 100]} />
               <Tooltip 
-                contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                contentStyle={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-subtle)' }}
                 itemStyle={{ color: 'var(--text-primary)' }}
               />
               <Line 
                 type="monotone" 
                 dataKey="rate" 
-                stroke="var(--accent-primary)" 
-                strokeWidth={3}
-                dot={{ r: 4, fill: 'var(--accent-primary)' }}
-                activeDot={{ r: 6 }} 
+                stroke="var(--accent)" 
+                strokeWidth={2}
+                dot={{ r: 3, fill: 'var(--accent)' }}
+                activeDot={{ r: 5 }} 
               />
             </LineChart>
           </ResponsiveContainer>
@@ -163,16 +163,16 @@ export default function AnalyticsPage() {
           <h2 className={styles.chartTitle}>Blocker Frequency</h2>
           <ResponsiveContainer width="100%" height="85%">
             <BarChart data={blockerTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
               <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} />
               <YAxis stroke="var(--text-secondary)" fontSize={12} />
               <Tooltip 
-                contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                contentStyle={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-subtle)' }}
               />
               <Legend />
-              <Bar dataKey="HIGH" stackId="a" fill="#ef4444" name="High" />
-              <Bar dataKey="MEDIUM" stackId="a" fill="#f59e0b" name="Medium" />
-              <Bar dataKey="LOW" stackId="a" fill="#10b981" name="Low" />
+              <Bar dataKey="HIGH" stackId="a" fill="#f43f5e" name="High" />
+              <Bar dataKey="MEDIUM" stackId="a" fill="#fbbf24" name="Medium" />
+              <Bar dataKey="LOW" stackId="a" fill="#38bdf8" name="Low" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -182,7 +182,9 @@ export default function AnalyticsPage() {
           <h2 className={styles.chartTitle}>Needs Attention</h2>
           {needsAttentionMembers.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80%', color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
+              <div style={{ marginBottom: '0.75rem', color: 'var(--status-submitted)' }}>
+                <CheckCircle2 size={36} />
+              </div>
               <p>Everyone is consistent. Great job!</p>
             </div>
           ) : (
@@ -220,12 +222,12 @@ export default function AnalyticsPage() {
               {memberStreaks.map(member => (
                 <tr key={member.userId}>
                   <td className={styles.tableCell} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface-2)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600 }}>
                       {member.name.charAt(0).toUpperCase()}
                     </div>
                     {member.name}
                   </td>
-                  <td className={styles.tableCell}>{member.currentStreak} days 🔥</td>
+                  <td className={styles.tableCell}>{member.currentStreak} days</td>
                   <td className={styles.tableCell}>{member.totalMissed30d} days</td>
                   <td className={styles.tableCell}>
                     {member.currentStreak >= 5 ? (

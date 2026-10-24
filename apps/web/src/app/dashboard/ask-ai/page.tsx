@@ -59,7 +59,8 @@ export default function AskAiPage() {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as { response?: { data?: { message?: string } } };
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

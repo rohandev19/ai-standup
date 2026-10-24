@@ -5,6 +5,7 @@ import { Input } from '@/components/Input/Input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import Link from 'next/link';
+import styles from './settings.module.css';
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -18,50 +19,55 @@ export default function SettingsPage() {
   const displayRole = myRole.charAt(0) + myRole.slice(1).toLowerCase();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.5s ease' }}>
-      <div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Settings</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Manage your workspace preferences and profile.</p>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Settings</h2>
+        <p className={styles.description}>Manage your workspace preferences and profile.</p>
       </div>
 
-      <Card glow style={{ maxWidth: '600px' }}>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+      <Card className={styles.card}>
+        <h3 className={styles.sectionTitle}>
           Profile Details
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className={styles.formFields}>
           <Input label="Full Name" defaultValue={user?.name || ''} disabled />
           <Input label="Email" type="email" defaultValue={user?.email || ''} disabled />
           <Input label="Workspace Role" defaultValue={displayRole} disabled />
           
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            {/* Disabled because full profile editing is phase 6+ per requirements, but we display the real data */}
+          <div className={styles.formActions}>
             <Button disabled>Save Changes</Button>
           </div>
         </div>
       </Card>
       
-      <Card style={{ maxWidth: '600px' }}>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+      <Card className={styles.card}>
+        <h3 className={styles.sectionTitle}>
           Notification Preferences
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+        <div className={styles.checkboxList}>
+          <label className={styles.checkboxLabel}>
             <input type="checkbox" defaultChecked />
             <span>Email me when a blocker is detected</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+          <label className={styles.checkboxLabel}>
             <input type="checkbox" defaultChecked />
             <span>Send daily AI summaries to my inbox</span>
           </label>
         </div>
       </Card>
 
-      <Card style={{ maxWidth: '600px' }}>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+      <Card className={styles.card}>
+        <h3 className={styles.sectionTitle}>
           Workspace Preferences
-          {myRole === 'MEMBER' && <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginLeft: '1rem', fontWeight: 'normal' }}>(Admin only)</span>}
+          {myRole === 'MEMBER' && <span className={styles.badgeAdmin}>(Admin only)</span>}
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', opacity: myRole === 'MEMBER' ? 0.6 : 1, pointerEvents: myRole === 'MEMBER' ? 'none' : 'auto' }}>
+        <div 
+          className={styles.formFields} 
+          style={{ 
+            opacity: myRole === 'MEMBER' ? 0.6 : 1, 
+            pointerEvents: myRole === 'MEMBER' ? 'none' : 'auto' 
+          }}
+        >
           <Input 
             label="Standup Window Start" 
             type="time" 
@@ -76,7 +82,7 @@ export default function SettingsPage() {
             id="ws-end"
             disabled={myRole === 'MEMBER'}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+          <div className={styles.formActions}>
             <Button 
               disabled={myRole === 'MEMBER'}
               onClick={async () => {
@@ -90,8 +96,9 @@ export default function SettingsPage() {
                   });
                   alert('Settings updated! Please refresh the page to see changes.');
                   window.location.reload();
-                } catch(e: any) {
-                  alert(e.response?.data?.message || 'Failed to update settings');
+                } catch(e: unknown) {
+                  const err = e as { response?: { data?: { message?: string } } };
+                  alert(err.response?.data?.message || 'Failed to update settings');
                 }
               }}
             >
@@ -101,21 +108,21 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card style={{ maxWidth: '600px' }}>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+      <Card className={styles.card}>
+        <h3 className={styles.sectionTitle}>
           Workspace Invite Details
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>Share these details with your team members so they can join your workspace.</p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
+        <div className={styles.formFields}>
+          <p className={styles.hintText}>Share these details with your team members so they can join your workspace.</p>
+          <div className={styles.rowInputs}>
+            <div>
               <Input label="Room Code" defaultValue={activeWorkspace?.joinCode || ''} disabled />
             </div>
-            <div style={{ flex: 1 }}>
+            <div>
               <Input label="Password" defaultValue={activeWorkspace?.joinPassword || ''} disabled />
             </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+          <div className={styles.formActions}>
             <Button 
               onClick={() => {
                 const text = `Join my workspace on AI Standup!\nRoom Code: ${activeWorkspace?.joinCode}\nPassword: ${activeWorkspace?.joinPassword}`;
@@ -130,14 +137,14 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card style={{ maxWidth: '600px' }}>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-glass)', paddingBottom: '1rem' }}>
+      <Card className={styles.card}>
+        <h3 className={styles.sectionTitle}>
           Workspace Billing
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage your workspace subscription tier, billing history, and plan features.</p>
-          <div style={{ marginTop: '0.5rem' }}>
-            <Link href="/dashboard/pricing" style={{ color: 'var(--primary-accent)', textDecoration: 'none', fontWeight: 600 }}>
+        <div className={styles.checkboxList}>
+          <p className={styles.hintText}>Manage your workspace subscription tier, billing history, and plan features.</p>
+          <div style={{ marginTop: '0.25rem' }}>
+            <Link href="/dashboard/pricing" className={styles.linkAccent}>
               Go to Billing Settings &rarr;
             </Link>
           </div>

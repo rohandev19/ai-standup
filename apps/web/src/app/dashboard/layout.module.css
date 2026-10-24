@@ -122,9 +122,7 @@
 
 .workspacesSectionHeader {
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 600;
   color: var(--text-secondary);
   padding: 0 0.5rem;
   margin-bottom: 0.75rem;

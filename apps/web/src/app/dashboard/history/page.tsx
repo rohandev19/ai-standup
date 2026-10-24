@@ -7,9 +7,9 @@ import { Input } from '@/components/Input/Input';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
+import { Download, Search } from 'lucide-react';
 import styles from './history.module.css';
 import { debounce } from 'lodash';
-import { format } from 'date-fns';
 
 interface HistoryItem {
   id: string;
@@ -160,17 +160,17 @@ export default function HistoryPage() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button variant="secondary" onClick={() => handleExport('entries')} disabled={isExporting}>
-            📥 Export Standups
+            <Download size={14} /> Export Standups
           </Button>
           <Button variant="secondary" onClick={() => handleExport('summaries')} disabled={isExporting}>
-            📥 Export Summaries
+            <Download size={14} /> Export Summaries
           </Button>
         </div>
       </div>
 
       <div className={styles.filters}>
         <div className={styles.searchWrapper}>
-          <span className={styles.searchIcon}>🔍</span>
+          <Search size={16} className={styles.searchIcon} />
           <input
             type="text"
             className={styles.searchInput}
@@ -208,7 +208,7 @@ export default function HistoryPage() {
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading history...</div>
       ) : data.length === 0 ? (
         <EmptyState
-          icon="🔍"
+          icon={<Search size={28} />}
           title="No results found"
           description="Try adjusting your search or filter criteria."
           actionLabel="Clear filters"
@@ -233,7 +233,7 @@ export default function HistoryPage() {
               {items.map((item) => {
                 if (item.type === 'weekly_digest') {
                   return (
-                    <Card key={item.id} className={styles.summaryCard} style={{ borderLeft: '4px solid #6366f1', backgroundColor: 'rgba(99, 102, 241, 0.03)' }}>
+                    <Card key={item.id} className={styles.summaryCard} style={{ borderLeft: '4px solid var(--accent)' }}>
                       <div className={styles.summaryHeader}>
                         <Badge variant="info">Weekly Digest</Badge>
                         <div className={styles.summaryMeta}>
@@ -249,7 +249,7 @@ export default function HistoryPage() {
                   return (
                     <Card key={item.id} className={styles.summaryCard}>
                       <div className={styles.summaryHeader}>
-                        <Badge variant="purple">AI Summary</Badge>
+                        <Badge variant="info">AI Summary</Badge>
                         <div className={styles.summaryMeta}>
                           {item.metadata?.entryCount || 0} entries • {item.metadata?.blockerCount || 0} blockers • {item.metadata?.submissionRate || 0}% rate
                         </div>
@@ -280,7 +280,7 @@ export default function HistoryPage() {
                       <div><span className={styles.fieldLabel}>Today:</span> {item.today}</div>
                       {item.blocker && (
                         <div className={styles.blockerField}>
-                          <span className={styles.fieldLabel} style={{ color: '#f87171' }}>Blocker:</span> {item.blocker}
+                          <span className={styles.fieldLabel} style={{ color: 'var(--sev-high)' }}>Blocker:</span> {item.blocker}
                         </div>
                       )}
                     </div>

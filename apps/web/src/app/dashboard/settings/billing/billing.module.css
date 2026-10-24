@@ -5,24 +5,24 @@
 }
 
 .subtitle {
-  color: var(--text-secondary);
+  color: var(--text-2);
   margin-bottom: 2rem;
 }
 
 .error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--sev-high);
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 2rem;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.2);
 }
 
 .currentPlan {
   margin-bottom: 3rem;
   padding: 1.5rem;
-  background: var(--surface-hover);
-  border-radius: 12px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
 }
 
@@ -31,14 +31,15 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  color: var(--text-1);
 }
 
 .badge {
-  background: var(--primary-accent);
-  color: white;
+  background: var(--accent);
+  color: #ffffff;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -49,28 +50,22 @@
 }
 
 .pricingCard {
-  background: var(--surface-bg);
+  background: var(--surface-1);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 2rem;
   position: relative;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.pricingCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .activeCard {
-  border: 2px solid var(--primary-accent);
+  border: 2px solid var(--accent);
 }
 
 .proCard {
-  background: linear-gradient(to bottom, var(--surface-bg), rgba(99, 102, 241, 0.05));
-  border-color: rgba(99, 102, 241, 0.3);
+  background: var(--surface-1);
+  border-color: var(--accent);
 }
 
 .popularBadge {
@@ -78,31 +73,32 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--primary-accent), #a855f7);
-  color: white;
-  padding: 0.25rem 1rem;
-  border-radius: 9999px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 0.25rem 0.875rem;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .pricingCard h3 {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: var(--text-1);
 }
 
 .price {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 2rem;
+  color: var(--text-1);
 }
 
 .price span {
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: var(--text-2);
   font-weight: 400;
 }
 
@@ -115,28 +111,29 @@
 
 .features li {
   padding: 0.5rem 0;
-  color: var(--text-secondary);
+  color: var(--text-2);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .features li::before {
   content: '✓';
-  color: var(--primary-accent);
+  color: var(--status-submitted);
   font-weight: bold;
 }
 
 .upgradeBtn {
   width: 100%;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  background: var(--primary-accent);
-  color: white;
+  background: var(--accent);
+  color: #ffffff;
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fast) ease;
 }
 
 .upgradeBtn:hover:not(:disabled) {
@@ -151,10 +148,10 @@
 .currentBtn {
   width: 100%;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  background: var(--surface-hover);
-  color: var(--text-secondary);
+  background: var(--surface-2);
+  color: var(--text-2);
   border: 1px solid var(--border-subtle);
   cursor: default;
 }
