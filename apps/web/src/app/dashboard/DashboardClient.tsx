@@ -276,7 +276,7 @@ export default function DashboardClient() {
 
       {/* Main Grid: Presence Dominan di Kiri, AI Summary & Submissions di Kanan */}
       <div className={styles.mainGrid}>
-        {/* Left Column — Team Presence (Primary Anchor) */}
+        {/* Left Column: Team Presence (Primary Anchor) */}
         <div className={styles.primaryColumn}>
           {/* Active Blockers Alert Box if any */}
           {activeBlockersList.length > 0 && (
@@ -380,7 +380,7 @@ export default function DashboardClient() {
           </section>
         </div>
 
-        {/* Right Column — AI Summary & Recent Submissions */}
+        {/* Right Column: AI Summary & Recent Submissions */}
         <div className={styles.secondaryColumn}>
           {/* AI Summary Card (No purple glow slop) */}
           <section>

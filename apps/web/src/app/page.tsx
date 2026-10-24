@@ -163,7 +163,7 @@ export default function LandingPage() {
                 <div className={styles.blockerCard}>
                   <div className={styles.blockerHeader}>
                     <AlertTriangle size={14} color="var(--sev-high)" />
-                    <span className={styles.blockerTitle}>High Blocker — Marcus Vance</span>
+                    <span className={styles.blockerTitle}>High Blocker: Marcus Vance</span>
                   </div>
                   <p className={styles.blockerDesc}>
                     Staging deployment is held up waiting on Auth0 token expiry config changes.

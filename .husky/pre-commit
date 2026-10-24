@@ -9,5 +9,8 @@ else
   echo "[pre-commit] To enforce security, please install gitleaks (https://github.com/gitleaks/gitleaks)"
 fi
 
+echo "[pre-commit] Checking for AI-slop (emojis, em-dashes, forbidden tokens)..."
+pnpm check:slop
+
 echo "[pre-commit] Running lint..."
 pnpm lint

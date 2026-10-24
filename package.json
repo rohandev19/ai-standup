@@ -8,6 +8,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint --concurrency=1",
+    "check:slop": "node scripts/check-slop.mjs",
     "test": "turbo run test",
     "clean": "turbo run clean",
     "prepare": "husky || true",
