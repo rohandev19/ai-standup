@@ -244,7 +244,14 @@ export class StandupsService {
       let blocker = null;
 
       if (entry) {
-        status = entry.status === 'MISSED' ? 'missed' : 'submitted'; // we ignore 'late' for simple UI
+        // LATE must stay distinct from SUBMITTED: the dashboard colors them
+        // differently (green vs amber) per the shared status palette.
+        status =
+          entry.status === 'MISSED'
+            ? 'missed'
+            : entry.status === 'LATE'
+              ? 'late'
+              : 'submitted';
         const submittedLocal = DateTime.fromJSDate(
           entry.submittedAt || new Date(),
         ).setZone(workspace.timezone);
@@ -255,6 +262,7 @@ export class StandupsService {
           blocker = {
             id: entry.blockerFlag.id,
             text: entry.blockerText,
+            severity: entry.blockerFlag.severity,
             isResolved: entry.blockerFlag.isResolved,
           };
         }

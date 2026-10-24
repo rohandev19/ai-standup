@@ -1,11 +1,18 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Card } from '@/components/Card/Card';
 import { Badge } from '@/components/Badge/Badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
+import {
+  type BlockerSeverity,
+  type SubmissionStatus,
+  getSeverityPresentation,
+  getStatusPresentation,
+  hasSubmitted,
+} from '@/lib/status';
 import styles from './dashboard.module.css';
 
 interface DashboardState {
@@ -20,11 +27,11 @@ interface DashboardState {
     id: string;
     name: string;
     avatarUrl: string | null;
-    status: 'submitted' | 'late' | 'not_yet' | 'missed';
+    status: SubmissionStatus;
     time: string | null;
     yesterday: string | null;
     today: string | null;
-    blocker: { id: string; text: string; isResolved: boolean } | null;
+    blocker: { id: string; text: string; severity: BlockerSeverity; isResolved: boolean } | null;
   }[];
   aiSummary?: string | null;
 }
@@ -35,11 +42,15 @@ export default function DashboardClient() {
   const activeWorkspaceId = activeWorkspace?.id;
   const [state, setState] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(loading);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   // 1. Initial State Fetch via REST
-  const fetchDashboardState = async () => {
+  const fetchDashboardState = useCallback(async () => {
     if (!activeWorkspaceId) return;
     try {
       const res = await api.get(`/workspaces/${activeWorkspaceId}/standups/dashboard-state`);
@@ -51,12 +62,33 @@ export default function DashboardClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
-    setLoading(true);
-    fetchDashboardState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let ignore = false;
+    if (activeWorkspaceId) {
+      api.get(`/workspaces/${activeWorkspaceId}/standups/dashboard-state`)
+        .then((res) => {
+          if (!ignore) {
+            setState(res.data);
+            setError(null);
+          }
+        })
+        .catch((err: unknown) => {
+          if (!ignore) {
+            const apiError = err as { response?: { data?: { message?: string } } };
+            setError(apiError.response?.data?.message || 'Failed to load dashboard state');
+          }
+        })
+        .finally(() => {
+          if (!ignore) {
+            setLoading(false);
+          }
+        });
+    }
+    return () => {
+      ignore = true;
+    };
   }, [activeWorkspaceId]);
 
   // 2. WebSocket Connection and Listeners
@@ -74,7 +106,7 @@ export default function DashboardClient() {
 
     socket.on('connect', () => {
       // 5.9 Auto-reconnect + resync full state via REST
-      if (!loading) { 
+      if (!loadingRef.current) { 
         fetchDashboardState();
       }
 
@@ -94,14 +126,14 @@ export default function DashboardClient() {
               ...m,
               status: (data.status === 'SUBMITTED' || data.status === 'PENDING_AI' 
                 ? 'submitted' 
-                : data.status.toLowerCase()) as 'submitted' | 'late' | 'not_yet' | 'missed',
+                : data.status.toLowerCase()) as SubmissionStatus,
               time: timeStr,
             };
           }
           return m;
         });
 
-        const newSubmitted = newMembers.filter(m => m.status === 'submitted' || m.status === 'late').length;
+        const newSubmitted = newMembers.filter(m => hasSubmitted(m.status)).length;
 
         return {
           ...prev,
@@ -136,7 +168,7 @@ export default function DashboardClient() {
     return () => {
       socket.disconnect();
     };
-  }, [accessToken, activeWorkspaceId]);
+  }, [accessToken, activeWorkspaceId, fetchDashboardState]);
 
   if (!activeWorkspaceId) {
     return <div style={{ padding: '2rem' }}>Please select a workspace.</div>;
@@ -155,7 +187,7 @@ export default function DashboardClient() {
   const submissionRate = Math.round((state.stats.submitted / (state.stats.totalMembers || 1)) * 100);
 
   const recentSubmissions = state.members
-    .filter(m => m.status === 'submitted' || m.status === 'late')
+    .filter(m => hasSubmitted(m.status))
     .sort((a, b) => (b.time || '').localeCompare(a.time || '')); 
 
   const aiSummaryText = state.aiSummary || "No AI summary has been generated for today yet. It will be generated automatically when the standup window closes.";
@@ -228,7 +260,11 @@ export default function DashboardClient() {
                       <li key={m.id}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                           <strong>{m.name}</strong>
-                          <Badge variant="danger" size="sm">high</Badge>
+                          {m.blocker && (
+                            <Badge variant={getSeverityPresentation(m.blocker.severity).variant} size="sm">
+                              {getSeverityPresentation(m.blocker.severity).label}
+                            </Badge>
+                          )}
                         </div>
                         {m.blocker?.text}
                       </li>
@@ -328,10 +364,10 @@ export default function DashboardClient() {
                     </div>
                   </div>
                   <Badge
-                    variant={m.status === 'submitted' || m.status === 'late' ? 'success' : m.status === 'missed' ? 'danger' : 'neutral'}
+                    variant={getStatusPresentation(m.status).variant}
                     dot={m.status === 'submitted'}
                   >
-                    {m.status === 'submitted' ? 'Submitted' : m.status === 'missed' ? 'Missed' : 'Not yet'}
+                    {getStatusPresentation(m.status).label}
                   </Badge>
                 </div>
               </Card>
