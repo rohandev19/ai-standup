@@ -6,7 +6,7 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { EmailProcessor } from './processors/email.processor';
 
-const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL;
+const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
 let redisConnection: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),

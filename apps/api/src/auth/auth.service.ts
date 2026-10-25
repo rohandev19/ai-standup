@@ -429,7 +429,7 @@ export class AuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const callbackUrl =
       process.env.GOOGLE_CALLBACK_URL ||
-      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+      `${process.env.FRONTEND_URL || 'https://www.aistandup.app'}/api/auth/google/callback`;
 
     if (!clientId) {
       throw new HttpException(
@@ -456,7 +456,7 @@ export class AuthService {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const callbackUrl =
       process.env.GOOGLE_CALLBACK_URL ||
-      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+      `${process.env.FRONTEND_URL || 'https://www.aistandup.app'}/api/auth/google/callback`;
 
     if (!clientId || !clientSecret) {
       throw new HttpException(

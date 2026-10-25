@@ -108,7 +108,8 @@ export class AuthController {
       const url = this.authService.getGoogleAuthUrl();
       return res.redirect(url);
     } catch (err: any) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const frontendUrl =
+        process.env.FRONTEND_URL || 'https://www.aistandup.app';
       return res.redirect(
         `${frontendUrl}/login?error=${encodeURIComponent(err.message || 'Google OAuth is not configured yet')}`,
       );
@@ -121,7 +122,7 @@ export class AuthController {
     @Query('error') error: string,
     @Res() res: Response,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.aistandup.app';
     if (error || !code) {
       return res.redirect(
         `${frontendUrl}/login?error=${encodeURIComponent(error || 'Google login cancelled')}`,

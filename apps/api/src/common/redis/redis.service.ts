@@ -20,7 +20,7 @@ export class RedisService
   );
 
   constructor() {
-    const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL;
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
 
     if (redisUrl) {
       super(redisUrl, {

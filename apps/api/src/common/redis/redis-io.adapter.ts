@@ -14,10 +14,10 @@ export class RedisIoAdapter extends IoAdapter {
 
     // We create separate connections for pub/sub because a Redis client in subscriber mode
     // cannot be used to publish messages.
-    const redisUrl = process.env.REDIS_TLS_URL || process.env.REDIS_URL;
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
 
     if (redisUrl) {
-      // Heroku provides a full URL for Redis
+      // Heroku / Cloud provides a full URL for Redis
       this.pubClient = new Redis(redisUrl, {
         tls: redisUrl.startsWith('rediss://')
           ? { rejectUnauthorized: false }
@@ -63,14 +63,11 @@ export class RedisIoAdapter extends IoAdapter {
       ]);
       this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
     } catch (err: any) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(
-          '[RedisIoAdapter] Redis adapter unavailable in development, falling back to in-memory Socket.io adapter:',
-          err.message,
-        );
-        return;
-      }
-      throw err;
+      console.warn(
+        '[RedisIoAdapter] Redis adapter unavailable, falling back to in-memory Socket.io adapter:',
+        err.message,
+      );
+      return;
     }
   }
 
