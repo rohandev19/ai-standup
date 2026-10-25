@@ -38,7 +38,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, accessToken, isLoading: isAuthLoading, logout } = useAuth();
-  const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading, setActiveWorkspace } = useWorkspace();
+  const { workspaces, activeWorkspace, isLoading: isWorkspaceLoading, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -135,8 +135,7 @@ export default function DashboardLayout({
       <OnboardingWizard
         workspace={activeWorkspace}
         onComplete={() => {
-          // Force a full page reload to fetch updated workspace state
-          window.location.reload();
+          refreshWorkspaces();
         }}
       />
     );

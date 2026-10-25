@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { api } from '@/lib/api';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Button } from '@/components/Button/Button';
 import { Plus, LogIn, Lightbulb, AlertTriangle } from 'lucide-react';
 import styles from './ZeroWorkspace.module.css';
@@ -10,6 +11,7 @@ interface ZeroWorkspaceProps {
 }
 
 export const ZeroWorkspace: React.FC<ZeroWorkspaceProps> = ({ onLogout }) => {
+  const { refreshWorkspaces } = useWorkspace();
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
@@ -26,7 +28,8 @@ export const ZeroWorkspace: React.FC<ZeroWorkspaceProps> = ({ onLogout }) => {
     setCreateError('');
     try {
       await api.post('/workspaces', { name: newWorkspaceName.trim() });
-      window.location.reload();
+      await refreshWorkspaces();
+      setIsCreating(false);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setCreateError(err.response?.data?.message || 'Failed to create workspace');
@@ -45,7 +48,8 @@ export const ZeroWorkspace: React.FC<ZeroWorkspaceProps> = ({ onLogout }) => {
         joinCode: joinCode.trim(),
         joinPassword: joinPassword.trim(),
       });
-      window.location.reload();
+      await refreshWorkspaces();
+      setIsJoining(false);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setJoinError(err.response?.data?.message || 'Failed to join workspace. Check code and password.');
