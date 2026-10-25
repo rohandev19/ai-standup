@@ -7,8 +7,14 @@
 </p>
 
 <p align="center">
+  <a href="https://www.aistandup.app" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Live_Demo-aistandup.app-00DC82?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
+
+<p align="center">
   A multi-tenant SaaS platform that replaces synchronous daily standups with async submissions,<br/>
-  real-time presence tracking via WebSocket, and AI-generated team summaries using Claude API.
+  real-time presence tracking via WebSocket, and AI-generated team summaries using Google Gemini.
 </p>
 
 <p align="center">
@@ -19,8 +25,22 @@
   <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Socket.io-4-010101?logo=socket.io" alt="Socket.io" />
   <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma" alt="Prisma 6" />
-  <img src="https://img.shields.io/badge/Claude_API-Haiku-D4A574" alt="Claude API" />
+  <img src="https://img.shields.io/badge/Google_Gemini-Flash_AI-4285F4?logo=google" alt="Google Gemini" />
 </p>
+
+---
+
+## 🎯 Reviewer & HR Quick Tour
+
+Want to test the live platform without setting up local environment?
+
+1. Open **[https://www.aistandup.app](https://www.aistandup.app)**.
+2. Click **Get Started** or **Continue with Google** on the login page for 1-click instant access.
+3. Complete the interactive **5-step Onboarding Wizard** (set workspace name, timezone, working hours, and invite members).
+4. Experience the **Real-Time Dashboard**:
+   - Submit a standup update (Yesterday, Today, Blockers).
+   - Watch WebSocket presence indicators transition in real time without refreshing.
+   - Test AI blocker severity classification and daily team narrative generation.
 
 ---
 
@@ -28,13 +48,13 @@
 
 Remote/hybrid teams (5–30 people) often skip daily standups due to timezone conflicts and meeting fatigue. Managers lose visibility into daily progress, and blockers surface too late.
 
-**AI Standup** solves this by letting team members submit updates asynchronously within a configurable time window. An AI (Claude) automatically summarizes the entire team's updates into a single narrative report and flags blockers by severity — so managers get a complete picture without reading every individual entry.
+**AI Standup** solves this by letting team members submit updates asynchronously within a configurable time window. An AI (Google Gemini) automatically summarizes the entire team's updates into a single narrative report and flags blockers by severity — so managers get a complete picture without reading every individual entry.
 
 ### Key Differentiators
 
 - **Multi-tenant architecture** — one deployment serves multiple isolated workspaces (companies/teams)
 - **Real-time WebSocket dashboard** — see who has/hasn't submitted without refreshing
-- **AI daily summaries** — Claude generates a single narrative from all team entries (batched, not per-entry)
+- **AI daily summaries** — Google Gemini generates a single narrative from all team entries (batched, not per-entry)
 - **Automated blocker detection** — AI classifies blocker severity (Low/Medium/High) with reasoning
 - **Weekly digest** — AI-generated weekly trend reports for managers
 
@@ -94,8 +114,8 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
                                     ┌──────┘      │        └───────┐
                                     ▼             ▼                ▼
                              ┌───────────┐ ┌───────────┐   ┌────────────┐
-                             │PostgreSQL │ │   Redis    │   │ Claude API │
-                             │(Prisma)   │ │           │   │ (Haiku)    │
+                             │PostgreSQL │ │   Redis    │   │ Gemini AI  │
+                             │(Prisma)   │ │           │   │ (Flash)    │
                              │           │ │• Socket.io│   │            │
                              │• Users    │ │  adapter  │   │• Summary   │
                              │• Workspaces│ │• BullMQ   │   │• Blockers  │
@@ -122,12 +142,12 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
 | **Frontend** | Next.js 16 (App Router), React 19, TypeScript 5 |
 | **Backend** | NestJS 11, TypeScript 5 |
 | **Database** | PostgreSQL (via Prisma 6 ORM) |
-| **Cache / Pub-Sub** | Redis (Socket.io adapter, BullMQ, rate limiting, circuit breaker) |
+| **Cache / Pub-Sub** | Redis / Valkey (Socket.io adapter, BullMQ, rate limiting, circuit breaker) |
 | **Real-Time** | Socket.io 4 (with Redis adapter for multi-instance) |
-| **AI** | Claude API (Haiku) — tool use for structured blocker classification |
+| **AI** | Google Gemini (gemini-3.6-flash via AI Studio) — tool use for structured blocker classification |
 | **Job Queue** | BullMQ (email, AI summary, AI blocker, weekly digest queues) |
 | **Email** | Nodemailer (configurable SMTP provider) |
-| **Auth** | JWT (access + refresh token rotation), bcrypt, Passport.js |
+| **Auth** | JWT (access + refresh token rotation), Google OAuth 2.0, bcrypt, Passport.js |
 | **Charts** | Recharts |
 | **Icons** | Lucide React |
 | **Monorepo** | Turborepo + pnpm workspaces |
@@ -144,9 +164,9 @@ ai-standup/
 │   ├── api/                    # NestJS backend
 │   │   ├── prisma/             # Schema & migrations
 │   │   └── src/
-│   │       ├── ai/             # Claude API integration, circuit breaker
+│   │       ├── ai/             # Gemini API integration, circuit breaker
 │   │       ├── analytics/      # Team health score, submission trends
-│   │       ├── auth/           # JWT, guards, login/register/reset
+│   │       ├── auth/           # JWT, Google OAuth, guards, login/register/reset
 │   │       ├── common/         # Shared guards, decorators, filters
 │   │       ├── events/         # Event emitter listeners
 │   │       ├── notifications/  # In-app + email notification system
@@ -165,12 +185,8 @@ ai-standup/
 │           ├── hooks/          # Custom hooks (useSocket, useAuth)
 │           └── lib/            # API client, utilities
 │
-├── packages/
-│   └── shared/                 # Shared types, enums, WebSocket events
-│
-├── design.md                   # Full architecture & schema design
-├── requirements.md             # 22 requirements in EARS format
-└── tasks.md                    # Implementation task checklist
+└── packages/
+    └── shared/                 # Shared types, enums, WebSocket events
 ```
 
 ---
@@ -212,11 +228,14 @@ The web app runs on `http://localhost:3000` and the API on `http://localhost:300
 | Variable | Description |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
-| `REDIS_URL` | Redis connection string |
-| `ANTHROPIC_API_KEY` | Claude API key for AI features |
-| `JWT_SECRET` | Secret for JWT token signing |
-| `JWT_REFRESH_SECRET` | Secret for refresh token signing |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Email service configuration |
+| `REDIS_URL` | Redis / Valkey connection string |
+| `GEMINI_API_KEY` | Google Gemini API key (via Google AI Studio) |
+| `JWT_SECRET` | Secret for JWT token signing (min 32 chars) |
+| `JWT_EXPIRATION` | Access token lifespan (e.g. 15m) |
+| `JWT_REFRESH_EXPIRATION` | Refresh token lifespan (e.g. 7d) |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 Client Secret |
+| `GOOGLE_CALLBACK_URL` | OAuth redirect callback URL |
 | `FRONTEND_URL` | Frontend URL for CORS and email links |
 
 ---
@@ -240,20 +259,20 @@ Standup Window Closes (Cron)
         │
         ├──► BullMQ: ai-summary job
         │         │
-        │         └──► Claude API (1 call, all entries batched)
+        │         └──► Google Gemini (1 call, all entries batched)
         │                  │
         │                  └──► AiSummary saved + WebSocket broadcast
         │
         └──► BullMQ: ai-blocker job
                   │
-                  └──► Claude API (1 call, tool use for structured output)
+                  └──► Google Gemini (1 call, tool use for structured output)
                            │
                            └──► BlockerFlags saved + HIGH severity alert
 
 Weekly (Last Working Day):
         └──► BullMQ: ai-weekly-digest job
                   │
-                  └──► Claude API (aggregates daily summaries)
+                  └──► Google Gemini (aggregates daily summaries)
                            │
                            └──► WeeklyDigest saved + email to Owner/Admin
 ```
