@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import styles from './ProductVideoDemo.module.css';
 import { 
   Play, 
@@ -18,15 +18,54 @@ export interface ProductVideoDemoProps {
   embedUrl?: string;
   /** Poster image path */
   poster?: string;
+  /** Auto-play when scrolled into view, default true */
+  autoPlayOnScroll?: boolean;
 }
 
 export function ProductVideoDemo({
   videoSrc = '/demo.mp4',
   embedUrl,
   poster,
+  autoPlayOnScroll = true,
 }: ProductVideoDemoProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!autoPlayOnScroll || embedUrl) return;
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    // IntersectionObserver to trigger seamless autoplay on scroll into view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video
+              .play()
+              .then(() => setIsPlaying(true))
+              .catch(() => {
+                // If browser restricts or demo.mp4 not present, stay on preview mockup
+              });
+          } else {
+            video.pause();
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [autoPlayOnScroll, embedUrl]);
 
   const handlePlay = () => {
     if (!videoRef.current) return;
@@ -41,7 +80,7 @@ export function ProductVideoDemo({
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div ref={containerRef} className={styles.wrapper}>
       {/* 16:9 Video Player Frame */}
       <div className={styles.videoFrame}>
         {embedUrl ? (
@@ -60,6 +99,8 @@ export function ProductVideoDemo({
               poster={poster}
               className={styles.videoElement}
               controls={isPlaying}
+              muted
+              loop
               playsInline
               preload="metadata"
               onPlay={() => setIsPlaying(true)}
