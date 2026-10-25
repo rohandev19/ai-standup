@@ -60,6 +60,14 @@
   flex-wrap: wrap;
 }
 
+.heroMockupWrapper {
+  margin-top: 3.5rem;
+  width: 100%;
+  max-width: 1080px;
+  position: relative;
+  z-index: 2;
+}
+
 /* Hero Bottom Separators */
 .heroBottomFade {
   position: absolute;
@@ -303,9 +311,9 @@
 .blockerCard {
   margin-top: 0.25rem;
   padding: 0.625rem 0.75rem;
-  background: rgba(244, 63, 94, 0.08);
-  border-left: 3px solid var(--sev-high);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #191118;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: var(--radius-sm);
 }
 
 .blockerHeader {
@@ -342,10 +350,10 @@
   max-width: 1140px;
   margin: 4.5rem auto;
   padding: 5rem 3.5rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: 44px;
-  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.5);
+  background: #0f1629;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 48px;
+  box-shadow: 0 24px 50px -15px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
@@ -881,10 +889,10 @@
   margin: 4.5rem auto 6.5rem;
   padding: 5rem 3rem;
   text-align: center;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: 44px;
-  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.5);
+  background: #0f1629;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 48px;
+  box-shadow: 0 24px 50px -15px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 

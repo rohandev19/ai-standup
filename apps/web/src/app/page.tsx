@@ -4,7 +4,7 @@ import styles from './page.module.css';
 import { Button } from '@/components/Button/Button';
 import { LandingNav } from '@/components/LandingNav';
 import { WaveBackground } from '@/components/WaveBackground';
-import { ProductVideoDemo } from '@/components/ProductVideoDemo';
+import { DashboardMockup } from '@/components/DashboardMockup';
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -70,17 +70,17 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
+
+          {/* Authentic Dashboard Browser Mockup */}
+          <div className={styles.heroMockupWrapper}>
+            <DashboardMockup />
+          </div>
         </section>
 
         {/* Smooth Bottom Separators */}
         <div className={styles.heroBottomFade} aria-hidden="true" />
         <div className={styles.heroBottomDivider} aria-hidden="true" />
       </div>
-
-      {/* Product Video Walkthrough Demo */}
-      <section className={styles.videoSection}>
-        <ProductVideoDemo videoSrc="/demo.mp4" />
-      </section>
 
 
       {/* Core Capabilities */}

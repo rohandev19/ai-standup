@@ -3,32 +3,29 @@ import { render, screen } from '@testing-library/react';
 import { ProductVideoDemo } from './ProductVideoDemo';
 
 describe('ProductVideoDemo component', () => {
-  it('renders video element with default source', () => {
-    const { container } = render(<ProductVideoDemo videoSrc="/demo.mp4" />);
-    const video = container.querySelector('video');
-    expect(video).toBeInTheDocument();
-    expect(video).toHaveAttribute('src', '/demo.mp4');
-  });
-
-  it('renders authentic product dashboard preview initially with play action', () => {
-    render(<ProductVideoDemo videoSrc="/demo.mp4" />);
+  it('renders authentic product dashboard preview with browser frame', () => {
+    render(<ProductVideoDemo />);
+    expect(screen.getByText('aistandup.app')).toBeInTheDocument();
     expect(screen.getByText('Platform Engineering')).toBeInTheDocument();
+    expect(screen.getByText('Submission Rate')).toBeInTheDocument();
+    expect(screen.getByText('Active Blockers (1)')).toBeInTheDocument();
     expect(screen.getByText('Alex Chen')).toBeInTheDocument();
     expect(screen.getByText('Claude AI Briefing')).toBeInTheDocument();
-
-    const playButton = screen.getByRole('button', { name: /play video walkthrough/i });
-    expect(playButton).toBeInTheDocument();
+    expect(screen.getByText("Today's Participation")).toBeInTheDocument();
   });
 
-  it('renders iframe when embedUrl is provided', () => {
-    render(<ProductVideoDemo embedUrl="https://www.youtube.com/embed/dQw4w9WgXcQ" />);
-    const iframe = screen.getByTitle(/AI Standup/i);
-    expect(iframe).toBeInTheDocument();
-    expect(iframe).toHaveAttribute('src', 'https://www.youtube.com/embed/dQw4w9WgXcQ');
-  });
-
-  it('does not render chapter timeline list', () => {
+  it('renders stats strip correctly', () => {
     render(<ProductVideoDemo />);
+    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByText('4 of 4 submitted')).toBeInTheDocument();
+    expect(screen.getByText('Standup Window')).toBeInTheDocument();
+    expect(screen.getByText('Open')).toBeInTheDocument();
+  });
+
+  it('does not render video element or chapters', () => {
+    const { container } = render(<ProductVideoDemo />);
+    expect(container.querySelector('video')).not.toBeInTheDocument();
+    expect(container.querySelector('iframe')).not.toBeInTheDocument();
     expect(screen.queryByText(/Chapters:/i)).not.toBeInTheDocument();
   });
 });
