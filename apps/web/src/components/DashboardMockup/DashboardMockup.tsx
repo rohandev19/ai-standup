@@ -124,7 +124,6 @@ export function DashboardMockup() {
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Standup Window</span>
                 <div className={styles.windowStatusPill}>
-                  <span className={styles.statusDotGreen} />
                   <span>Open</span>
                 </div>
                 <span className={styles.statSub}>4h 10m remaining</span>
@@ -157,7 +156,6 @@ export function DashboardMockup() {
                   <div className={styles.sectionHeader}>
                     <h3 className={styles.sectionHeading}>Team Presence</h3>
                     <div className={styles.liveBadge}>
-                      <span className={styles.statusDotGreen} />
                       <span>Live</span>
                     </div>
                   </div>
@@ -228,7 +226,6 @@ export function DashboardMockup() {
                 <div className={styles.aiSummarySection}>
                   <div className={styles.sectionHeader}>
                     <h3 className={styles.sectionHeading}>AI Summary</h3>
-                    <span className={styles.aiGeneratedBadge}>AI-generated</span>
                   </div>
                   <div className={styles.aiSummaryCard}>
                     <div className={styles.aiBriefingBadge}>

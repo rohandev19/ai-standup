@@ -264,7 +264,7 @@ export default function DashboardClient() {
         <Card className={styles.statCard}>
           <div className={styles.statLabel}>Standup Window</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-            <Badge variant={state.stats.windowStatus === 'open' ? 'success' : 'neutral'} dot>
+            <Badge variant={state.stats.windowStatus === 'open' ? 'success' : 'neutral'}>
               {state.stats.windowStatus === 'open' ? 'Open' : 'Closed'}
             </Badge>
           </div>
@@ -309,9 +309,9 @@ export default function DashboardClient() {
               <div className={styles.sectionTitleGroup}>
                 <h2>Team Presence</h2>
                 {isConnected ? (
-                  <Badge variant="success" dot size="sm">Live</Badge>
+                  <Badge variant="success" size="sm">Live</Badge>
                 ) : (
-                  <Badge variant="warning" dot size="sm">Reconnecting…</Badge>
+                  <Badge variant="warning" size="sm">Reconnecting…</Badge>
                 )}
               </div>
             </div>
@@ -387,7 +387,6 @@ export default function DashboardClient() {
             <div className={styles.sectionHeader}>
               <div className={styles.sectionTitleGroup}>
                 <h2>AI Summary</h2>
-                <Badge variant="purple">AI-generated</Badge>
               </div>
             </div>
             <Card className={styles.aiCard}>
