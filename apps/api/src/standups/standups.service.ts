@@ -193,9 +193,11 @@ export class StandupsService {
       select: { content: true },
     });
 
-    // Window Status Logic (mirroring Scheduler)
-    const dayOfWeek = localTime.weekday; // 1 = Monday, 7 = Sunday
-    const isWorkingDay = workspace.workingDays.includes(dayOfWeek);
+    // Window Status Logic (mirroring Scheduler: 0=Sun..6=Sat, or 7=Sun)
+    const jsDay = localTime.weekday === 7 ? 0 : localTime.weekday;
+    const isWorkingDay =
+      workspace.workingDays.includes(jsDay) ||
+      workspace.workingDays.includes(localTime.weekday);
 
     let windowStatus: 'open' | 'closed' = 'closed';
     let windowRemaining = '0m';

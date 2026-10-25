@@ -26,7 +26,7 @@ export class SchedulerService {
    */
   private isWorkingDay(date: DateTime, workingDays: number[]): boolean {
     const jsDay = date.weekday === 7 ? 0 : date.weekday;
-    return workingDays.includes(jsDay);
+    return workingDays.includes(jsDay) || workingDays.includes(date.weekday);
   }
 
   // Window Close Processor - Runs every 5 minutes (Phase 4.4)
