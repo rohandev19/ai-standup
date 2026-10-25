@@ -106,7 +106,9 @@
 
 html {
   color-scheme: dark;
+  scroll-behavior: smooth;
 }
+
 
 body {
   min-height: 100dvh;
