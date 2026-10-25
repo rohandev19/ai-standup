@@ -177,7 +177,7 @@ export function ProductVideoDemo({
                   aria-label="Play video walkthrough"
                 >
                   <Play size={18} fill="currentColor" />
-                  <span>Watch walkthrough (2 min)</span>
+                  <span>Watch demo (30s)</span>
                 </button>
               </div>
             )}
