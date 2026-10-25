@@ -3,16 +3,14 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import { Button } from '@/components/Button/Button';
 import { LandingNav } from '@/components/LandingNav';
+import { WaveBackground } from '@/components/WaveBackground';
+import { ProductVideoDemo } from '@/components/ProductVideoDemo';
 import { 
-  Users, 
-  Bot, 
   AlertTriangle, 
   CheckCircle2, 
-  Clock, 
-  XCircle,
-  ArrowRight,
   ShieldCheck
 } from 'lucide-react';
+
 
 export const metadata: Metadata = {
   title: 'AI Standup | Async Team Standups and AI Summaries',
@@ -53,209 +51,191 @@ export default function LandingPage() {
       <LandingNav />
 
       {/* Hero Section */}
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <h1 className={styles.title}>
-            Async daily standups with automated summaries and blocker detection.
-          </h1>
-          <p className={styles.subtitle}>
-            Replace synchronous status calls. Team members share quick updates on their own schedule, and Claude AI generates daily digests and flags blockers in real time.
-          </p>
-          <div className={styles.ctaGroup}>
-            <Link href="/register">
-              <Button variant="primary">Start for free</Button>
-            </Link>
-            <Link href="#how-it-works">
-              <Button variant="secondary">See how it works</Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Real Product Preview */}
-        <div className={styles.productPreviewWrapper}>
-          <div className={styles.productPreviewCard}>
-            <div className={styles.previewHeader}>
-              <div className={styles.previewTeamInfo}>
-                <span className={styles.previewTeamName}>Platform Engineering</span>
-                <span className={styles.previewMeta}>Window: 09:00 – 11:00 AM</span>
-              </div>
-              <div className={styles.liveIndicator}>
-                <span className={styles.liveDot} /> Live
-              </div>
-            </div>
-
-            <div className={styles.previewStats}>
-              <div className={styles.previewStatItem}>
-                <span className={styles.previewStatLabel}>Submissions</span>
-                <span className={styles.previewStatValue}>4 of 5 (80%)</span>
-              </div>
-              <div className={styles.previewStatItem}>
-                <span className={styles.previewStatLabel}>Active Blockers</span>
-                <span className={styles.previewStatValue} style={{ color: 'var(--sev-high)' }}>1 High Severity</span>
-              </div>
-            </div>
-
-            <div className={styles.previewGrid}>
-              {/* Presence List */}
-              <div className={styles.previewPresence}>
-                <div className={styles.previewSectionTitle}>Team Presence</div>
-                <div className={styles.previewPresenceItem}>
-                  <div className={styles.previewAvatar}>AC</div>
-                  <div className={styles.previewMemberInfo}>
-                    <span className={styles.previewMemberName}>Alex Chen</span>
-                    <span className={styles.previewMemberTime}>Submitted 09:14</span>
-                  </div>
-                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                    <CheckCircle2 size={12} /> Submitted
-                  </span>
-                </div>
-                <div className={styles.previewPresenceItem}>
-                  <div className={styles.previewAvatar}>SJ</div>
-                  <div className={styles.previewMemberInfo}>
-                    <span className={styles.previewMemberName}>Sara Jenkins</span>
-                    <span className={styles.previewMemberTime}>Submitted 09:42</span>
-                  </div>
-                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                    <CheckCircle2 size={12} /> Submitted
-                  </span>
-                </div>
-                <div className={styles.previewPresenceItem}>
-                  <div className={styles.previewAvatar}>DK</div>
-                  <div className={styles.previewMemberInfo}>
-                    <span className={styles.previewMemberName}>David Kim</span>
-                    <span className={styles.previewMemberTime}>Submitted 10:15</span>
-                  </div>
-                  <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                    <CheckCircle2 size={12} /> Submitted
-                  </span>
-                </div>
-                <div className={styles.previewPresenceItem}>
-                  <div className={styles.previewAvatar}>MV</div>
-                  <div className={styles.previewMemberInfo}>
-                    <span className={styles.previewMemberName}>Marcus Vance</span>
-                    <span className={styles.previewMemberTime}>Submitted 11:18</span>
-                  </div>
-                  <span className={`${styles.statusChip} ${styles.statusLate}`}>
-                    <Clock size={12} /> Late
-                  </span>
-                </div>
-                <div className={styles.previewPresenceItem}>
-                  <div className={styles.previewAvatar}>ER</div>
-                  <div className={styles.previewMemberInfo}>
-                    <span className={styles.previewMemberName}>Elena Rostova</span>
-                    <span className={styles.previewMemberTime}>Not submitted</span>
-                  </div>
-                  <span className={`${styles.statusChip} ${styles.statusMissed}`}>
-                    <XCircle size={12} /> Missed
-                  </span>
-                </div>
-              </div>
-
-              {/* AI Summary Panel */}
-              <div className={styles.previewAiPanel}>
-                <div className={styles.previewSectionTitle}>
-                  <Bot size={15} /> AI Daily Summary
-                </div>
-                <div className={styles.aiBadge}>AI-generated digest</div>
-                <p className={styles.aiContent}>
-                  The team made solid progress on database index tuning and WebSocket event testing. Alex and Sara completed PR reviews for the billing module.
-                </p>
-                <div className={styles.blockerCard}>
-                  <div className={styles.blockerHeader}>
-                    <AlertTriangle size={14} color="var(--sev-high)" />
-                    <span className={styles.blockerTitle}>High Blocker: Marcus Vance</span>
-                  </div>
-                  <p className={styles.blockerDesc}>
-                    Staging deployment is held up waiting on Auth0 token expiry config changes.
-                  </p>
-                </div>
-              </div>
+      <div className={styles.heroWrapper}>
+        <WaveBackground />
+        <section className={styles.hero}>
+          <div className={styles.heroContent}>
+            <h1 className={styles.title}>
+              Async daily standups with automated summaries and blocker detection.
+            </h1>
+            <p className={styles.subtitle}>
+              Replace synchronous status calls. Team members share quick updates on their own schedule, and Claude AI generates daily digests and flags blockers in real time.
+            </p>
+            <div className={styles.ctaGroup}>
+              <Link href="/register">
+                <Button variant="primary">Start for free</Button>
+              </Link>
+              <Link href="#how-it-works">
+                <Button variant="secondary">See how it works</Button>
+              </Link>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Smooth Bottom Separators */}
+        <div className={styles.heroBottomFade} aria-hidden="true" />
+        <div className={styles.heroBottomDivider} aria-hidden="true" />
+      </div>
+
+      {/* Product Video Walkthrough Demo */}
+      <section className={styles.videoSection}>
+        <ProductVideoDemo videoSrc="/demo.mp4" />
       </section>
+
 
       {/* Core Capabilities */}
       <section id="features" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionHeading}>Built for async engineering teams</h2>
+          <h2 className={styles.sectionHeading}>Built for async teams</h2>
           <p className={styles.sectionLead}>
-            Three focused tools that keep your team synchronized without scheduling friction.
+            Status, daily summaries, and blocker triage in one place.
           </p>
         </div>
 
-        <div className={styles.capabilitiesGrid}>
-          <div className={styles.capabilityCard}>
-            <div className={styles.capabilityIcon}>
-              <Users size={24} />
+        <div className={styles.bentoGrid}>
+          {/* Column 1: Stacked Left Cards */}
+          <div className={styles.bentoColLeft}>
+            {/* Card 1: Live WebSocket Sync */}
+            <div className={styles.bentoCard}>
+              <div>
+                <h3 className={styles.bentoCardTitle}>Sub-second live sync</h3>
+                <p className={styles.bentoCardText}>
+                  Updates broadcast instantly across your team without manual page refresh.
+                </p>
+              </div>
+
+              <div className={styles.bentoStreamBar}>
+                <div className={styles.bentoStreamBadge}>
+                  <span className={styles.bentoStreamDot} />
+                  <span>WebSocket live</span>
+                </div>
+                <span className={styles.bentoStreamPing}>&lt; 20ms sync</span>
+              </div>
             </div>
-            <h3 className={styles.capabilityTitle}>Live Team Presence</h3>
-            <p className={styles.capabilityDesc}>
-              A real-time dashboard showing who has submitted, who is running late, and who missed their window. WebSocket updates keep the status board fresh without refreshing.
-            </p>
+
+            {/* Card 2: Cost-Controlled AI */}
+            <div className={styles.bentoCard}>
+              <div>
+                <div className={styles.bentoStatNumber}>1 Call</div>
+                <div className={styles.bentoStatLabel}>Zero token waste</div>
+                <p className={styles.bentoCardText}>
+                  All updates are batched into a single daily Claude briefing once the window closes.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.capabilityCard}>
-            <div className={styles.capabilityIcon}>
-              <Bot size={24} />
+          {/* Column 2: Center Tall Phone Mockup */}
+          <div className={styles.bentoColCenter}>
+            <div className={styles.mockupPhone}>
+              <div className={styles.mockupHeader}>
+                <span className={styles.mockupHeaderTitle}>Daily Standup</span>
+                <span className={styles.mockupHeaderTime}>09:00 - 11:00</span>
+              </div>
+
+              <div className={styles.mockupQuestion}>
+                <span className={styles.mockupLabel}>Yesterday</span>
+                <div className={styles.mockupInput}>Merged database indexes &amp; verified latency</div>
+              </div>
+
+              <div className={styles.mockupQuestion}>
+                <span className={styles.mockupLabel}>Today</span>
+                <div className={styles.mockupInput}>WebSocket presence gateway &amp; review PRs</div>
+              </div>
+
+              <div className={styles.mockupQuestion}>
+                <span className={styles.mockupLabel}>Blockers</span>
+                <div className={styles.mockupInput}>None · Ready for deployment</div>
+              </div>
+
+              <div className={styles.mockupPresenceStack}>
+                <div className={styles.mockupPresenceRow}>
+                  <span className={styles.mockupPresenceName}>Alex Chen</span>
+                  <span className={styles.mockupPresenceStatus}>Submitted</span>
+                </div>
+                <div className={styles.mockupPresenceRow}>
+                  <span className={styles.mockupPresenceName}>Sara Jenkins</span>
+                  <span className={styles.mockupPresenceStatus}>Submitted</span>
+                </div>
+                <div className={styles.mockupPresenceRow}>
+                  <span className={styles.mockupPresenceName}>Marcus Vance</span>
+                  <span className={styles.mockupPresenceStatusLate}>Late</span>
+                </div>
+              </div>
             </div>
-            <h3 className={styles.capabilityTitle}>Automated Daily Summaries</h3>
-            <p className={styles.capabilityDesc}>
-              As soon as the submission window closes, Claude AI synthesizes all updates into a coherent, 30-second daily briefing. Leads review one clear summary instead of fragmented Slack threads.
-            </p>
           </div>
 
-          <div className={styles.capabilityCard}>
-            <div className={styles.capabilityIcon}>
-              <AlertTriangle size={24} />
+          {/* Column 3: Right Tall Card with Radar Concentric Pulse */}
+          <div className={styles.bentoColRight}>
+            <div>
+              <h3 className={styles.bentoCardTitle}>Instant blocker triage</h3>
+              <p className={styles.bentoCardText}>
+                AI detects impediments and alerts leads before the sprint derails.
+              </p>
             </div>
-            <h3 className={styles.capabilityTitle}>Blocker Detection & Severity</h3>
-            <p className={styles.capabilityDesc}>
-              AI extracts impediments automatically, tags severity levels (High, Medium, Low), and highlights urgent bottlenecks so managers can unblock engineers immediately.
-            </p>
+
+            {/* Concentric Radar Pulse Visual */}
+            <div className={styles.radarContainer}>
+              <div className={styles.radarRing3} />
+              <div className={styles.radarRing2} />
+              <div className={styles.radarRing1} />
+              <div className={styles.radarCenter}>
+                <AlertTriangle size={18} color="var(--sev-high)" />
+                <span>1 High</span>
+              </div>
+            </div>
+
+            <div className={styles.triageStack}>
+              <div className={styles.triageRow}>
+                <span>OAuth token expired</span>
+                <span className={styles.triageTagHigh}>High</span>
+              </div>
+              <div className={styles.triageRow}>
+                <span>Upload URL timeout</span>
+                <span className={styles.triageTagMedium}>Medium</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works - Minimal Horizontal Flow */}
       <section id="how-it-works" className={styles.sectionAlt}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionHeading}>How it works</h2>
           <p className={styles.sectionLead}>
-            A simple 3-step workflow designed to take less than 2 minutes of each member day.
+            Three asynchronous steps taking under two minutes a day.
           </p>
         </div>
 
-        <div className={styles.stepsTimeline}>
-          <div className={styles.stepItem}>
-            <div className={styles.stepBadge}>1</div>
+        <div className={styles.stepsFlow}>
+          <div className={styles.stepColumn}>
+            <div className={styles.stepMeta}>
+              <span className={styles.stepNum}>01</span>
+            </div>
             <h3 className={styles.stepTitle}>Submit updates within your window</h3>
             <p className={styles.stepDesc}>
-              Each teammate answers three concise prompts: What did you accomplish yesterday? What are you working on today? Are there any blockers?
+              Teammates post three quick answers: yesterday, today, and blockers on their own schedule.
             </p>
           </div>
 
-          <div className={styles.stepConnector}>
-            <ArrowRight size={20} className={styles.connectorIcon} />
-          </div>
-
-          <div className={styles.stepItem}>
-            <div className={styles.stepBadge}>2</div>
+          <div className={styles.stepColumn}>
+            <div className={styles.stepMeta}>
+              <span className={styles.stepNum}>02</span>
+            </div>
             <h3 className={styles.stepTitle}>Presence updates in real time</h3>
             <p className={styles.stepDesc}>
-              Live presence chips turn from gray to green across the team dashboard. Submissions received after the deadline are tracked as Late.
+              Live board tracks check-ins instantly over WebSockets. Late submissions are flagged without blocking the team.
             </p>
           </div>
 
-          <div className={styles.stepConnector}>
-            <ArrowRight size={20} className={styles.connectorIcon} />
-          </div>
-
-          <div className={styles.stepItem}>
-            <div className={styles.stepBadge}>3</div>
+          <div className={styles.stepColumn}>
+            <div className={styles.stepMeta}>
+              <span className={styles.stepNum}>03</span>
+            </div>
             <h3 className={styles.stepTitle}>AI generates the workspace digest</h3>
             <p className={styles.stepDesc}>
-              When the window closes, the workspace digest is ready. Blockers are categorized by severity and archived into searchable history.
+              Claude synthesizes entries into a 30-second briefing and triages blockers by severity as the window closes.
             </p>
           </div>
         </div>
