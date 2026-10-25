@@ -151,6 +151,12 @@ export class AuthService {
       );
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException(
+        'This account was created with Google. Please sign in using Google.',
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -417,5 +423,150 @@ export class AuthService {
     await this.redisService.del(`reset-password:${token}`);
 
     return { message: 'Password has been successfully reset.' };
+  }
+
+  getGoogleAuthUrl(): string {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const callbackUrl =
+      process.env.GOOGLE_CALLBACK_URL ||
+      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+
+    if (!clientId) {
+      throw new HttpException(
+        'Google OAuth client ID is not configured in .env',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: callbackUrl,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'consent',
+    });
+
+    return `${rootUrl}?${params.toString()}`;
+  }
+
+  async handleGoogleCallback(code: string) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const callbackUrl =
+      process.env.GOOGLE_CALLBACK_URL ||
+      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+
+    if (!clientId || !clientSecret) {
+      throw new HttpException(
+        'Google OAuth credentials are not configured in .env',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    // 1. Exchange authorization code for tokens
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: callbackUrl,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      this.logger.error('Google token exchange failed:', tokenData);
+      throw new HttpException(
+        tokenData.error_description || 'Failed to authenticate with Google',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // 2. Fetch user profile with access token
+    const profileResponse = await fetch(
+      'https://www.googleapis.com/oauth2/v3/userinfo',
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      },
+    );
+
+    const profile = await profileResponse.json();
+
+    if (!profileResponse.ok || !profile.email) {
+      this.logger.error('Failed to fetch Google profile:', profile);
+      throw new HttpException(
+        'Failed to retrieve Google profile information',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // 3. Find or create user
+    let user = await this.usersService.findByGoogleId(profile.sub);
+
+    if (!user) {
+      // Check if user exists by email (registered previously via email/password)
+      const existingUserByEmail = await this.usersService.findByEmail(
+        profile.email,
+      );
+
+      if (existingUserByEmail) {
+        // Link Google ID and mark email as verified
+        user = await this.usersService.update(existingUserByEmail.id, {
+          googleId: profile.sub,
+          isEmailVerified: true,
+          avatarUrl: existingUserByEmail.avatarUrl || profile.picture || null,
+        });
+      } else {
+        // Create new Google user
+        user = await this.usersService.create({
+          email: profile.email,
+          name: profile.name || profile.email.split('@')[0],
+          avatarUrl: profile.picture || null,
+          googleId: profile.sub,
+          authProvider: 'GOOGLE',
+          isEmailVerified: true,
+          passwordHash: null,
+        });
+      }
+    } else {
+      // Refresh avatar if not set
+      if (!user.avatarUrl && profile.picture) {
+        user = await this.usersService.update(user.id, {
+          avatarUrl: profile.picture,
+        });
+      }
+    }
+
+    // 4. Generate system tokens
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload);
+
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    await this.redisService.set(
+      `refresh-token:${refreshToken}`,
+      user.id,
+      'EX',
+      604800,
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    };
   }
 }

@@ -11,6 +11,19 @@ import cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from './common/redis/redis-io.adapter';
 import helmet from 'helmet';
 
+// Prevent process crash from BullMQ / ioredis connection resets during development
+process.on('uncaughtException', (err: any) => {
+  if (
+    err?.code === 'ECONNRESET' ||
+    err?.message?.includes('max requests limit exceeded') ||
+    err?.message?.includes('ECONNRESET')
+  ) {
+    console.warn('[Redis Warning] Handled connection reset:', err.message);
+    return;
+  }
+  console.error('[Uncaught Exception]', err);
+});
+
 async function bootstrap() {
   // Initialize Sentry before anything else
   if (process.env.SENTRY_DSN) {

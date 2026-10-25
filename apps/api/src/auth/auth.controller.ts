@@ -9,6 +9,7 @@ import {
   Req,
   Get,
   Param,
+  Query,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -43,7 +44,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/api/auth/refresh', // only sent to refresh endpoint via Next.js proxy
+      path: '/api/auth',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -70,7 +71,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/api/auth/refresh',
+      path: '/api/auth',
     });
 
     return this.authService.logout(refreshToken);
@@ -99,5 +100,53 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  @Get('google')
+  googleAuth(@Res() res: Response) {
+    try {
+      const url = this.authService.getGoogleAuthUrl();
+      return res.redirect(url);
+    } catch (err: any) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(
+        `${frontendUrl}/login?error=${encodeURIComponent(err.message || 'Google OAuth is not configured yet')}`,
+      );
+    }
+  }
+
+  @Get('google/callback')
+  async googleAuthCallback(
+    @Query('code') code: string,
+    @Query('error') error: string,
+    @Res() res: Response,
+  ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    if (error || !code) {
+      return res.redirect(
+        `${frontendUrl}/login?error=${encodeURIComponent(error || 'Google login cancelled')}`,
+      );
+    }
+
+    try {
+      const result = await this.authService.handleGoogleCallback(code);
+
+      // Set refresh token as HttpOnly cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/api/auth',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.redirect(
+        `${frontendUrl}/oauth/callback?token=${encodeURIComponent(result.accessToken)}`,
+      );
+    } catch (err: any) {
+      return res.redirect(
+        `${frontendUrl}/login?error=${encodeURIComponent(err.message || 'Google authentication failed')}`,
+      );
+    }
   }
 }

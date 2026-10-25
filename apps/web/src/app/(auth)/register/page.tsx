@@ -6,6 +6,7 @@ import { Card } from '@/components/Card/Card';
 import { Input } from '@/components/Input/Input';
 import { Button } from '@/components/Button/Button';
 import { api } from '@/lib/api';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import styles from '../auth.module.css';
 
 export default function RegisterPage() {
@@ -73,6 +74,9 @@ export default function RegisterPage() {
           {error}
         </div>
       )}
+
+      {/* Google Sign-up */}
+      <GoogleSignInButton label="Sign up with Google" showDivider={true} />
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input 

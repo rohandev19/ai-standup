@@ -19,6 +19,12 @@ export class UsersService {
     });
   }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { googleId },
+    });
+  }
+
   async create(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({
       data,
@@ -77,6 +83,12 @@ export class UsersService {
   ) {
     const user = await this.findById(id);
     if (!user) throw new Error('User not found');
+
+    if (!user.passwordHash) {
+      throw new UnauthorizedException(
+        'Accounts created with Google cannot change password this way',
+      );
+    }
 
     const isPasswordValid = await bcrypt.compare(
       currentPassword,

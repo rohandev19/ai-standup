@@ -16,9 +16,11 @@ datasource db {
 model User {
   id                  String    @id @default(uuid())
   email               String    @unique
-  passwordHash        String
+  passwordHash        String?
   name                String
   avatarUrl           String?
+  googleId            String?   @unique
+  authProvider        String    @default("LOCAL")
   isEmailVerified     Boolean   @default(false)
   isLocked            Boolean   @default(false) // Account lockout after too many failed logins
   lockedUntil         DateTime? // When the lockout expires
