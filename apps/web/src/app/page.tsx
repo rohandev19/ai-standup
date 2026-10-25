@@ -26,11 +26,11 @@ export default function LandingPage() {
   const faqs = [
     {
       q: 'How does the AI summary work?',
-      a: 'When your team submission window closes each day, Claude AI reads all standup entries and generates a concise narrative summary highlighting accomplishments, blockers, and participation metrics. Leads read one synthesized digest instead of chasing individual updates.',
+      a: 'When your team submission window closes each day, our AI reads all standup entries and generates a concise narrative summary highlighting accomplishments, blockers, and participation metrics. Leads read one synthesized digest instead of chasing individual updates.',
     },
     {
       q: 'Is my team data private?',
-      a: 'Yes. Every workspace is completely isolated at the database level. Your data is never accessible to other organizations. Standup entries are sent to Anthropic Claude strictly for summarization under enterprise data protection standards.',
+      a: 'Yes. Every workspace is completely isolated at the database level. Your data is never accessible to other organizations. Standup entries are processed strictly for summarization under enterprise data protection standards.',
     },
     {
       q: 'Do we need to install browser extensions or bots?',
@@ -59,7 +59,7 @@ export default function LandingPage() {
               Async daily standups with automated summaries and blocker detection.
             </h1>
             <p className={styles.subtitle}>
-              Replace synchronous status calls. Team members share quick updates on their own schedule, and Claude AI generates daily digests and flags blockers in real time.
+              Replace synchronous status calls. Team members share quick updates on their own schedule, and AI generates daily digests and flags blockers in real time.
             </p>
             <div className={styles.ctaGroup}>
               <Link href="/register">
@@ -119,7 +119,7 @@ export default function LandingPage() {
                 <div className={styles.bentoStatNumber}>1 Call</div>
                 <div className={styles.bentoStatLabel}>Zero token waste</div>
                 <p className={styles.bentoCardText}>
-                  All updates are batched into a single daily Claude briefing once the window closes.
+                  All updates are batched into a single daily AI briefing once the window closes.
                 </p>
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function LandingPage() {
             </div>
             <h3 className={styles.stepTitle}>AI generates the workspace digest</h3>
             <p className={styles.stepDesc}>
-              Claude synthesizes entries into a 30-second briefing and triages blockers by severity as the window closes.
+              AI synthesizes entries into a 30-second briefing and triages blockers by severity as the window closes.
             </p>
           </div>
         </div>
