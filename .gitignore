@@ -18,6 +18,8 @@ out/
 .env
 .env.*
 !.env.example
+.redis-dev-store.json
+
 
 # ==================
 # IDE / OS

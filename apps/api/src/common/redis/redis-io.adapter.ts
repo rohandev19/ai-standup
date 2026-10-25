@@ -40,22 +40,45 @@ export class RedisIoAdapter extends IoAdapter {
   }
 
   async connectToRedis(): Promise<void> {
-    await Promise.all([
-      new Promise<void>((resolve, reject) => {
-        this.pubClient.on('ready', resolve);
-        this.pubClient.on('error', reject);
-      }),
-      new Promise<void>((resolve, reject) => {
-        this.subClient.on('ready', resolve);
-        this.subClient.on('error', reject);
-      }),
-    ]);
-    this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
+    try {
+      const connectWithTimeout = (client: Redis) =>
+        new Promise<void>((resolve, reject) => {
+          if (client.status === 'ready') return resolve();
+          const timer = setTimeout(() => {
+            reject(new Error('Redis connection timed out after 5000ms'));
+          }, 5000);
+          client.once('ready', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          client.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+
+      await Promise.all([
+        connectWithTimeout(this.pubClient),
+        connectWithTimeout(this.subClient),
+      ]);
+      this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
+    } catch (err: any) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(
+          '[RedisIoAdapter] Redis adapter unavailable in development, falling back to in-memory Socket.io adapter:',
+          err.message,
+        );
+        return;
+      }
+      throw err;
+    }
   }
 
   createIOServer(port: number, options?: ServerOptions): any {
     const server = super.createIOServer(port, options);
-    server.adapter(this.adapterConstructor);
+    if (this.adapterConstructor) {
+      server.adapter(this.adapterConstructor);
+    }
     return server;
   }
 }
