@@ -13,4 +13,6 @@ echo "[pre-commit] Checking for AI-slop (emojis, em-dashes, forbidden tokens)...
 pnpm check:slop
 
 echo "[pre-commit] Running lint..."
+export NODE_OPTIONS="--max-old-space-size=4096"
 pnpm lint
+

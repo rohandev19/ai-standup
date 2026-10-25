@@ -62,13 +62,19 @@ coverage/
 *.ps1
 mailpit.exe
 test-*.js
+test-*.ts
 test-*.json
 scripts/mailpit/
+check-users.js
+update-workspace.js
+scratch/
+apps/api/scratch/
 
 # ==================
-# Documentation Drafts
+# Documentation Drafts & Prompts
 # ==================
 COMMIT-SUMMARY.md
+RisetDesignAiSlop.md
 
 # ==================
 # AI Prompts & Instructions
@@ -79,3 +85,8 @@ requirements.md
 tasks.md
 .agents/
 .neon
+AGENTS.md
+CLAUDE.md
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+
