@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { Card } from '@/components/Card/Card';
 import { Button } from '@/components/Button/Button';
 import { Input } from '@/components/Input/Input';
@@ -7,9 +8,19 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 import Link from 'next/link';
 import styles from './settings.module.css';
 
+const DAYS = [
+  { label: 'Sun', value: 0 },
+  { label: 'Mon', value: 1 },
+  { label: 'Tue', value: 2 },
+  { label: 'Wed', value: 3 },
+  { label: 'Thu', value: 4 },
+  { label: 'Fri', value: 5 },
+  { label: 'Sat', value: 6 },
+];
+
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, refreshWorkspaces } = useWorkspace();
   
   // Find the user's role in the active workspace
   const myMember = activeWorkspace?.members.find(m => m.role);
@@ -17,6 +28,70 @@ export default function SettingsPage() {
   
   // Capitalize role for display
   const displayRole = myRole.charAt(0) + myRole.slice(1).toLowerCase();
+
+  const [selectedDays, setSelectedDays] = useState<number[]>(
+    activeWorkspace?.workingDays ?? [1, 2, 3, 4, 5]
+  );
+  const [windowStart, setWindowStart] = useState<string>(activeWorkspace?.standupWindowStart || '09:00');
+  const [windowEnd, setWindowEnd] = useState<string>(activeWorkspace?.standupWindowEnd || '11:00');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  // Synchronize form state when switching workspaces
+  const [prevWorkspaceId, setPrevWorkspaceId] = useState(activeWorkspace?.id);
+  if (activeWorkspace && activeWorkspace.id !== prevWorkspaceId) {
+    setPrevWorkspaceId(activeWorkspace.id);
+    setSelectedDays(activeWorkspace.workingDays?.length ? activeWorkspace.workingDays : [1, 2, 3, 4, 5]);
+    setWindowStart(activeWorkspace.standupWindowStart || '09:00');
+    setWindowEnd(activeWorkspace.standupWindowEnd || '11:00');
+  }
+
+  const toggleDay = (dayValue: number) => {
+    if (myRole === 'MEMBER') return;
+    setSelectedDays(prev => {
+      if (prev.includes(dayValue)) {
+        if (prev.length <= 1) {
+          alert('Minimal 1 hari kerja harus dipilih.');
+          return prev;
+        }
+        return prev.filter(d => d !== dayValue);
+      }
+      return [...prev, dayValue].sort((a, b) => a - b);
+    });
+  };
+
+  const handleSavePreferences = async () => {
+    if (myRole === 'MEMBER' || !activeWorkspace) return;
+    if (selectedDays.length === 0) {
+      setSaveError('Minimal 1 hari kerja harus dipilih.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+    setSaveSuccess(false);
+
+    try {
+      const { api } = await import('@/lib/api');
+      await api(`/workspaces/${activeWorkspace.id}/onboarding`, {
+        method: 'PATCH',
+        data: {
+          standupWindowStart: windowStart,
+          standupWindowEnd: windowEnd,
+          workingDays: selectedDays,
+        },
+      });
+      await refreshWorkspaces();
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      setSaveError(err.response?.data?.message || 'Failed to update settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -68,39 +143,64 @@ export default function SettingsPage() {
             pointerEvents: myRole === 'MEMBER' ? 'none' : 'auto' 
           }}
         >
+          <div className={styles.daySelectorGroup}>
+            <label className={styles.daySelectorLabel}>Working Days</label>
+            <p className={styles.hintText}>
+              Select the active days when your team is expected to submit daily standups.
+            </p>
+            <div className={styles.dayGrid}>
+              {DAYS.map(day => {
+                const isSelected = selectedDays.includes(day.value);
+                return (
+                  <button
+                    key={day.value}
+                    type="button"
+                    disabled={myRole === 'MEMBER'}
+                    onClick={() => toggleDay(day.value)}
+                    className={`${styles.dayBtn} ${isSelected ? styles.daySelected : ''}`}
+                    title={day.label}
+                  >
+                    {day.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <Input 
             label="Standup Window Start" 
             type="time" 
-            defaultValue={activeWorkspace?.standupWindowStart || '09:00'} 
+            value={windowStart}
+            onChange={e => setWindowStart(e.target.value)}
             id="ws-start"
             disabled={myRole === 'MEMBER'}
           />
           <Input 
             label="Standup Window End" 
             type="time" 
-            defaultValue={activeWorkspace?.standupWindowEnd || '11:00'} 
+            value={windowEnd}
+            onChange={e => setWindowEnd(e.target.value)}
             id="ws-end"
             disabled={myRole === 'MEMBER'}
           />
+
+          {saveSuccess && (
+            <div className={styles.successMessage}>
+              Preferences saved successfully!
+            </div>
+          )}
+
+          {saveError && (
+            <div className={styles.errorMessage}>
+              {saveError}
+            </div>
+          )}
+
           <div className={styles.formActions}>
             <Button 
-              disabled={myRole === 'MEMBER'}
-              onClick={async () => {
-                const start = (document.getElementById('ws-start') as HTMLInputElement).value;
-                const end = (document.getElementById('ws-end') as HTMLInputElement).value;
-                try {
-                  const { api } = await import('@/lib/api');
-                  await api(`/workspaces/${activeWorkspace?.id}/onboarding`, {
-                    method: 'PATCH',
-                    data: { standupWindowStart: start, standupWindowEnd: end }
-                  });
-                  alert('Settings updated! Please refresh the page to see changes.');
-                  window.location.reload();
-                } catch(e: unknown) {
-                  const err = e as { response?: { data?: { message?: string } } };
-                  alert(err.response?.data?.message || 'Failed to update settings');
-                }
-              }}
+              disabled={myRole === 'MEMBER' || isSaving}
+              isLoading={isSaving}
+              onClick={handleSavePreferences}
             >
               Save Preferences
             </Button>

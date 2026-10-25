@@ -13,6 +13,8 @@ export interface Workspace {
   joinPassword?: string;
   standupWindowStart?: string;
   standupWindowEnd?: string;
+  workingDays?: number[];
+  timezone?: string;
 }
 
 interface WorkspaceContextType {
