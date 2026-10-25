@@ -109,7 +109,7 @@
 
 /* Summary Cards */
 .summaryCard {
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--border-subtle);
 }
 
 .summaryHeader {
@@ -189,10 +189,10 @@
 }
 
 .blockerField {
-  background: rgba(244, 63, 94, 0.08);
-  border-left: 3px solid var(--sev-high);
+  background: #191118;
+  border: 1px solid rgba(244, 63, 94, 0.35);
   padding: 0.5rem 0.75rem;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-sm);
 }
 
 /* Pagination */

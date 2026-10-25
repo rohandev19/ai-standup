@@ -208,9 +208,8 @@
 
 /* Active Blockers Alert Box */
 .blockerAlert {
-  background-color: var(--sev-high-bg);
-  border: 1px solid rgba(244, 63, 94, 0.3);
-  border-left: 3px solid var(--sev-high);
+  background-color: #191118;
+  border: 1px solid rgba(244, 63, 94, 0.35);
   padding: 1.25rem;
   border-radius: var(--radius-md);
 }
@@ -308,8 +307,8 @@
 /* Error Banner */
 .errorCard {
   padding: 1.5rem;
-  border-left: 3px solid var(--status-missed);
-  background-color: var(--status-missed-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background-color: #1c1317;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;

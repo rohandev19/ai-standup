@@ -603,8 +603,7 @@
 }
 
 .notifUnread {
-  background: rgba(139, 92, 246, 0.04);
-  border-left: 3px solid var(--accent-primary);
+  background: #181926;
 }
 
 .notifText {

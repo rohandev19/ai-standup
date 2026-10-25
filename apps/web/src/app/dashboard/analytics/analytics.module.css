@@ -142,9 +142,9 @@
   display: flex;
   align-items: center;
   padding: 1rem;
-  background: var(--bg-tertiary);
+  background: #191118;
+  border: 1px solid rgba(239, 68, 68, 0.35);
   border-radius: 8px;
-  border-left: 4px solid var(--status-missed);
 }
 
 .attentionAvatar {
