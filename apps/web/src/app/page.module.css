@@ -337,10 +337,27 @@
 }
 
 .sectionAlt {
-  padding: 5rem 1.5rem;
+  position: relative;
+  width: calc(100% - 3rem);
+  max-width: 1140px;
+  margin: 4.5rem auto;
+  padding: 5rem 3.5rem;
   background: var(--surface-1);
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 44px;
+  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.sectionAlt::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
 }
 
 .sectionHeader {
@@ -858,10 +875,28 @@
 
 /* Final CTA */
 .finalCta {
-  padding: 5rem 1.5rem;
+  position: relative;
+  width: calc(100% - 3rem);
+  max-width: 1140px;
+  margin: 4.5rem auto 6.5rem;
+  padding: 5rem 3rem;
   text-align: center;
   background: var(--surface-1);
-  border-top: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 44px;
+  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.finalCta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
 }
 
 .finalCtaInner {
@@ -990,5 +1025,13 @@
   .pricingGrid {
     grid-template-columns: 1fr;
     max-width: 420px;
+  }
+
+  .sectionAlt,
+  .finalCta {
+    width: calc(100% - 1.5rem);
+    margin: 2.5rem auto;
+    padding: 3.5rem 1.5rem;
+    border-radius: 28px;
   }
 }
