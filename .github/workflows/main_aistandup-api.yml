@@ -32,6 +32,9 @@ jobs:
           pnpm --filter=@ai-standup/shared build
           pnpm --filter=api exec prisma generate
           pnpm run build --filter=api
+          pnpm --filter=api --prod deploy deploy-api
+          cd deploy-api
+          node node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma
         env:
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/db"
           DATABASE_URL_UNPOOLED: "postgresql://placeholder:placeholder@localhost:5432/db"
@@ -42,5 +45,5 @@ jobs:
         with:
           app-name: 'aistandup-api'
           slot-name: 'Production'
-          package: .
+          package: ./deploy-api
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_365281AFAB5C4B7195D3A0BA8941C9C3 }}
