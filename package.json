@@ -13,7 +13,7 @@
     "clean": "turbo run clean",
     "prepare": "husky || true",
     "heroku-postbuild": "if [ \"$PROJECT_TARGET\" = \"web\" ]; then pnpm run build --filter=web; else pnpm --filter=@ai-standup/shared build && pnpm --filter=api exec prisma generate && (pnpm --filter=api exec prisma migrate deploy || true) && pnpm run build --filter=api; fi",
-    "start": "if [ \"$PROJECT_TARGET\" = \"web\" ]; then npm --prefix apps/web run start; else node -e \"const fs = require('fs'); const p = fs.existsSync('./apps/api/dist/main.js') ? './apps/api/dist/main.js' : './apps/api/dist/src/main.js'; console.log('Starting NestJS server from:', p); require(p);\"; fi"
+    "start": "if [ \"$PROJECT_TARGET\" = \"web\" ]; then npm --prefix apps/web run start; else node -e \"const fs = require('fs'); const p = fs.existsSync('./apps/api/dist/src/main.js') ? './apps/api/dist/src/main.js' : './apps/api/dist/main.js'; console.log('Starting NestJS server from:', p); require(p);\"; fi"
   },
   "dependencies": {
     "@neon/config": "^1.9.1",

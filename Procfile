@@ -1,1 +1,1 @@
-web: node -e "const fs = require('fs'); const p = fs.existsSync('./apps/api/dist/main.js') ? './apps/api/dist/main.js' : './apps/api/dist/src/main.js'; console.log('Starting NestJS server from:', p); require(p);"
+web: node -e "const fs = require('fs'); const p = fs.existsSync('./apps/api/dist/src/main.js') ? './apps/api/dist/src/main.js' : './apps/api/dist/main.js'; console.log('Starting NestJS server from:', p); require(p);"
