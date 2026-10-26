@@ -1,5 +1,5 @@
 <h1 align="center">
-  🤖 AI Standup
+  AI Standup
 </h1>
 
 <p align="center">
@@ -14,7 +14,7 @@
 
 <p align="center">
   A multi-tenant SaaS platform that replaces synchronous daily standups with async submissions,<br/>
-  real-time presence tracking via WebSocket, and AI-generated team summaries using Google Gemini.
+  real-time presence tracking via WebSocket, and AI generated team summaries using Google Gemini.
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 
 ---
 
-## 🎯 Reviewer & HR Quick Tour
+## Reviewer & HR Quick Tour
 
 Want to test the live platform without setting up local environment?
 
@@ -44,11 +44,11 @@ Want to test the live platform without setting up local environment?
 
 ---
 
-## 📋 Overview
+## Overview
 
 Remote/hybrid teams (5–30 people) often skip daily standups due to timezone conflicts and meeting fatigue. Managers lose visibility into daily progress, and blockers surface too late.
 
-**AI Standup** solves this by letting team members submit updates asynchronously within a configurable time window. An AI (Google Gemini) automatically summarizes the entire team's updates into a single narrative report and flags blockers by severity — so managers get a complete picture without reading every individual entry.
+**AI Standup** solves this by letting team members submit updates asynchronously within a configurable time window. An AI automatically summarizes the entire team's updates into a single narrative report and flags blockers by severity so managers get a complete picture without reading every individual entry.
 
 ### Key Differentiators
 
@@ -60,14 +60,14 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core
 | Feature | Description |
 |---|---|
-| **Async Standup Submission** | 3-field form (Yesterday / Today / Blockers) with configurable submission window per workspace |
+| **Async Standup Submission** | 3 field form (Yesterday / Today / Blockers) with configurable submission window per workspace |
 | **Real-Time Presence Dashboard** | WebSocket-powered live view of who submitted, with animated status transitions |
-| **AI Daily Summary** | One Claude API call per workspace/day — generates narrative summary with metadata |
+| **AI Daily Summary** | One Claude API call per workspace/day generates narrative summary with metadata |
 | **AI Blocker Detection** | Batch analysis with severity classification (Low/Medium/High) using Claude tool use |
 | **AI Weekly Digest** | End-of-week automated report with trends, participation rates, and recurring blocker patterns |
 
@@ -93,7 +93,7 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────┐     ┌─────────────────────────────────┐
@@ -135,7 +135,7 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -156,7 +156,7 @@ Remote/hybrid teams (5–30 people) often skip daily standups due to timezone co
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ai-standup/
@@ -191,7 +191,7 @@ ai-standup/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -240,7 +240,7 @@ The web app runs on `http://localhost:3000` and the API on `http://localhost:300
 
 ---
 
-## 🔒 Security Model
+## Security Model
 
 This is a multi-tenant platform — tenant isolation is the #1 security priority:
 
@@ -252,7 +252,7 @@ This is a multi-tenant platform — tenant isolation is the #1 security priority
 
 ---
 
-## 📊 AI Pipeline Design
+## AI Pipeline Design
 
 ```
 Standup Window Closes (Cron)
@@ -283,7 +283,7 @@ Weekly (Last Working Day):
 
 ---
 
-## 📄 License
+## License
 
 MIT
 
