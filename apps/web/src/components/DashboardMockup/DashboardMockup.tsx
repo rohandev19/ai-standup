@@ -2,6 +2,7 @@
 
 import styles from './DashboardMockup.module.css';
 import { 
+  Check,
   CheckCircle2, 
   Clock, 
   AlertTriangle,
@@ -180,7 +181,7 @@ export function DashboardMockup() {
                         <span className={styles.memberTime}>09:14</span>
                       </div>
                       <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                        <CheckCircle2 size={11} /> Submitted
+                        <Check size={13} strokeWidth={2.8} /> Submitted
                       </span>
                     </div>
 
@@ -191,7 +192,7 @@ export function DashboardMockup() {
                         <span className={styles.memberTime}>09:42</span>
                       </div>
                       <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                        <CheckCircle2 size={11} /> Submitted
+                        <Check size={13} strokeWidth={2.8} /> Submitted
                       </span>
                     </div>
 
@@ -202,7 +203,7 @@ export function DashboardMockup() {
                         <span className={styles.memberTime}>10:15</span>
                       </div>
                       <span className={`${styles.statusChip} ${styles.statusSubmitted}`}>
-                        <CheckCircle2 size={11} /> Submitted
+                        <Check size={13} strokeWidth={2.8} /> Submitted
                       </span>
                     </div>
 

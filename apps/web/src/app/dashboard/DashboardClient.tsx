@@ -15,7 +15,7 @@ import {
   getStatusPresentation,
   hasSubmitted,
 } from '@/lib/status';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Check } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 interface DashboardState {
@@ -368,7 +368,7 @@ export default function DashboardClient() {
                       </div>
                       <Badge
                         variant={getStatusPresentation(m.status).variant}
-                        dot={m.status === 'submitted'}
+                        icon={m.status === 'submitted' ? <Check size={13} strokeWidth={2.8} /> : undefined}
                       >
                         {getStatusPresentation(m.status).label}
                       </Badge>

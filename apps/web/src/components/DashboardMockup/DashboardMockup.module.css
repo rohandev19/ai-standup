@@ -286,13 +286,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #10b981;
-  background: rgba(16, 185, 129, 0.12);
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: transparent;
+  padding: 0;
+  border: none;
   align-self: flex-start;
   margin: 0.15rem 0;
 }
@@ -358,13 +357,12 @@
 }
 
 .sevHighBadge {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: #f43f5e;
-  background: rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.25);
-  padding: 0.05rem 0.35rem;
-  border-radius: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .blockerText {
@@ -402,12 +400,11 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: transparent;
+  padding: 0;
+  border: none;
 }
 
 .participationCard {
@@ -513,24 +510,26 @@
 .statusChip {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  font-size: 0.625rem;
-  font-weight: 500;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0;
+  border-radius: 0;
   flex-shrink: 0;
+  background: transparent;
+  border: none;
 }
 
 .statusSubmitted {
   color: #10b981;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: transparent;
+  border: none;
 }
 
 .statusLate {
   color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: transparent;
+  border: none;
 }
 
 /* AI Summary Section */

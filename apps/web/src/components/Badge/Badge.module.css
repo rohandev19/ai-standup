@@ -1,20 +1,22 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
+  gap: 0.35rem;
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1.2;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .sm {
-  padding: 0.2rem 0.5rem;
+  padding: 0;
   font-size: 0.75rem;
 }
 
 .md {
-  padding: 0.25rem 0.65rem;
+  padding: 0;
   font-size: 0.8125rem;
 }
 
@@ -29,37 +31,37 @@
 
 /* Variants */
 .success {
-  background: var(--status-submitted-bg);
+  background: transparent;
   color: var(--status-submitted);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: none;
 }
 
 .warning {
-  background: var(--status-late-bg);
+  background: transparent;
   color: var(--status-late);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: none;
 }
 
 .danger {
-  background: var(--status-missed-bg);
+  background: transparent;
   color: var(--status-missed);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: none;
 }
 
 .info {
-  background: var(--sev-low-bg);
+  background: transparent;
   color: var(--sev-low);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: none;
 }
 
 .neutral {
-  background: var(--status-pending-bg);
+  background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
+  border: none;
 }
 
 .purple {
-  background: var(--ai-surface);
+  background: transparent;
   color: var(--ai-badge);
-  border: 1px solid var(--ai-border);
+  border: none;
 }

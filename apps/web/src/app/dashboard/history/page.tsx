@@ -7,7 +7,7 @@ import { Input } from '@/components/Input/Input';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { api } from '@/lib/api';
-import { Download, Search } from 'lucide-react';
+import { Download, Search, Check } from 'lucide-react';
 import styles from './history.module.css';
 import { debounce } from 'lodash';
 
@@ -271,6 +271,7 @@ export default function HistoryPage() {
                       </div>
                       <Badge
                         variant={item.status === 'submitted' ? 'success' : item.status === 'late' ? 'warning' : 'danger'}
+                        icon={item.status === 'submitted' ? <Check size={13} strokeWidth={2.8} /> : undefined}
                       >
                         {item.status}
                       </Badge>
