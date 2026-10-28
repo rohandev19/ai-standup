@@ -89,6 +89,7 @@ export function WaveBackground() {
     };
 
     function initWebGL(): boolean {
+      if (!canvas) return false;
       try {
         cleanupGL();
 
@@ -259,7 +260,7 @@ export function WaveBackground() {
     initWebGL();
 
     const handleResize = () => {
-      if (!gl || gl.isContextLost() || !program) return;
+      if (!canvas || !gl || gl.isContextLost() || !program) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const width = canvas.clientWidth || window.innerWidth;
       const height = canvas.clientHeight || window.innerHeight;

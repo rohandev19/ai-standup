@@ -3,7 +3,6 @@
 import styles from './DashboardMockup.module.css';
 import { 
   Check,
-  CheckCircle2, 
   Clock, 
   AlertTriangle,
   Bot,
