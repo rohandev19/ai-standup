@@ -7,6 +7,14 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { EmailProcessor } from './processors/email.processor';
 
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+const retryStrategy = (times: number) => {
+  if (times > 10) {
+    console.error('Redis connection failed after 10 retries');
+    return null;
+  }
+  return Math.min(times * 500, 3000);
+};
+
 let redisConnection: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -18,15 +26,11 @@ let redisConnection: any = {
           requestCert: true,
         }
       : undefined,
+  connectTimeout: 3000,
+  keepAlive: 30000,
   enableOfflineQueue: false,
   maxRetriesPerRequest: null, // Required by BullMQ
-  retryStrategy: (times: number) => {
-    if (times > 10) {
-      console.error('Redis connection failed after 10 retries');
-      return null;
-    }
-    return Math.min(times * 100, 3000);
-  },
+  retryStrategy,
 };
 
 if (redisUrl) {
@@ -43,8 +47,11 @@ if (redisUrl) {
             requestCert: true,
           }
         : undefined,
+    connectTimeout: 3000,
+    keepAlive: 30000,
     enableOfflineQueue: false,
     maxRetriesPerRequest: null, // Required by BullMQ
+    retryStrategy,
   };
 }
 

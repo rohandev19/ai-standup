@@ -4,6 +4,7 @@ export const api = axios.create({
   // Use Next.js rewrite proxy to avoid CORS/Network errors and enable Secure SameSite=Lax cookies
   baseURL: '/api',
   withCredentials: true, // Untuk mengirim cookie refreshToken
+  timeout: 15000,
 });
 
 // Interceptor untuk menyisipkan accessToken ke setiap request

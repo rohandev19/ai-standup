@@ -6,47 +6,69 @@ import { INestApplicationContext } from '@nestjs/common';
 
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor!: ReturnType<typeof createAdapter>;
-  private pubClient: Redis;
-  private subClient: Redis;
+  private pubClient?: Redis;
+  private subClient?: Redis;
+  private readonly shouldSkipRedis: boolean;
 
   constructor(app: INestApplicationContext) {
     super(app);
 
-    // We create separate connections for pub/sub because a Redis client in subscriber mode
-    // cannot be used to publish messages.
     const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+    this.shouldSkipRedis =
+      process.env.NODE_ENV === 'production' &&
+      !redisUrl &&
+      (!process.env.REDIS_HOST || process.env.REDIS_HOST === 'localhost');
+
+    if (this.shouldSkipRedis) {
+      return;
+    }
 
     if (redisUrl) {
-      // Heroku / Cloud provides a full URL for Redis
       this.pubClient = new Redis(redisUrl, {
-        tls: redisUrl.startsWith('rediss://')
-          ? { rejectUnauthorized: false }
-          : undefined,
+        connectTimeout: 3000,
+        tls:
+          redisUrl.startsWith('rediss://') || redisUrl.includes('upstash')
+            ? { rejectUnauthorized: false }
+            : undefined,
       });
     } else {
-      // Fallback for local development
       this.pubClient = new Redis({
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
         password: process.env.REDIS_PASSWORD || undefined,
+        connectTimeout: 3000,
         tls:
           process.env.REDIS_HOST && process.env.REDIS_HOST !== 'localhost'
-            ? {}
+            ? { rejectUnauthorized: false }
             : undefined,
       });
     }
 
     this.subClient = this.pubClient.duplicate();
+
+    this.pubClient.on('error', (err) => {
+      console.warn('[RedisIoAdapter] pubClient warning:', err.message);
+    });
+    this.subClient.on('error', (err) => {
+      console.warn('[RedisIoAdapter] subClient warning:', err.message);
+    });
   }
 
   async connectToRedis(): Promise<void> {
+    if (this.shouldSkipRedis || !this.pubClient || !this.subClient) {
+      console.warn(
+        '[RedisIoAdapter] No external Redis configured, using in-memory Socket.io adapter.',
+      );
+      return;
+    }
+
     try {
       const connectWithTimeout = (client: Redis) =>
         new Promise<void>((resolve, reject) => {
           if (client.status === 'ready') return resolve();
           const timer = setTimeout(() => {
-            reject(new Error('Redis connection timed out after 5000ms'));
-          }, 5000);
+            reject(new Error('Redis connection timed out after 3000ms'));
+          }, 3000);
           client.once('ready', () => {
             clearTimeout(timer);
             resolve();
@@ -62,11 +84,13 @@ export class RedisIoAdapter extends IoAdapter {
         connectWithTimeout(this.subClient),
       ]);
       this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn(
         '[RedisIoAdapter] Redis adapter unavailable, falling back to in-memory Socket.io adapter:',
-        err.message,
+        (err as Error).message,
       );
+      this.pubClient.disconnect();
+      this.subClient.disconnect();
       return;
     }
   }

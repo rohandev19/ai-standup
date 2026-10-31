@@ -1,5 +1,12 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { api } from '@/lib/api';
 
 interface User {
@@ -23,18 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Use a ref to keep the latest token without dealing with useEffect firing order
   const tokenRef = React.useRef<string | null>(null);
-  
-  // Sync token to ref without mutating during render.
-  // We update this ref in the state setter functions (initAuth, login, logout)
-  // so it's always ready before child components mount and make API calls.
 
   // Setup interceptor dinamis (hanya sekali saat mount)
   useEffect(() => {
     const requestInterceptor = api.interceptors.request.use((config) => {
-      if (tokenRef.current) {
+      if (tokenRef.current && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${tokenRef.current}`;
       }
       return config;
@@ -46,47 +49,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        
+
         // Prevent infinite loops if /auth/refresh itself returns 401
         // Also don't attempt to refresh if login/register fails with 401
         if (
-          error.response?.status === 401 && 
-          !originalRequest._retry && 
-          !['/auth/refresh', '/auth/login', '/auth/register', '/auth/logout'].includes(originalRequest.url)
+          error.response?.status === 401 &&
+          originalRequest &&
+          !originalRequest._retry &&
+          ![
+            '/auth/refresh',
+            '/auth/login',
+            '/auth/register',
+            '/auth/logout',
+          ].includes(originalRequest.url)
         ) {
           originalRequest._retry = true;
-          
+
           try {
             if (!refreshPromise) {
-              refreshPromise = api.post('/auth/refresh').then(res => {
-                const newToken = res.data.accessToken;
-                // Update token in state and ref
-                setAccessToken(newToken);
-                tokenRef.current = newToken;
-                return newToken;
-              }).finally(() => {
-                refreshPromise = null; // Reset when done
-              });
+              refreshPromise = api
+                .post('/auth/refresh')
+                .then((res) => {
+                  const newToken = res.data.accessToken;
+                  setAccessToken(newToken);
+                  tokenRef.current = newToken;
+                  return newToken;
+                })
+                .finally(() => {
+                  refreshPromise = null;
+                });
             }
 
-            // Await the shared refresh promise
             const newToken = await refreshPromise;
-            
-            // Update the failed request's header and retry it
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           } catch (refreshError) {
-            // Refresh failed (e.g. refresh token expired)
-            // Log out user by clearing state
             setAccessToken(null);
             setUser(null);
             tokenRef.current = null;
             return Promise.reject(refreshError);
           }
         }
-        
+
         return Promise.reject(error);
-      }
+      },
     );
 
     return () => {
@@ -100,15 +106,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initAuth = async () => {
       try {
         const res = await api.post('/auth/refresh');
-        const newToken = res.data.accessToken;
-        tokenRef.current = newToken;
-        setAccessToken(newToken);
-        setUser(res.data.user);
+        // Do not overwrite if login() was already called while refresh was in flight
+        if (!tokenRef.current) {
+          const newToken = res.data.accessToken;
+          tokenRef.current = newToken;
+          setAccessToken(newToken);
+          setUser(res.data.user);
+        }
       } catch {
-        // Refresh token invalid atau tidak ada
-        tokenRef.current = null;
-        setAccessToken(null);
-        setUser(null);
+        // Refresh token invalid atau tidak ada — jangan timpa jika login() sudah dipanggil
+        if (!tokenRef.current) {
+          tokenRef.current = null;
+          setAccessToken(null);
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -116,13 +127,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = (token: string, userData: User) => {
+  const login = useCallback((token: string, userData: User) => {
     tokenRef.current = token;
     setAccessToken(token);
     setUser(userData);
-  };
+    setIsLoading(false);
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } catch {
@@ -131,10 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenRef.current = null;
     setAccessToken(null);
     setUser(null);
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, accessToken, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

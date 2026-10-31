@@ -9,7 +9,7 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "node dist/main.js",
+    "start": "node -e \"const fs = require('fs'); const p = fs.existsSync('dist/main.js') ? './dist/main.js' : './dist/src/main.js'; require(p);\"",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node -e \"const fs = require('fs'); const p = fs.existsSync('dist/main.js') ? './dist/main.js' : './dist/src/main.js'; require(p);\"",

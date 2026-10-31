@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { api } from '@/lib/api';
 
@@ -23,10 +23,9 @@ jest.mock('@/lib/api', () => ({
 const TestComponent = () => {
   const { user, accessToken, isLoading, login, logout } = useAuth();
   
-  if (isLoading) return <div>Loading Auth...</div>;
-
   return (
     <div>
+      {isLoading && <div>Loading Auth...</div>}
       <div data-testid="auth-status">{user ? 'Authenticated' : 'Unauthenticated'}</div>
       <div data-testid="user-email">{user?.email}</div>
       <div data-testid="access-token">{accessToken}</div>
@@ -56,6 +55,7 @@ describe('AuthContext', () => {
 
     // Eventually resolves to unauthenticated
     await waitFor(() => {
+      expect(screen.queryByText('Loading Auth...')).not.toBeInTheDocument();
       expect(screen.getByTestId('auth-status')).toHaveTextContent('Unauthenticated');
     });
     
@@ -84,5 +84,37 @@ describe('AuthContext', () => {
 
     expect(screen.getByTestId('user-email')).toHaveTextContent('john@example.com');
     expect(screen.getByTestId('access-token')).toHaveTextContent('mock-token-123');
+  });
+
+  it('does not overwrite explicit login() state if initial refresh rejects afterwards', async () => {
+    let rejectRefresh!: (err: Error) => void;
+    (api.post as jest.Mock).mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectRefresh = reject;
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    // Simulate OAuth callback calling login() before initial refresh completes
+    fireEvent.click(screen.getByText('Login'));
+
+    expect(screen.getByTestId('auth-status')).toHaveTextContent('Authenticated');
+    expect(screen.getByTestId('access-token')).toHaveTextContent('new-token');
+
+    // Now initial refresh rejects
+    rejectRefresh(new Error('Unauthorized'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading Auth...')).not.toBeInTheDocument();
+    });
+
+    // User should still be authenticated!
+    expect(screen.getByTestId('auth-status')).toHaveTextContent('Authenticated');
+    expect(screen.getByTestId('access-token')).toHaveTextContent('new-token');
   });
 });

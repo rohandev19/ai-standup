@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import styles from './GoogleSignInButton.module.css';
 
 interface GoogleSignInButtonProps {
@@ -11,7 +12,11 @@ export function GoogleSignInButton({
   label = 'Continue with Google',
   showDivider = true,
 }: GoogleSignInButtonProps) {
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const handleGoogleLogin = () => {
+    if (isRedirecting) return;
+    setIsRedirecting(true);
     // Redirect through Next.js proxy rewrite to NestJS GET /auth/google
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = '/api/auth/google';
@@ -22,8 +27,10 @@ export function GoogleSignInButton({
       <button
         type="button"
         onClick={handleGoogleLogin}
+        disabled={isRedirecting}
         className={styles.googleBtn}
         aria-label={label}
+        style={isRedirecting ? { opacity: 0.7, cursor: 'wait' } : undefined}
       >
         <svg
           className={styles.googleIcon}
@@ -49,7 +56,7 @@ export function GoogleSignInButton({
             d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.69 1.27 6.63l4 3.13c.95-2.85 3.6-4.96 6.73-4.96z"
           />
         </svg>
-        <span>{label}</span>
+        <span>{isRedirecting ? 'Connecting to Google...' : label}</span>
       </button>
 
       {showDivider && (

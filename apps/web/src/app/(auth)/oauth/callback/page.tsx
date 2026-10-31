@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
@@ -12,8 +12,12 @@ function OAuthCallbackContent() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
   const [errorMessage, setErrorMessage] = useState('');
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    if (processedRef.current) return;
+    processedRef.current = true;
+
     const token = searchParams.get('token');
     const error = searchParams.get('error');
 

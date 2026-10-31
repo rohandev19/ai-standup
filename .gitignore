@@ -11,6 +11,9 @@ dist/
 .next/
 .turbo/
 out/
+deploy-api/
+deploy-test/
+deploy-prod/
 
 # ==================
 # Environment / Secrets
