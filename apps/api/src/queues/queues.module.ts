@@ -6,6 +6,8 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { EmailProcessor } from './processors/email.processor';
 
+import { queueAdminAuthMiddleware } from './queue-auth.middleware';
+
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
 const retryStrategy = (times: number) => {
   if (times > 10) {
@@ -82,7 +84,7 @@ console.log('[QueuesModule] Redis connection config:', {
     BullBoardModule.forRoot({
       route: '/admin/queues',
       adapter: ExpressAdapter,
-      middleware: [], // Will add simple admin auth middleware later
+      middleware: [queueAdminAuthMiddleware],
     }),
     BullBoardModule.forFeature({
       name: 'email',
