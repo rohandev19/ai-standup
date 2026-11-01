@@ -5,14 +5,13 @@ import {
   Req,
   UseGuards,
   Body,
-  RawBodyRequest,
+  BadRequestException,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { WorkspaceMembershipGuard } from '../common/guards/workspace-membership.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
-import type { Request } from 'express';
 
 @Controller('billing')
 export class BillingController {
@@ -34,14 +33,14 @@ export class BillingController {
   }
 
   // Webhook needs raw body for signature verification
-  // Assuming NestJS is configured with `{ rawBody: true }` in main.ts
+  // Configured with `{ rawBody: true }` in main.ts
   @Post('webhook')
   async handleWebhook(@Req() req: any) {
     const signature = req.headers['stripe-signature'] as string;
     const rawBody = req.rawBody;
 
     if (!signature || !rawBody) {
-      throw new Error('Missing stripe signature or raw body');
+      throw new BadRequestException('Missing stripe signature or raw body');
     }
 
     return this.billingService.handleWebhook(signature, rawBody);

@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import Stripe from 'stripe';
 
@@ -41,7 +47,6 @@ export class BillingService {
           quantity: 1,
         },
       ],
-      client_reference_id: workspaceId,
       success_url: `${process.env.FRONTEND_URL}/dashboard/settings/billing?success=true`,
       cancel_url: `${process.env.FRONTEND_URL}/dashboard/settings/billing?canceled=true`,
       metadata: {
@@ -54,7 +59,18 @@ export class BillingService {
   }
 
   async handleWebhook(signature: string, body: Buffer) {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock';
+    const isProduction = process.env.NODE_ENV === 'production';
+    const webhookSecret =
+      process.env.STRIPE_WEBHOOK_SECRET ||
+      (isProduction ? undefined : 'whsec_mock');
+
+    if (!webhookSecret) {
+      this.logger.error('Stripe webhook secret is not configured');
+      throw new InternalServerErrorException(
+        'Stripe webhook secret is not configured',
+      );
+    }
+
     let event: Stripe.Event;
 
     try {
@@ -67,7 +83,7 @@ export class BillingService {
       this.logger.error(
         `Webhook signature verification failed: ${err.message}`,
       );
-      throw new Error('Webhook signature verification failed');
+      throw new BadRequestException('Webhook signature verification failed');
     }
 
     switch (event.type) {
