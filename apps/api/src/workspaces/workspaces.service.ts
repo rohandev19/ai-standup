@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -46,9 +47,21 @@ export class WorkspacesService {
           },
         },
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        timezone: true,
+        standupWindowStart: true,
+        standupWindowEnd: true,
+        workingDays: true,
+        onboardingCompleted: true,
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        createdAt: true,
+        updatedAt: true,
         members: {
-          where: { userId },
+          where: { userId, isActive: true },
           select: { role: true },
         },
       },
@@ -635,20 +648,30 @@ export class WorkspacesService {
       throw new NotFoundException('Member not found or inactive');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // If transferring ownership
-      if (newRole === 'OWNER') {
-        const currentOwner = await tx.workspaceMember.findUnique({
-          where: { workspaceId_userId: { workspaceId, userId: requesterId } },
-        });
+    const requesterMember = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: requesterId } },
+    });
 
-        if (currentOwner?.role === 'OWNER') {
-          // Demote current owner
-          await tx.workspaceMember.update({
-            where: { id: currentOwner.id },
-            data: { role: 'ADMIN' },
-          });
-        }
+    if (!requesterMember || !requesterMember.isActive) {
+      throw new ForbiddenException(
+        'Requester is not an active member of this workspace',
+      );
+    }
+
+    if (newRole === 'OWNER' || member.role === 'OWNER') {
+      if (requesterMember.role !== 'OWNER') {
+        throw new ForbiddenException(
+          'Only the workspace owner can transfer or modify owner privileges',
+        );
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      if (newRole === 'OWNER') {
+        await tx.workspaceMember.update({
+          where: { id: requesterMember.id },
+          data: { role: 'ADMIN' },
+        });
       }
 
       const updated = await tx.workspaceMember.update({
@@ -680,6 +703,21 @@ export class WorkspacesService {
 
     if (!member || !member.isActive) {
       throw new NotFoundException('Member not found or already removed');
+    }
+
+    if (member.role === 'OWNER') {
+      throw new ForbiddenException('Cannot remove the workspace owner');
+    }
+
+    const requesterMember = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId: requesterId } },
+    });
+
+    if (
+      !requesterMember ||
+      (requesterMember.role !== 'OWNER' && requesterMember.role !== 'ADMIN')
+    ) {
+      throw new ForbiddenException('Insufficient permissions to remove member');
     }
 
     return this.prisma.$transaction(async (tx) => {

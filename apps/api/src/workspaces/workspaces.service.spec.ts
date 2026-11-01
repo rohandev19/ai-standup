@@ -4,7 +4,11 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getQueueToken } from '@nestjs/bullmq';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
 
 describe('WorkspacesService', () => {
@@ -246,6 +250,173 @@ describe('WorkspacesService', () => {
           userId: 'user-1',
         }),
       );
+    });
+  });
+
+  describe('Role management security invariants', () => {
+    describe('updateMemberRole', () => {
+      it('should reject with ForbiddenException when an ADMIN attempts to promote someone to OWNER', async () => {
+        jest
+          .spyOn(prismaService.workspaceMember, 'findUnique')
+          .mockResolvedValueOnce({
+            id: 'target-mem-1',
+            role: 'MEMBER',
+            isActive: true,
+          } as any) // target
+          .mockResolvedValueOnce({
+            id: 'requester-mem-1',
+            role: 'ADMIN',
+            isActive: true,
+          } as any); // requester
+
+        await expect(
+          service.updateMemberRole('ws-1', 'user-2', 'OWNER', 'admin-user-1'),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('should reject with ForbiddenException when an ADMIN attempts to demote the OWNER', async () => {
+        jest
+          .spyOn(prismaService.workspaceMember, 'findUnique')
+          .mockResolvedValueOnce({
+            id: 'target-mem-1',
+            role: 'OWNER',
+            isActive: true,
+          } as any) // target owner
+          .mockResolvedValueOnce({
+            id: 'requester-mem-1',
+            role: 'ADMIN',
+            isActive: true,
+          } as any); // requester admin
+
+        await expect(
+          service.updateMemberRole(
+            'ws-1',
+            'owner-user-1',
+            'MEMBER',
+            'admin-user-1',
+          ),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('should allow OWNER to transfer ownership and demote requester to ADMIN in transaction', async () => {
+        jest
+          .spyOn(prismaService.workspaceMember, 'findUnique')
+          .mockResolvedValueOnce({
+            id: 'target-mem-1',
+            role: 'MEMBER',
+            isActive: true,
+          } as any) // target
+          .mockResolvedValueOnce({
+            id: 'owner-mem-1',
+            role: 'OWNER',
+            isActive: true,
+          } as any); // requester owner
+
+        const mockTx = {
+          workspaceMember: {
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: 'target-mem-1', role: 'OWNER' }),
+          },
+          auditLog: {
+            create: jest.fn().mockResolvedValue({ id: 'audit-1' }),
+          },
+        };
+
+        jest
+          .spyOn(prismaService, '$transaction')
+          .mockImplementation(async (cb: any) => cb(mockTx));
+
+        const result = await service.updateMemberRole(
+          'ws-1',
+          'user-2',
+          'OWNER',
+          'owner-user-1',
+        );
+
+        expect(result.role).toBe('OWNER');
+        expect(mockTx.workspaceMember.update).toHaveBeenCalledWith({
+          where: { id: 'owner-mem-1' },
+          data: { role: 'ADMIN' },
+        });
+      });
+    });
+
+    describe('removeMember', () => {
+      it('should reject with ForbiddenException when attempting to remove the OWNER', async () => {
+        jest
+          .spyOn(prismaService.workspaceMember, 'findUnique')
+          .mockResolvedValueOnce({
+            id: 'target-owner',
+            role: 'OWNER',
+            isActive: true,
+          } as any);
+
+        await expect(
+          service.removeMember('ws-1', 'owner-user', 'admin-user'),
+        ).rejects.toThrow(
+          new ForbiddenException('Cannot remove the workspace owner'),
+        );
+      });
+
+      it('should allow ADMIN or OWNER to remove a standard MEMBER', async () => {
+        jest
+          .spyOn(prismaService.workspaceMember, 'findUnique')
+          .mockResolvedValueOnce({
+            id: 'target-member',
+            role: 'MEMBER',
+            isActive: true,
+          } as any)
+          .mockResolvedValueOnce({
+            id: 'admin-member',
+            role: 'ADMIN',
+            isActive: true,
+          } as any);
+
+        const mockTx = {
+          workspaceMember: {
+            update: jest
+              .fn()
+              .mockResolvedValue({ id: 'target-member', isActive: false }),
+          },
+          auditLog: {
+            create: jest.fn().mockResolvedValue({ id: 'audit-1' }),
+          },
+        };
+
+        jest
+          .spyOn(prismaService, '$transaction')
+          .mockImplementation(async (cb: any) => cb(mockTx));
+
+        const result = await service.removeMember(
+          'ws-1',
+          'member-user',
+          'admin-user',
+        );
+        expect(result.isActive).toBe(false);
+      });
+    });
+
+    describe('getMyWorkspaces', () => {
+      it('should query with select projection hiding joinPassword and stripe customer IDs', async () => {
+        (prismaService.workspace as any).findMany = jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'ws-1', name: 'Acme', members: [{ role: 'MEMBER' }] },
+          ]);
+
+        const result = await service.getMyWorkspaces('user-1');
+        expect(result).toHaveLength(1);
+        expect((prismaService.workspace as any).findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            select: expect.objectContaining({
+              id: true,
+              name: true,
+              slug: true,
+            }),
+          }),
+        );
+      });
     });
   });
 });
