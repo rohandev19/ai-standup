@@ -12,6 +12,7 @@ import {
 import { StandupsService } from './standups.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { WorkspaceMembershipGuard } from '../common/guards/workspace-membership.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { SubmitStandupDto } from './dto/submit-standup.dto';
 import { EditStandupDto } from './dto/edit-standup.dto';
 import type { RequestWithUser } from '../common/interfaces/request-with-user.interface';
@@ -72,7 +73,7 @@ export class StandupsController {
     return this.standupsService.getWorkspaceStandups(workspaceId, date);
   }
 
-  // TODO: Add RolesGuard to restrict this to Owner/Admin
+  @Roles('OWNER', 'ADMIN')
   @Patch('blockers/:blockerId/resolve')
   async resolveBlocker(
     @Param('workspaceId') workspaceId: string,
