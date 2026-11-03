@@ -26,6 +26,25 @@ export class AuthService {
     @InjectQueue('email') private readonly emailQueue: Queue,
   ) {}
 
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private async getUserIdFromToken(
+    prefix: 'verify-email' | 'reset-password' | 'refresh-token',
+    rawToken: string,
+  ): Promise<{ userId: string | null; keyToDelete: string }> {
+    const hashedKey = `${prefix}:${this.hashToken(rawToken)}`;
+    let userId = await this.redisService.get(hashedKey);
+    if (userId) {
+      return { userId, keyToDelete: hashedKey };
+    }
+    // Backward compatibility fallback for pre-existing unhashed tokens
+    const rawKey = `${prefix}:${rawToken}`;
+    userId = await this.redisService.get(rawKey);
+    return { userId, keyToDelete: rawKey };
+  }
+
   private hasConfiguredSmtp(): boolean {
     const smtpHost = process.env.SMTP_HOST;
     if (!smtpHost) return false;
@@ -157,7 +176,7 @@ export class AuthService {
 
     // Store in Redis (expires in 24 hours = 86400 seconds)
     await this.redisService.set(
-      `verify-email:${verificationToken}`,
+      `verify-email:${this.hashToken(verificationToken)}`,
       user.id,
       'EX',
       86400,
@@ -256,7 +275,7 @@ export class AuthService {
     // Refresh Token (expires in 7 days = 604800 seconds)
     const refreshToken = crypto.randomBytes(40).toString('hex');
     await this.redisService.set(
-      `refresh-token:${refreshToken}`,
+      `refresh-token:${this.hashToken(refreshToken)}`,
       user.id,
       'EX',
       604800,
@@ -277,8 +296,11 @@ export class AuthService {
     if (!refreshToken)
       throw new UnauthorizedException('No refresh token provided');
 
-    // Check if token exists in Redis
-    const userId = await this.redisService.get(`refresh-token:${refreshToken}`);
+    // Check if token exists in Redis (hashed, with legacy fallback)
+    const { userId } = await this.getUserIdFromToken(
+      'refresh-token',
+      refreshToken,
+    );
     if (!userId) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -303,13 +325,19 @@ export class AuthService {
   async logout(refreshToken: string) {
     if (refreshToken) {
       // Remove refresh token from Redis (revokes session)
+      await this.redisService.del(
+        `refresh-token:${this.hashToken(refreshToken)}`,
+      );
       await this.redisService.del(`refresh-token:${refreshToken}`);
     }
     return { message: 'Logged out successfully' };
   }
 
   async verifyEmail(token: string) {
-    const userId = await this.redisService.get(`verify-email:${token}`);
+    const { userId, keyToDelete } = await this.getUserIdFromToken(
+      'verify-email',
+      token,
+    );
 
     if (!userId) {
       throw new HttpException(
@@ -321,7 +349,7 @@ export class AuthService {
     await this.usersService.update(userId, { isEmailVerified: true });
 
     // Remove token after successful verification
-    await this.redisService.del(`verify-email:${token}`);
+    await this.redisService.del(keyToDelete);
 
     return { message: 'Email successfully verified. You can now login.' };
   }
@@ -355,7 +383,7 @@ export class AuthService {
 
     // Store in Redis (expires in 24 hours = 86400 seconds)
     await this.redisService.set(
-      `verify-email:${verificationToken}`,
+      `verify-email:${this.hashToken(verificationToken)}`,
       user.id,
       'EX',
       86400,
@@ -386,7 +414,7 @@ export class AuthService {
 
       // Store in Redis (expires in 1 hour = 3600 seconds)
       await this.redisService.set(
-        `reset-password:${resetToken}`,
+        `reset-password:${this.hashToken(resetToken)}`,
         user.id,
         'EX',
         3600,
@@ -414,7 +442,10 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const userId = await this.redisService.get(`reset-password:${token}`);
+    const { userId, keyToDelete } = await this.getUserIdFromToken(
+      'reset-password',
+      token,
+    );
 
     if (!userId) {
       throw new HttpException(
@@ -428,7 +459,7 @@ export class AuthService {
 
     await this.usersService.update(userId, { passwordHash });
 
-    await this.redisService.del(`reset-password:${token}`);
+    await this.redisService.del(keyToDelete);
 
     return { message: 'Password has been successfully reset.' };
   }
@@ -563,7 +594,7 @@ export class AuthService {
 
     const refreshToken = crypto.randomBytes(40).toString('hex');
     await this.redisService.set(
-      `refresh-token:${refreshToken}`,
+      `refresh-token:${this.hashToken(refreshToken)}`,
       user.id,
       'EX',
       604800,

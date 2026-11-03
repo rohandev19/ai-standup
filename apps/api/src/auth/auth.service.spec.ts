@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { JwtService } from '@nestjs/jwt';
@@ -133,5 +134,130 @@ describe('AuthService', () => {
 
     const refreshed = await service.refresh(res.refreshToken);
     expect(refreshed.accessToken).toBe('signed-jwt-token');
+  });
+  it('hashes verification tokens with SHA-256 and verifies successfully with raw token', async () => {
+    usersService.findByEmail.mockResolvedValue(null);
+    usersService.create.mockResolvedValue({
+      id: 'user-2',
+      email: 'verify@example.com',
+      name: 'Verify User',
+      isEmailVerified: false,
+    });
+
+    // Provide mock SMTP so verification token is stored
+    const prevHost = process.env.SMTP_HOST;
+    const prevUser = process.env.SMTP_USER;
+    const prevPass = process.env.SMTP_PASS;
+    process.env.SMTP_HOST = 'smtp.example.com';
+    process.env.SMTP_USER = 'user';
+    process.env.SMTP_PASS = 'pass';
+
+    try {
+      await service.register({
+        email: 'verify@example.com',
+        password: 'Password123',
+        name: 'Verify User',
+        consentGivenAt: new Date().toISOString(),
+      });
+
+      // Find the verify-email key in redisStore
+      const verifyKey = Array.from(redisStore.keys()).find((k) =>
+        k.startsWith('verify-email:'),
+      );
+      expect(verifyKey).toBeDefined();
+
+      const tokenHash = verifyKey!.split(':')[1];
+      // SHA-256 is 64 hex characters
+      expect(tokenHash).toHaveLength(64);
+      expect(redisStore.get(verifyKey!)).toBe('user-2');
+
+      // Now verify using verifyEmail - we extract the raw token passed to sendEmailSafe (or generate and verify)
+      // Since sendEmailSafe received the rawToken in jobData or text, let's test verifyEmail directly:
+      const rawToken = 'my-raw-verification-token';
+      const expectedHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+      redisStore.set(`verify-email:${expectedHash}`, 'user-2');
+
+      const verifyRes = await service.verifyEmail(rawToken);
+      expect(verifyRes.message).toContain('successfully verified');
+      expect(usersService.update).toHaveBeenCalledWith('user-2', {
+        isEmailVerified: true,
+      });
+      expect(redisStore.has(`verify-email:${expectedHash}`)).toBe(false);
+    } finally {
+      process.env.SMTP_HOST = prevHost;
+      process.env.SMTP_USER = prevUser;
+      process.env.SMTP_PASS = prevPass;
+    }
+  });
+
+  it('hashes password reset tokens with SHA-256 and verifies successfully with raw token', async () => {
+    const mockUser = {
+      id: 'user-reset-1',
+      email: 'reset@example.com',
+      name: 'Reset User',
+      passwordHash: 'old-hash',
+    };
+    usersService.findByEmail.mockResolvedValue(mockUser);
+
+    const prevHost = process.env.SMTP_HOST;
+    const prevUser = process.env.SMTP_USER;
+    const prevPass = process.env.SMTP_PASS;
+    process.env.SMTP_HOST = 'smtp.example.com';
+    process.env.SMTP_USER = 'user';
+    process.env.SMTP_PASS = 'pass';
+
+    try {
+      await service.requestPasswordReset('reset@example.com');
+
+      const resetKey = Array.from(redisStore.keys()).find((k) =>
+        k.startsWith('reset-password:'),
+      );
+      expect(resetKey).toBeDefined();
+      const tokenHash = resetKey!.split(':')[1];
+      expect(tokenHash).toHaveLength(64);
+      expect(redisStore.get(resetKey!)).toBe('user-reset-1');
+
+      // Test resetPassword with a known raw token
+      const rawResetToken = 'my-raw-reset-token-12345';
+      const rawHash = crypto
+        .createHash('sha256')
+        .update(rawResetToken)
+        .digest('hex');
+      redisStore.set(`reset-password:${rawHash}`, 'user-reset-1');
+
+      const resetRes = await service.resetPassword(
+        rawResetToken,
+        'NewSecretPassword123',
+      );
+      expect(resetRes.message).toContain('successfully reset');
+      expect(usersService.update).toHaveBeenCalledWith(
+        'user-reset-1',
+        expect.objectContaining({ passwordHash: 'hashed-password' }),
+      );
+      expect(redisStore.has(`reset-password:${rawHash}`)).toBe(false);
+    } finally {
+      process.env.SMTP_HOST = prevHost;
+      process.env.SMTP_USER = prevUser;
+      process.env.SMTP_PASS = prevPass;
+    }
+  });
+
+  it('maintains backward compatibility with pre-existing unhashed tokens', async () => {
+    // Setup legacy unhashed token directly in redis
+    redisStore.set('reset-password:legacy-raw-token', 'user-legacy');
+
+    const resetRes = await service.resetPassword(
+      'legacy-raw-token',
+      'NewPassword123',
+    );
+    expect(resetRes.message).toContain('successfully reset');
+    expect(usersService.update).toHaveBeenCalledWith(
+      'user-legacy',
+      expect.objectContaining({ passwordHash: 'hashed-password' }),
+    );
+    expect(redisStore.has('reset-password:legacy-raw-token')).toBe(false);
   });
 });
