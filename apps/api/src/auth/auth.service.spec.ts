@@ -6,14 +6,19 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RedisService } from '../common/redis/redis.service';
 import * as bcrypt from 'bcrypt';
+import * as nodemailer from 'nodemailer';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashed-password'),
   compare: jest.fn().mockResolvedValue(true),
 }));
 
+jest.mock('nodemailer', () => ({ createTransport: jest.fn() }));
+
 describe('AuthService', () => {
   let service: AuthService;
+  const originalEnv = process.env;
+  const emailQueue = { add: jest.fn() };
   let usersService: {
     findByEmail: jest.Mock;
     findById: jest.Mock;
@@ -22,6 +27,7 @@ describe('AuthService', () => {
     update: jest.Mock;
     incrementFailedLogin: jest.Mock;
     resetFailedLogin: jest.Mock;
+    replacePassword: jest.Mock;
     lockAccount: jest.Mock;
   };
   let redisStore: Map<string, string>;
@@ -32,6 +38,14 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    process.env = {
+      ...originalEnv,
+      SMTP_HOST: 'smtp.example.invalid',
+      SMTP_USER: 'mail-user',
+      SMTP_PASS: 'mail-test-password',
+      USE_DIRECT_EMAIL: 'false',
+    };
+    emailQueue.add.mockReset().mockResolvedValue({ id: 'job-1' });
     redisStore = new Map<string, string>();
     usersService = {
       findByEmail: jest.fn(),
@@ -41,6 +55,7 @@ describe('AuthService', () => {
       update: jest.fn(),
       incrementFailedLogin: jest.fn(),
       resetFailedLogin: jest.fn(),
+      replacePassword: jest.fn().mockResolvedValue(true),
       lockAccount: jest.fn(),
     };
     redisService = {
@@ -66,7 +81,7 @@ describe('AuthService', () => {
         },
         {
           provide: getQueueToken('email'),
-          useValue: { add: jest.fn().mockResolvedValue({ id: 'job-1' }) },
+          useValue: emailQueue,
         },
       ],
     }).compile();
@@ -74,39 +89,71 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  it('registers a new user without blocking when production SMTP is not configured', async () => {
-    const prevNodeEnv = process.env.NODE_ENV;
-    const prevSmtpHost = process.env.SMTP_HOST;
+  afterEach(() => {
+    process.env = originalEnv;
+    jest.restoreAllMocks();
+  });
+
+  it('keeps registration, repeat registration, resend, and login unverified without production SMTP', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.SMTP_HOST;
+    const user = {
+      id: 'user-1',
+      email: 'new@example.invalid',
+      name: 'New User',
+      passwordHash: 'hashed-password',
+      isEmailVerified: false,
+    };
+    const registerDto = {
+      email: user.email,
+      password: 'Password123',
+      name: user.name,
+      consentGivenAt: new Date().toISOString(),
+    };
 
-    try {
-      usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({
-        id: 'user-1',
-        email: 'new@example.com',
-        name: 'New User',
-        isEmailVerified: true,
-      });
+    usersService.findByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValue(user);
+    usersService.create.mockResolvedValue(user);
 
-      const res = await service.register({
-        email: 'new@example.com',
-        password: 'Password123',
-        name: 'New User',
-        consentGivenAt: new Date().toISOString(),
-      });
+    const first = await service.register(registerDto);
+    expect(await service.register(registerDto)).toEqual(first);
+    expect(await service.resendVerification(user.email)).toEqual(first);
+    await expect(
+      service.login({ email: user.email, password: registerDto.password }),
+    ).rejects.toThrow('Please verify your email address');
 
-      expect(res.message).toContain('If the email is valid');
-      expect(usersService.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'new@example.com',
-          isEmailVerified: true,
-        }),
-      );
-    } finally {
-      process.env.NODE_ENV = prevNodeEnv;
-      process.env.SMTP_HOST = prevSmtpHost;
-    }
+    expect(usersService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ isEmailVerified: false }),
+    );
+    expect(usersService.update).not.toHaveBeenCalled();
+    expect(redisService.set).not.toHaveBeenCalled();
+  });
+
+  it('keeps the account unverified when SMTP delivery fails', async () => {
+    process.env.USE_DIRECT_EMAIL = 'true';
+    const sendMail = jest.fn().mockRejectedValue(new Error('SMTP unavailable'));
+    jest
+      .mocked(nodemailer.createTransport)
+      .mockReturnValue({ sendMail } as unknown as ReturnType<
+        typeof nodemailer.createTransport
+      >);
+    usersService.create.mockResolvedValue({
+      id: 'user-1',
+      email: 'new@example.invalid',
+      isEmailVerified: false,
+    });
+
+    await service.register({
+      email: 'new@example.invalid',
+      password: 'Password123',
+      name: 'New User',
+      consentGivenAt: new Date().toISOString(),
+    });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+
+    expect(sendMail).toHaveBeenCalled();
+    expect(usersService.update).not.toHaveBeenCalled();
   });
 
   it('allows login and stores refresh token in RedisService', async () => {
@@ -118,6 +165,7 @@ describe('AuthService', () => {
       isLocked: false,
       isEmailVerified: true,
       failedLoginAttempts: 0,
+      sessionVersion: 0,
     };
     usersService.findByEmail.mockResolvedValue(mockUser);
     usersService.findById.mockResolvedValue(mockUser);
@@ -134,6 +182,11 @@ describe('AuthService', () => {
 
     const refreshed = await service.refresh(res.refreshToken);
     expect(refreshed.accessToken).toBe('signed-jwt-token');
+
+    usersService.findById.mockResolvedValue({ ...mockUser, sessionVersion: 1 });
+    await expect(service.refresh(res.refreshToken)).rejects.toThrow(
+      'Invalid or expired refresh token',
+    );
   });
   it('hashes verification tokens with SHA-256 and verifies successfully with raw token', async () => {
     usersService.findByEmail.mockResolvedValue(null);
@@ -199,6 +252,7 @@ describe('AuthService', () => {
       email: 'reset@example.com',
       name: 'Reset User',
       passwordHash: 'old-hash',
+      sessionVersion: 2,
     };
     usersService.findByEmail.mockResolvedValue(mockUser);
 
@@ -218,7 +272,7 @@ describe('AuthService', () => {
       expect(resetKey).toBeDefined();
       const tokenHash = resetKey!.split(':')[1];
       expect(tokenHash).toHaveLength(64);
-      expect(redisStore.get(resetKey!)).toBe('user-reset-1');
+      expect(redisStore.get(resetKey!)).toBe('2:user-reset-1');
 
       // Test resetPassword with a known raw token
       const rawResetToken = 'my-raw-reset-token-12345';
@@ -226,16 +280,17 @@ describe('AuthService', () => {
         .createHash('sha256')
         .update(rawResetToken)
         .digest('hex');
-      redisStore.set(`reset-password:${rawHash}`, 'user-reset-1');
+      redisStore.set(`reset-password:${rawHash}`, '2:user-reset-1');
 
       const resetRes = await service.resetPassword(
         rawResetToken,
         'NewSecretPassword123',
       );
       expect(resetRes.message).toContain('successfully reset');
-      expect(usersService.update).toHaveBeenCalledWith(
+      expect(usersService.replacePassword).toHaveBeenCalledWith(
         'user-reset-1',
-        expect.objectContaining({ passwordHash: 'hashed-password' }),
+        2,
+        'hashed-password',
       );
       expect(redisStore.has(`reset-password:${rawHash}`)).toBe(false);
     } finally {
@@ -254,10 +309,101 @@ describe('AuthService', () => {
       'NewPassword123',
     );
     expect(resetRes.message).toContain('successfully reset');
-    expect(usersService.update).toHaveBeenCalledWith(
+    expect(usersService.replacePassword).toHaveBeenCalledWith(
       'user-legacy',
-      expect.objectContaining({ passwordHash: 'hashed-password' }),
+      0,
+      'hashed-password',
     );
     expect(redisStore.has('reset-password:legacy-raw-token')).toBe(false);
+  });
+
+  it('rejects old reset links after a password change or a concurrent reset', async () => {
+    redisStore.set('reset-password:old-token', '2:user-legacy');
+    usersService.replacePassword.mockResolvedValue(false);
+
+    await expect(
+      service.resetPassword('old-token', 'NewPassword123'),
+    ).rejects.toThrow('Invalid or expired reset token');
+  });
+
+  function mockGoogleProfile(profile: Record<string, unknown>) {
+    process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce(Response.json({ access_token: 'provider-token' }))
+      .mockResolvedValueOnce(Response.json(profile));
+  }
+
+  it('rejects Google profiles with an unverified email', async () => {
+    mockGoogleProfile({
+      sub: 'google-id',
+      email: 'new@gmail.com',
+      email_verified: false,
+    });
+
+    await expect(service.handleGoogleCallback('oauth-code')).rejects.toThrow(
+      'Google did not provide a verified email address',
+    );
+    expect(usersService.findByGoogleId).not.toHaveBeenCalled();
+    expect(redisService.set).not.toHaveBeenCalled();
+  });
+
+  it('does not link an existing account based on matching email', async () => {
+    mockGoogleProfile({
+      sub: 'new-google-id',
+      email: 'existing@gmail.com',
+      email_verified: true,
+    });
+    usersService.findByEmail.mockResolvedValue({ id: 'existing-user' });
+
+    await expect(service.handleGoogleCallback('oauth-code')).rejects.toThrow(
+      'An account already uses this email',
+    );
+    expect(usersService.update).not.toHaveBeenCalled();
+    expect(redisService.set).not.toHaveBeenCalled();
+  });
+
+  it('requires direct verification for new Google accounts with external email', async () => {
+    const email = 'new@example.invalid';
+    mockGoogleProfile({ sub: 'google-id', email, email_verified: true });
+    usersService.create.mockResolvedValue({
+      id: 'google-user',
+      email,
+      isEmailVerified: false,
+    });
+
+    await expect(service.handleGoogleCallback('oauth-code')).rejects.toThrow(
+      'Verify your email',
+    );
+    expect(usersService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ isEmailVerified: false, passwordHash: null }),
+    );
+    expect(emailQueue.add).toHaveBeenCalledWith(
+      'send-verification',
+      expect.objectContaining({ email }),
+    );
+    expect([...redisStore.keys()]).toEqual([
+      expect.stringMatching(/^verify-email:/),
+    ]);
+  });
+
+  it('issues a refresh session for a previously linked and verified Google account', async () => {
+    mockGoogleProfile({
+      sub: 'google-id',
+      email: 'existing@example.invalid',
+      email_verified: true,
+    });
+    usersService.findByGoogleId.mockResolvedValue({
+      id: 'google-user',
+      isEmailVerified: true,
+      sessionVersion: 2,
+    });
+
+    await expect(service.handleGoogleCallback('oauth-code')).resolves.toEqual({
+      refreshToken: expect.any(String),
+    });
+    expect(usersService.findByEmail).not.toHaveBeenCalled();
+    expect([...redisStore.values()]).toEqual(['2:google-user']);
   });
 });

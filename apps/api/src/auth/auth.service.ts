@@ -14,6 +14,23 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { RedisService } from '../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
+import type { User } from '@prisma/client';
+import { createTransport } from 'nodemailer';
+
+export const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60;
+
+const VERIFICATION_MESSAGE =
+  'If the email is valid, check your inbox for verification instructions.';
+
+type SessionUser = Pick<User, 'id' | 'email' | 'name' | 'sessionVersion'>;
+
+type GoogleProfile = {
+  sub?: unknown;
+  email?: unknown;
+  email_verified?: unknown;
+  name?: unknown;
+  picture?: unknown;
+};
 
 @Injectable()
 export class AuthService {
@@ -30,19 +47,70 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  private async getUserIdFromToken(
+  private async getStoredToken(
     prefix: 'verify-email' | 'reset-password' | 'refresh-token',
-    rawToken: string,
-  ): Promise<{ userId: string | null; keyToDelete: string }> {
-    const hashedKey = `${prefix}:${this.hashToken(rawToken)}`;
-    let userId = await this.redisService.get(hashedKey);
-    if (userId) {
-      return { userId, keyToDelete: hashedKey };
+    token: string,
+  ): Promise<{ value: string | null; key: string }> {
+    const hashedKey = `${prefix}:${this.hashToken(token)}`;
+    const value = (await this.redisService.get(hashedKey)) as string | null;
+    if (value) return { value, key: hashedKey };
+
+    // Existing tokens may still be stored under their un-hashed keys.
+    const legacyKey = `${prefix}:${token}`;
+    return {
+      value: (await this.redisService.get(legacyKey)) as string | null,
+      key: legacyKey,
+    };
+  }
+
+  private sessionTokenValue(user: SessionUser): string {
+    return `${user.sessionVersion}:${user.id}`;
+  }
+
+  private async getVersionedToken(
+    prefix: 'reset-password' | 'refresh-token',
+    token: string,
+  ) {
+    const { value, key } = await this.getStoredToken(prefix, token);
+    if (!value) return null;
+
+    // Tokens issued before session versioning stored only the user ID.
+    const separator = value.indexOf(':');
+    if (separator === -1) return { userId: value, version: 0, key };
+
+    const version = Number(value.slice(0, separator));
+    const userId = value.slice(separator + 1);
+    if (
+      !userId ||
+      separator === 0 ||
+      !Number.isSafeInteger(version) ||
+      version < 0
+    ) {
+      return null;
     }
-    // Backward compatibility fallback for pre-existing unhashed tokens
-    const rawKey = `${prefix}:${rawToken}`;
-    userId = await this.redisService.get(rawKey);
-    return { userId, keyToDelete: rawKey };
+    return { userId, version, key };
+  }
+
+  private async issueRefreshToken(user: SessionUser): Promise<string> {
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    await this.redisService.set(
+      `refresh-token:${this.hashToken(refreshToken)}`,
+      this.sessionTokenValue(user),
+      'EX',
+      REFRESH_TOKEN_TTL,
+    );
+    return refreshToken;
+  }
+
+  private sessionResponse(user: SessionUser) {
+    return {
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        email: user.email,
+        sessionVersion: user.sessionVersion,
+      }),
+      user: { id: user.id, email: user.email, name: user.name },
+    };
   }
 
   private hasConfiguredSmtp(): boolean {
@@ -74,9 +142,8 @@ export class AuthService {
 
     const sendDirectly = async (): Promise<boolean> => {
       try {
-        const nodemailer = await import('nodemailer');
         const port = parseInt(process.env.SMTP_PORT || '587', 10);
-        const transporter = nodemailer.createTransport({
+        const transporter = createTransport({
           host: process.env.SMTP_HOST || 'localhost',
           port,
           secure: port === 465,
@@ -143,68 +210,22 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { email, password, name, consentGivenAt } = registerDto;
 
-    const existingUser = await this.usersService.findByEmail(email);
-
-    if (existingUser) {
-      if (!existingUser.isEmailVerified && !this.hasConfiguredSmtp()) {
-        await this.usersService.update(existingUser.id, {
-          isEmailVerified: true,
-        });
-      }
-      // Generic response to prevent user enumeration
-      return {
-        message:
-          'If the email is valid, check your inbox for further instructions.',
-      };
+    const existing = await this.usersService.findByEmail(email);
+    if (existing) {
+      if (!existing.isEmailVerified) await this.sendVerification(existing);
+      return { message: VERIFICATION_MESSAGE };
     }
-
-    const saltRounds = 12; // Increased from 10 for better security against brute-force
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-    const consentDate = new Date(consentGivenAt);
-    const smtpConfigured = this.hasConfiguredSmtp();
 
     const user = await this.usersService.create({
       email,
       name,
-      passwordHash,
-      consentGivenAt: consentDate,
-      isEmailVerified: !smtpConfigured,
+      passwordHash: await bcrypt.hash(password, 12),
+      consentGivenAt: new Date(consentGivenAt),
+      isEmailVerified: false,
     });
 
-    // Generate Verification Token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-
-    // Store in Redis (expires in 24 hours = 86400 seconds)
-    await this.redisService.set(
-      `verify-email:${this.hashToken(verificationToken)}`,
-      user.id,
-      'EX',
-      86400,
-    );
-
-    if (smtpConfigured) {
-      const frontendUrl =
-        process.env.FRONTEND_URL || 'https://www.aistandup.app';
-      void this.sendEmailSafe({
-        to: user.email,
-        subject: 'Verify Your Email Address',
-        text: `Welcome! Please verify your email address by clicking this link: ${frontendUrl}/verify-email/${verificationToken}\n\nThis link will expire in 24 hours.`,
-        jobName: 'send-verification',
-        jobData: {
-          email: user.email,
-          token: verificationToken,
-        },
-      }).then(async (sent) => {
-        if (!sent) {
-          await this.usersService.update(user.id, { isEmailVerified: true });
-        }
-      });
-    }
-
-    return {
-      message:
-        'If the email is valid, check your inbox for further instructions.',
-    };
+    await this.sendVerification(user);
+    return { message: VERIFICATION_MESSAGE };
   }
 
   async login(loginDto: LoginDto) {
@@ -224,18 +245,6 @@ export class AuthService {
       } else {
         // Lock expired, reset
         await this.usersService.resetFailedLogin(user.id);
-      }
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      if (!this.hasConfiguredSmtp()) {
-        await this.usersService.update(user.id, { isEmailVerified: true });
-      } else {
-        throw new HttpException(
-          'Please verify your email address before logging in. Check your inbox for the verification link.',
-          HttpStatus.FORBIDDEN,
-        );
       }
     }
 
@@ -268,61 +277,40 @@ export class AuthService {
       await this.usersService.resetFailedLogin(user.id);
     }
 
-    // Generate Tokens
-    const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload);
-
-    // Refresh Token (expires in 7 days = 604800 seconds)
-    const refreshToken = crypto.randomBytes(40).toString('hex');
-    await this.redisService.set(
-      `refresh-token:${this.hashToken(refreshToken)}`,
-      user.id,
-      'EX',
-      604800,
-    );
+    if (!user.isEmailVerified) {
+      throw new HttpException(
+        'Please verify your email address before logging in. Check your inbox for the verification link.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     return {
-      accessToken,
-      refreshToken, // Will be returned to controller to set as HttpOnly cookie
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
+      ...this.sessionResponse(user),
+      refreshToken: await this.issueRefreshToken(user),
     };
   }
 
-  async refresh(refreshToken: string) {
-    if (!refreshToken)
+  async refresh(refreshToken: string | undefined) {
+    if (!refreshToken) {
       throw new UnauthorizedException('No refresh token provided');
-
-    // Check if token exists in Redis (hashed, with legacy fallback)
-    const { userId } = await this.getUserIdFromToken(
-      'refresh-token',
-      refreshToken,
-    );
-    if (!userId) {
+    }
+    const stored = await this.getVersionedToken('refresh-token', refreshToken);
+    if (!stored) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
-
-    // Generate new Access Token
-    const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload);
-
-    return {
-      accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
+    const user = await this.usersService.findById(stored.userId);
+    if (
+      !user ||
+      !user.isEmailVerified ||
+      user.sessionVersion !== stored.version
+    ) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+    return this.sessionResponse(user);
   }
 
-  async logout(refreshToken: string) {
+  async logout(refreshToken: string | undefined) {
     if (refreshToken) {
       // Remove refresh token from Redis (revokes session)
       await this.redisService.del(
@@ -334,7 +322,7 @@ export class AuthService {
   }
 
   async verifyEmail(token: string) {
-    const { userId, keyToDelete } = await this.getUserIdFromToken(
+    const { value: userId, key } = await this.getStoredToken(
       'verify-email',
       token,
     );
@@ -349,33 +337,21 @@ export class AuthService {
     await this.usersService.update(userId, { isEmailVerified: true });
 
     // Remove token after successful verification
-    await this.redisService.del(keyToDelete);
+    await this.redisService.del(key);
 
     return { message: 'Email successfully verified. You can now login.' };
   }
 
   async resendVerification(email: string) {
     const user = await this.usersService.findByEmail(email);
+    if (user && !user.isEmailVerified) await this.sendVerification(user);
+    return { message: VERIFICATION_MESSAGE };
+  }
 
-    if (!user) {
-      // Generic response to prevent email enumeration
-      return {
-        message:
-          'If the email is valid, check your inbox for verification link.',
-      };
-    }
-
-    if (user.isEmailVerified) {
-      return {
-        message: 'This email is already verified. You can login now.',
-      };
-    }
-
+  private async sendVerification(user: Pick<User, 'id' | 'email'>) {
     if (!this.hasConfiguredSmtp()) {
-      await this.usersService.update(user.id, { isEmailVerified: true });
-      return {
-        message: 'This email is already verified. You can login now.',
-      };
+      this.logger.warn('SMTP not configured; email verification was not sent');
+      return;
     }
 
     // Generate new verification token
@@ -400,10 +376,6 @@ export class AuthService {
         token: verificationToken,
       },
     });
-
-    return {
-      message: 'If the email is valid, check your inbox for verification link.',
-    };
   }
 
   async requestPasswordReset(email: string) {
@@ -415,7 +387,7 @@ export class AuthService {
       // Store in Redis (expires in 1 hour = 3600 seconds)
       await this.redisService.set(
         `reset-password:${this.hashToken(resetToken)}`,
-        user.id,
+        this.sessionTokenValue(user),
         'EX',
         3600,
       );
@@ -442,29 +414,30 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const { userId, keyToDelete } = await this.getUserIdFromToken(
-      'reset-password',
-      token,
-    );
-
-    if (!userId) {
+    const stored = await this.getVersionedToken('reset-password', token);
+    if (!stored) {
       throw new HttpException(
         'Invalid or expired reset token',
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    const saltRounds = 12; // Increased for better security
-    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
-
-    await this.usersService.update(userId, { passwordHash });
-
-    await this.redisService.del(keyToDelete);
-
+    const updated = await this.usersService.replacePassword(
+      stored.userId,
+      stored.version,
+      await bcrypt.hash(newPassword, 12),
+    );
+    if (!updated) {
+      throw new HttpException(
+        'Invalid or expired reset token',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    await this.redisService.del(stored.key);
     return { message: 'Password has been successfully reset.' };
   }
 
-  getGoogleAuthUrl(): string {
+  getGoogleAuthUrl(state: string): string {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const callbackUrl =
       process.env.GOOGLE_CALLBACK_URL ||
@@ -482,6 +455,7 @@ export class AuthService {
       client_id: clientId,
       redirect_uri: callbackUrl,
       response_type: 'code',
+      state,
       scope: 'openid email profile',
       access_type: 'online',
       prompt: 'select_account',
@@ -520,12 +494,20 @@ export class AuthService {
       signal: AbortSignal.timeout(10000),
     });
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = (await tokenResponse.json()) as {
+      access_token?: unknown;
+    } | null;
 
-    if (!tokenResponse.ok || !tokenData.access_token) {
-      this.logger.error('Google token exchange failed:', tokenData);
+    if (
+      !tokenResponse.ok ||
+      typeof tokenData?.access_token !== 'string' ||
+      !tokenData.access_token
+    ) {
+      this.logger.warn(
+        `Google token exchange failed (HTTP ${tokenResponse.status})`,
+      );
       throw new HttpException(
-        tokenData.error_description || 'Failed to authenticate with Google',
+        'Failed to authenticate with Google',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -541,73 +523,61 @@ export class AuthService {
       },
     );
 
-    const profile = await profileResponse.json();
+    const profile = (await profileResponse.json()) as GoogleProfile | null;
 
-    if (!profileResponse.ok || !profile.email) {
-      this.logger.error('Failed to fetch Google profile:', profile);
+    if (
+      !profileResponse.ok ||
+      typeof profile?.sub !== 'string' ||
+      !profile.sub ||
+      typeof profile.email !== 'string' ||
+      !profile.email ||
+      profile.email_verified !== true
+    ) {
       throw new HttpException(
-        'Failed to retrieve Google profile information',
-        HttpStatus.BAD_REQUEST,
+        'Google did not provide a verified email address.',
+        HttpStatus.FORBIDDEN,
       );
     }
 
-    // 3. Find or create user
+    const email = profile.email.toLowerCase();
+    const avatarUrl =
+      typeof profile.picture === 'string' ? profile.picture : null;
     let user = await this.usersService.findByGoogleId(profile.sub);
-
     if (!user) {
-      // Check if user exists by email (registered previously via email/password)
-      const existingUserByEmail = await this.usersService.findByEmail(
-        profile.email,
-      );
+      const existingUser = await this.usersService.findByEmail(email);
+      if (existingUser) {
+        throw new HttpException(
+          'An account already uses this email. Sign in with your original method.',
+          HttpStatus.CONFLICT,
+        );
+      }
 
-      if (existingUserByEmail) {
-        // Link Google ID and mark email as verified
-        user = await this.usersService.update(existingUserByEmail.id, {
-          googleId: profile.sub,
-          isEmailVerified: true,
-          avatarUrl: existingUserByEmail.avatarUrl || profile.picture || null,
-        });
-      } else {
-        // Create new Google user
-        user = await this.usersService.create({
-          email: profile.email,
-          name: profile.name || profile.email.split('@')[0],
-          avatarUrl: profile.picture || null,
-          googleId: profile.sub,
-          authProvider: 'GOOGLE',
-          isEmailVerified: true,
-          passwordHash: null,
-        });
-      }
-    } else {
-      // Refresh avatar if not set
-      if (!user.avatarUrl && profile.picture) {
-        user = await this.usersService.update(user.id, {
-          avatarUrl: profile.picture,
-        });
-      }
+      // Google is authoritative for Gmail addresses. Verify external email
+      // addresses directly before enabling a new account.
+      const isEmailVerified = email.endsWith('@gmail.com');
+      user = await this.usersService.create({
+        email,
+        name:
+          typeof profile.name === 'string' ? profile.name : email.split('@')[0],
+        avatarUrl,
+        googleId: profile.sub,
+        authProvider: 'GOOGLE',
+        isEmailVerified,
+        passwordHash: null,
+      });
     }
 
-    // 4. Generate system tokens
-    const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload);
+    if (!user.isEmailVerified) {
+      await this.sendVerification(user);
+      throw new HttpException(
+        'Verify your email, then sign in again with Google.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
-    const refreshToken = crypto.randomBytes(40).toString('hex');
-    await this.redisService.set(
-      `refresh-token:${this.hashToken(refreshToken)}`,
-      user.id,
-      'EX',
-      604800,
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
+    if (!user.avatarUrl && avatarUrl) {
+      await this.usersService.update(user.id, { avatarUrl });
+    }
+    return { refreshToken: await this.issueRefreshToken(user) };
   }
 }

@@ -19,9 +19,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
 
-  const queryError = searchParams.get('error')
-    ? decodeURIComponent(searchParams.get('error')!)
-    : '';
+  const queryError = searchParams.get('error') ?? '';
   const displayedError = error || queryError;
 
   const handleSubmit = async (e: React.FormEvent) => {

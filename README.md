@@ -235,12 +235,14 @@ The web app runs on `http://localhost:3000` and the API on `http://localhost:300
 | `JWT_REFRESH_EXPIRATION` | Refresh token lifespan (e.g. 7d) |
 | `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 Client Secret |
-| `GOOGLE_CALLBACK_URL` | OAuth redirect callback URL |
+| `GOOGLE_CALLBACK_URL` | Google OAuth callback on the frontend origin, using `/api/auth/google/callback` |
 | `FRONTEND_URL` | Frontend URL for CORS and email links |
 
 ---
 
 ## Security Model
+
+Email/password registrations require a working SMTP setup and confirmation of the verification link. Google accounts with non-Gmail addresses also require confirmation when first registered. Existing accounts retain their original sign-in method unless they already have a linked Google identity.
 
 This is a multi-tenant platform — tenant isolation is the #1 security priority:
 

@@ -3,6 +3,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
+  OnGatewayInit,
   OnGatewayDisconnect,
   SubscribeMessage,
   MessageBody,
@@ -11,6 +12,13 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { UsersService } from '../users/users.service';
+import type { AccessTokenClaims } from '../users/users.service';
+
+interface SocketSession {
+  user?: AccessTokenClaims;
+  timeoutId?: NodeJS.Timeout;
+}
 
 @WebSocketGateway({
   cors: {
@@ -18,59 +26,77 @@ import { PrismaService } from '../common/prisma/prisma.service';
     credentials: true,
   },
 })
-export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class EventsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server!: Server;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly usersService: UsersService,
   ) {}
 
-  handleConnection(client: Socket) {
-    try {
-      const token = (client.handshake.auth.token ||
-        client.handshake.query.token) as string;
-      if (!token) {
-        client.disconnect();
-        return;
-      }
-      const payload = this.jwtService.verify<{
-        sub?: string;
-        id?: string;
-        exp?: number;
-      }>(token);
-      (client.data as { user: any }).user = payload;
+  afterInit(server: Server) {
+    server.use((client, next) => {
+      void this.authenticateSocket(client).then(
+        () => next(),
+        () => next(new Error('Session is no longer valid')),
+      );
+    });
+  }
 
-      // Token Expiry Check (Phase 5)
-      if (payload.exp) {
-        const expiresInMs = payload.exp * 1000 - Date.now();
-        if (expiresInMs <= 0) {
-          client.disconnect();
-        } else {
-          const timeoutId = setTimeout(() => {
-            client.emit('token_expired', {
-              message: 'Your session has expired. Please reconnect.',
-            });
-            client.disconnect();
-          }, expiresInMs);
-          (client.data as { timeoutId: NodeJS.Timeout }).timeoutId = timeoutId;
-        }
-      }
+  private async authenticateSocket(client: Socket) {
+    const token = (client.handshake.auth.token ??
+      client.handshake.query.token) as unknown;
+    if (typeof token !== 'string') throw new Error('Missing access token');
 
-      // Join user-specific room for individual notifications
-      if (payload.sub || payload.id) {
-        void client.join(`user_${payload.sub || payload.id}`);
-      }
-    } catch {
-      client.disconnect();
+    const claims = this.jwtService.verify<AccessTokenClaims>(token);
+    if (!claims.exp || !(await this.usersService.findActiveSession(claims))) {
+      throw new Error('Session is no longer valid');
     }
+    (client.data as SocketSession).user = claims;
+  }
+
+  handleConnection(client: Socket) {
+    const data = client.data as SocketSession;
+    const user = data.user;
+    if (!user || user.exp * 1000 <= Date.now()) {
+      client.disconnect();
+      return;
+    }
+
+    data.timeoutId = setTimeout(
+      () => {
+        client.emit('token_expired', {
+          message: 'Your session has expired. Please reconnect.',
+        });
+        client.disconnect();
+      },
+      user.exp * 1000 - Date.now(),
+    );
+    void client.join(`user_${user.sub}`);
   }
 
   handleDisconnect(client: Socket) {
-    const data = client.data as { timeoutId?: NodeJS.Timeout };
-    if (data.timeoutId) {
-      clearTimeout(data.timeoutId);
+    const { timeoutId } = client.data as SocketSession;
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+
+  @OnEvent('auth.sessions_revoked')
+  async handleSessionsRevoked(payload: {
+    userId: string;
+    sessionVersion: number;
+  }) {
+    const sockets = await this.server
+      .in(`user_${payload.userId}`)
+      .fetchSockets();
+    for (const socket of sockets) {
+      const { user } = socket.data as SocketSession;
+      if ((user?.sessionVersion ?? 0) < payload.sessionVersion) {
+        socket.disconnect(true);
+      }
     }
   }
 
@@ -79,8 +105,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { workspaceId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const user = (client.data as { user?: { sub?: string; id?: string } }).user;
-    if (!user || !data.workspaceId)
+    const user = (client.data as SocketSession).user;
+    if (!user || !data?.workspaceId)
       return {
         status: 'error',
         message: 'Unauthorized or missing workspaceId',
@@ -91,19 +117,25 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       where: {
         workspaceId_userId: {
           workspaceId: data.workspaceId,
-          userId: (user.sub || user.id) as string,
+          userId: user.sub,
+        },
+        isActive: true,
+        user: {
+          isEmailVerified: true,
+          sessionVersion: user.sessionVersion ?? 0,
         },
       },
+      select: { id: true },
     });
 
-    if (!membership || !membership.isActive) {
+    if (!membership || !client.connected) {
       return {
         status: 'error',
         message: 'You are not a member of this workspace',
       };
     }
 
-    void client.join(`workspace_${data.workspaceId}`);
+    await client.join(`workspace_${data.workspaceId}`);
     return {
       status: 'success',
       message: `Joined workspace ${data.workspaceId}`,
@@ -144,22 +176,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @OnEvent('member.removed')
-  async handleMemberRemoved(payload: { workspaceId: string; userId: string }) {
+  handleMemberRemoved(payload: { workspaceId: string; userId: string }) {
+    this.server
+      .in(`user_${payload.userId}`)
+      .socketsLeave(`workspace_${payload.workspaceId}`);
     this.broadcastToWorkspace(payload.workspaceId, 'member_removed', {
       userId: payload.userId,
     });
-
-    // Also force disconnect the socket from the room if they are connected
-    const sockets = await this.server
-      .in(`workspace_${payload.workspaceId}`)
-      .fetchSockets();
-    for (const socket of sockets) {
-      const user = (socket.data as { user?: { sub?: string; id?: string } })
-        .user;
-      if (user && (user.sub === payload.userId || user.id === payload.userId)) {
-        socket.leave(`workspace_${payload.workspaceId}`);
-      }
-    }
   }
 
   @OnEvent('member.joined')

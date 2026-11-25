@@ -4,6 +4,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  HttpException,
   Res,
   UseGuards,
   Req,
@@ -11,13 +12,30 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import type { Response } from 'express';
-import { AuthService } from './auth.service';
+import type { CookieOptions, Request, Response } from 'express';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { AuthService, REFRESH_TOKEN_TTL } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
+
+const OAUTH_STATE_COOKIE = 'googleOAuthState';
+
+function readCookie(req: Request, name: string): string | undefined {
+  const value = req.cookies?.[name] as unknown;
+  return typeof value === 'string' ? value : undefined;
+}
+
+function authCookieOptions(path: string): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path,
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -39,14 +57,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(loginDto);
 
-    // Set refresh token as HttpOnly, Secure cookie
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api/auth',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    this.setRefreshCookie(res, result.refreshToken);
 
     return {
       accessToken: result.accessToken,
@@ -56,23 +67,17 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: any) {
-    const refreshToken = req.cookies?.refreshToken;
+  async refresh(@Req() req: Request) {
+    const refreshToken = readCookie(req, 'refreshToken');
     return this.authService.refresh(refreshToken);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: any, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies?.refreshToken;
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = readCookie(req, 'refreshToken');
 
-    // Clear cookie
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api/auth',
-    });
+    res.clearCookie('refreshToken', authCookieOptions('/api/auth'));
 
     return this.authService.logout(refreshToken);
   }
@@ -104,50 +109,84 @@ export class AuthController {
 
   @Get('google')
   googleAuth(@Res() res: Response) {
+    res.setHeader('Cache-Control', 'no-store');
+    const state = randomBytes(32).toString('hex');
     try {
-      const url = this.authService.getGoogleAuthUrl();
+      const url = this.authService.getGoogleAuthUrl(state);
+      res.cookie(OAUTH_STATE_COOKIE, state, {
+        ...authCookieOptions('/api/auth/google/callback'),
+        maxAge: 10 * 60 * 1000,
+      });
       return res.redirect(url);
-    } catch (err: any) {
-      const frontendUrl =
-        process.env.FRONTEND_URL || 'https://www.aistandup.app';
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent(err.message || 'Google OAuth is not configured yet')}`,
+    } catch {
+      return this.redirectToLogin(
+        res,
+        'Google sign-in is currently unavailable.',
       );
     }
   }
 
   @Get('google/callback')
   async googleAuthCallback(
-    @Query('code') code: string,
-    @Query('error') error: string,
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'https://www.aistandup.app';
-    if (error || !code) {
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent(error || 'Google login cancelled')}`,
+    res.setHeader('Cache-Control', 'no-store');
+    const expectedState = readCookie(req, OAUTH_STATE_COOKIE);
+    if (
+      typeof state !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(state) ||
+      typeof expectedState !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(expectedState) ||
+      !timingSafeEqual(Buffer.from(state), Buffer.from(expectedState))
+    ) {
+      return this.redirectToLogin(
+        res,
+        'Google sign-in expired. Please try again.',
       );
+    }
+
+    res.clearCookie(
+      OAUTH_STATE_COOKIE,
+      authCookieOptions('/api/auth/google/callback'),
+    );
+    if (typeof code !== 'string' || !code) {
+      return this.redirectToLogin(res, 'Google sign-in was cancelled.');
     }
 
     try {
-      const result = await this.authService.handleGoogleCallback(code);
-
-      // Set refresh token as HttpOnly cookie
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/api/auth',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      return res.redirect(
-        `${frontendUrl}/oauth/callback?token=${encodeURIComponent(result.accessToken)}`,
-      );
-    } catch (err: any) {
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent(err.message || 'Google authentication failed')}`,
-      );
+      const { refreshToken } =
+        await this.authService.handleGoogleCallback(code);
+      this.setRefreshCookie(res, refreshToken);
+      return res.redirect(`${this.frontendUrl()}/oauth/callback`);
+    } catch (error: unknown) {
+      const message =
+        error instanceof HttpException && error.getStatus() < 500
+          ? error.message
+          : 'Google sign-in failed. Please try again.';
+      return this.redirectToLogin(res, message);
     }
+  }
+
+  private setRefreshCookie(res: Response, token: string) {
+    res.cookie('refreshToken', token, {
+      ...authCookieOptions('/api/auth'),
+      maxAge: REFRESH_TOKEN_TTL * 1000,
+    });
+  }
+
+  private frontendUrl() {
+    return (process.env.FRONTEND_URL || 'https://www.aistandup.app').replace(
+      /\/$/,
+      '',
+    );
+  }
+
+  private redirectToLogin(res: Response, message: string) {
+    return res.redirect(
+      `${this.frontendUrl()}/login?error=${encodeURIComponent(message)}`,
+    );
   }
 }
