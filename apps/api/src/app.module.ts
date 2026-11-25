@@ -34,7 +34,14 @@ import { Request } from 'express';
           process.env.NODE_ENV !== 'production'
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
-        redact: ['req.headers.authorization', 'req.body.password'],
+        redact: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          'res.headers["set-cookie"]',
+          'req.body.password',
+          'req.body.currentPassword',
+          'req.body.newPassword',
+        ],
       },
     }),
     RedisModule,

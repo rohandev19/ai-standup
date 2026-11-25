@@ -1,11 +1,31 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
+export interface AccessTokenClaims {
+  sub: string;
+  sessionVersion?: number;
+  exp: number;
+}
+
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
+
+  findActiveSession({ sub, sessionVersion = 0 }: AccessTokenClaims) {
+    if (!sub || !Number.isSafeInteger(sessionVersion) || sessionVersion < 0) {
+      return null;
+    }
+    return this.prisma.user.findUnique({
+      where: { id: sub, sessionVersion, isEmailVerified: true },
+      select: { id: true, email: true },
+    });
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
@@ -99,11 +119,33 @@ export class UsersService {
       throw new UnauthorizedException('Invalid current password');
     }
 
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
-
-    await this.update(id, { passwordHash });
+    const updated = await this.replacePassword(
+      id,
+      user.sessionVersion,
+      await bcrypt.hash(newPassword, 12),
+    );
+    if (!updated) {
+      throw new UnauthorizedException('Password changed. Sign in again.');
+    }
 
     return { message: 'Password updated successfully' };
+  }
+
+  async replacePassword(
+    id: string,
+    sessionVersion: number,
+    passwordHash: string,
+  ) {
+    const { count } = await this.prisma.user.updateMany({
+      where: { id, sessionVersion },
+      data: { passwordHash, sessionVersion: { increment: 1 } },
+    });
+    if (!count) return false;
+
+    this.events.emit('auth.sessions_revoked', {
+      userId: id,
+      sessionVersion: sessionVersion + 1,
+    });
+    return true;
   }
 }

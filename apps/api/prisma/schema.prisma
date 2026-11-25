@@ -21,6 +21,7 @@ model User {
   avatarUrl           String?
   googleId            String?   @unique
   authProvider        String    @default("LOCAL")
+  sessionVersion      Int       @default(0)
   isEmailVerified     Boolean   @default(false)
   isLocked            Boolean   @default(false) // Account lockout after too many failed logins
   lockedUntil         DateTime? // When the lockout expires

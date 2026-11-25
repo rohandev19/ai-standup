@@ -10,6 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
+import { Prisma } from '@prisma/client';
 
 describe('WorkspacesService', () => {
   let service: WorkspacesService;
@@ -137,37 +138,6 @@ describe('WorkspacesService', () => {
       expect(result.message).toBe('Invitation resent');
     });
 
-    it('invite used twice rejected', async () => {
-      // Mock an invite that has already been used
-      jest
-        .spyOn(prismaService.workspaceInvite, 'findUnique')
-        .mockResolvedValue({
-          id: 'invite-1',
-          workspaceId: 'ws-1',
-          usedAt: new Date(), // Already used
-          expiresAt: new Date(Date.now() + 10000), // Not expired
-        } as any);
-
-      await expect(
-        service.joinWorkspace('invite-token-123', 'user-1'),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('expired invite rejected', async () => {
-      jest
-        .spyOn(prismaService.workspaceInvite, 'findUnique')
-        .mockResolvedValue({
-          id: 'invite-1',
-          workspaceId: 'ws-1',
-          usedAt: null, // Not used
-          expiresAt: new Date(Date.now() - 10000), // Expired
-        } as any);
-
-      await expect(
-        service.joinWorkspace('invite-token-123', 'user-1'),
-      ).rejects.toThrow(BadRequestException);
-    });
-
     it('bulk invite 20 emails -> 20 individual invites terkirim', async () => {
       const emails = Array.from(
         { length: 20 },
@@ -195,60 +165,166 @@ describe('WorkspacesService', () => {
       expect(inviteSpy).toHaveBeenCalledTimes(20);
       expect(result.length).toBe(20);
     });
+  });
 
-    it('invite accepted -> event emitted', async () => {
-      jest
-        .spyOn(prismaService.workspaceMember, 'findUnique')
-        .mockResolvedValue(null);
-      jest
-        .spyOn(prismaService.workspaceInvite, 'findUnique')
-        .mockResolvedValue({
+  describe('workspace admission', () => {
+    const workspaceId = 'ws-1';
+    const userId = 'user-1';
+    const leftAt = new Date('2026-11-01T12:00:00Z');
+    const createTransactionMock = () => ({
+      workspace: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: workspaceId,
+          subscriptionTier: 'FREE',
+          joinPassword: 'room-password',
+        }),
+      },
+      workspaceInvite: {
+        findUnique: jest.fn().mockResolvedValue({
           id: 'invite-1',
-          workspaceId: 'ws-1',
-          email: 'user@example.com',
+          workspaceId,
+          email: 'user@example.invalid',
           usedAt: null,
+          createdAt: new Date(leftAt.getTime() + 1),
           expiresAt: new Date(Date.now() + 10000),
           invitedById: 'inviter-1',
-        } as any);
-      jest
-        .spyOn(prismaService.user, 'findUnique')
-        .mockResolvedValue({ email: 'user@example.com', name: 'User' } as any);
-
-      const txCallbackSpy = jest.fn((cb) =>
-        cb({
-          workspaceMember: {
-            create: jest
-              .fn()
-              .mockResolvedValue({ workspaceId: 'ws-1', userId: 'user-1' }),
-            findUnique: jest.fn().mockResolvedValue(null),
-          },
-          workspaceInvite: {
-            update: jest.fn().mockResolvedValue({}),
-            findUnique: jest.fn().mockResolvedValue({
-              email: 'user@example.com',
-              invitedById: 'inviter-1',
-              workspaceId: 'ws-1',
-            }),
-          },
-          user: {
-            findUnique: jest
-              .fn()
-              .mockResolvedValue({ email: 'user@example.com', name: 'User' }),
-          },
         }),
-      );
+        update: jest.fn(),
+      },
+      workspaceMember: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        count: jest.fn().mockResolvedValue(4),
+        create: jest
+          .fn()
+          .mockResolvedValue({ workspaceId, userId, role: 'MEMBER' }),
+        update: jest
+          .fn()
+          .mockResolvedValue({ workspaceId, userId, role: 'MEMBER' }),
+      },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: userId,
+          email: 'user@example.invalid',
+          name: 'User',
+        }),
+      },
+    });
+
+    let tx: ReturnType<typeof createTransactionMock>;
+
+    beforeEach(() => {
+      tx = createTransactionMock();
       jest
         .spyOn(prismaService, '$transaction')
-        .mockImplementation(txCallbackSpy as any);
+        .mockImplementation((run) =>
+          run(tx as unknown as Prisma.TransactionClient),
+        );
+    });
 
-      await service.joinWorkspace('token-123', 'user-1');
+    it('rejects rejoining via room code after removal', async () => {
+      tx.workspaceMember.findUnique.mockResolvedValue({
+        isActive: false,
+        role: 'ADMIN',
+        leftAt,
+      });
 
+      await expect(
+        service.joinWithCode(userId, 'room-code', 'room-password'),
+      ).rejects.toThrow('Ask a workspace admin for a new invitation');
+      expect(tx.workspaceMember.update).not.toHaveBeenCalled();
+      expect(tx.workspaceMember.create).not.toHaveBeenCalled();
+    });
+
+    it('enforces Free capacity at join time for both room codes and invitations', async () => {
+      tx.workspaceMember.count.mockResolvedValue(5);
+
+      await expect(
+        service.joinWithCode(userId, 'room-code', 'room-password'),
+      ).rejects.toThrow('Free tier limit reached');
+      await expect(
+        service.joinWorkspace('invite-token', userId),
+      ).rejects.toThrow('Free tier limit reached');
+      expect(tx.workspaceMember.create).not.toHaveBeenCalled();
+      expect(tx.workspaceInvite.update).not.toHaveBeenCalled();
+    });
+
+    it('retries a concurrent room join before checking capacity again', async () => {
+      jest.spyOn(prismaService, '$transaction').mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('Transaction conflict', {
+          code: 'P2034',
+          clientVersion: 'test',
+        }),
+      );
+      tx.workspaceMember.count.mockResolvedValue(5);
+
+      await expect(
+        service.joinWithCode(userId, 'room-code', 'room-password'),
+      ).rejects.toThrow('Free tier limit reached');
+      expect(prismaService.$transaction).toHaveBeenCalledTimes(2);
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['used', { usedAt: new Date() }, 'Invitation already used'],
+      ['expired', { expiresAt: new Date(0) }, 'Invitation expired'],
+    ])('rejects a %s invite', async (_kind, changes, message) => {
+      const invite = await tx.workspaceInvite.findUnique();
+      tx.workspaceInvite.findUnique.mockResolvedValue({
+        ...invite,
+        ...changes,
+      });
+
+      await expect(
+        service.joinWorkspace('invite-token', userId),
+      ).rejects.toThrow(message);
+      expect(tx.workspaceInvite.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects an invitation issued before removal', async () => {
+      const invite = await tx.workspaceInvite.findUnique();
+      tx.workspaceInvite.findUnique.mockResolvedValue({
+        ...invite,
+        createdAt: leftAt,
+      });
+      tx.workspaceMember.findUnique.mockResolvedValue({
+        isActive: false,
+        leftAt,
+      });
+
+      await expect(
+        service.joinWorkspace('invite-token', userId),
+      ).rejects.toThrow('A new invitation is required');
+      expect(tx.workspaceMember.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts a fresh named invitation and resets prior role and team', async () => {
+      tx.workspaceMember.findUnique.mockResolvedValue({
+        id: 'removed-member',
+        isActive: false,
+        role: 'ADMIN',
+        teamId: 'old-team',
+        leftAt,
+      });
+
+      await expect(
+        service.joinWorkspace('invite-token', userId),
+      ).resolves.toMatchObject({
+        workspaceId,
+        userId,
+        role: 'MEMBER',
+      });
+      expect(tx.workspaceMember.update).toHaveBeenCalledWith({
+        where: { id: 'removed-member' },
+        data: expect.objectContaining({
+          isActive: true,
+          role: 'MEMBER',
+          teamId: null,
+          leftAt: null,
+        }),
+      });
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'invite.accepted',
-        expect.objectContaining({
-          workspaceId: 'ws-1',
-          userId: 'user-1',
-        }),
+        expect.objectContaining({ workspaceId, userId }),
       );
     });
   });
@@ -394,6 +470,10 @@ describe('WorkspacesService', () => {
           'admin-user',
         );
         expect(result.isActive).toBe(false);
+        expect(eventEmitter.emit).toHaveBeenCalledWith('member.removed', {
+          workspaceId: 'ws-1',
+          userId: 'member-user',
+        });
       });
     });
 

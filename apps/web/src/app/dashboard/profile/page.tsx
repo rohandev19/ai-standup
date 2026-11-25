@@ -15,7 +15,7 @@ interface WorkspaceItem {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   const [name, setName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -74,10 +74,8 @@ export default function ProfilePage() {
         currentPassword,
         newPassword,
       });
-      alert('Password changed successfully');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      alert('Password updated. Sign in with your new password.');
+      await logout();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       alert(error.response?.data?.message || 'Failed to change password');

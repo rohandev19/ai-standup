@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, type SubscriptionTier } from '@prisma/client';
 import * as crypto from 'crypto';
 import { HistoryQueryDto } from './dto/history-query.dto';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -148,22 +148,28 @@ export class WorkspacesService {
       }
     }
 
-    // Check if user is already a member
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (existingUser) {
-      const member = await this.prisma.workspaceMember.findUnique({
-        where: {
-          workspaceId_userId: { workspaceId, userId: existingUser.id },
-        },
-      });
-      if (member) throw new BadRequestException('User is already a member');
+    const member = existingUser
+      ? await this.prisma.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: { workspaceId, userId: existingUser.id },
+          },
+        })
+      : null;
+    if (member?.isActive) {
+      throw new BadRequestException('User is already a member');
     }
 
-    // Check if there is already a pending invite
     const existingInvite = await this.prisma.workspaceInvite.findFirst({
-      where: { workspaceId, email, usedAt: null },
+      where: {
+        workspaceId,
+        email,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+        ...(member?.leftAt && { createdAt: { gt: member.leftAt } }),
+      },
     });
 
     if (existingInvite) {
@@ -222,6 +228,18 @@ export class WorkspacesService {
     if (invite.workspaceId !== workspaceId)
       throw new BadRequestException('Invalid workspace');
     if (invite.usedAt) throw new BadRequestException('Invite already used');
+
+    const removedMember = await this.prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId,
+        isActive: false,
+        user: { email: invite.email },
+        leftAt: { gte: invite.createdAt },
+      },
+    });
+    if (removedMember) {
+      throw new BadRequestException('Create a new invitation for this member');
+    }
 
     const workspace = await this.findWorkspaceById(workspaceId);
     const inviter = await this.prisma.user.findUnique({
@@ -292,67 +310,87 @@ export class WorkspacesService {
     return results;
   }
 
-  async joinWithCode(userId: string, joinCode: string, joinPassword: string) {
-    const workspace = await this.prisma.workspace.findUnique({
-      where: { joinCode },
-    });
-
-    if (!workspace) throw new NotFoundException('Invalid Room Code');
-    if (workspace.joinPassword !== joinPassword)
-      throw new BadRequestException('Invalid Password');
-
-    const existingMember = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: { workspaceId: workspace.id, userId },
-      },
-    });
-
-    if (existingMember) {
-      if (!existingMember.isActive) {
-        // Reactivate
-        await this.prisma.workspaceMember.update({
-          where: { id: existingMember.id },
-          data: { isActive: true, joinedAt: new Date(), leftAt: null },
+  private async withMembershipTransaction<T>(
+    run: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await this.prisma.$transaction(run, {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         });
-      }
-      return {
-        message: 'Successfully joined workspace',
-        workspaceId: workspace.id,
-      };
-    }
-
-    // New member
-    if (workspace.subscriptionTier === 'FREE') {
-      const activeMembersCount = await this.prisma.workspaceMember.count({
-        where: { workspaceId: workspace.id, isActive: true },
-      });
-      if (activeMembersCount >= 5) {
-        throw new BadRequestException(
-          'Workspace is full (Free tier limit reached)',
-        );
+      } catch (error: unknown) {
+        if (
+          attempt >= 3 ||
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== 'P2034'
+        ) {
+          throw error;
+        }
       }
     }
+  }
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.workspaceMember.create({
-        data: {
-          workspaceId: workspace.id,
-          userId,
-          role: 'MEMBER',
-        },
-      });
-
-      const user = await tx.user.findUnique({ where: { id: userId } });
-      this.eventEmitter.emit('workspace.member_joined', {
-        workspaceId: workspace.id,
-        member: { id: user?.id, name: user?.name, avatarUrl: user?.avatarUrl },
-      });
-
-      return {
-        message: 'Successfully joined workspace',
-        workspaceId: workspace.id,
-      };
+  private async checkWorkspaceCapacity(
+    tx: Prisma.TransactionClient,
+    workspaceId: string,
+    tier: SubscriptionTier,
+  ) {
+    if (tier !== 'FREE') return;
+    const activeMembers = await tx.workspaceMember.count({
+      where: { workspaceId, isActive: true },
     });
+    if (activeMembers >= 5) {
+      throw new BadRequestException(
+        'Workspace is full (Free tier limit reached)',
+      );
+    }
+  }
+
+  async joinWithCode(userId: string, joinCode: string, joinPassword: string) {
+    const { workspaceId, member } = await this.withMembershipTransaction(
+      async (tx) => {
+        const workspace = await tx.workspace.findUnique({
+          where: { joinCode },
+        });
+        if (!workspace) throw new NotFoundException('Invalid Room Code');
+        if (workspace.joinPassword !== joinPassword) {
+          throw new BadRequestException('Invalid Password');
+        }
+
+        const workspaceId = workspace.id;
+        const membership = await tx.workspaceMember.findUnique({
+          where: { workspaceId_userId: { workspaceId, userId } },
+        });
+        if (membership?.isActive) return { workspaceId, member: null };
+        if (membership) {
+          throw new ForbiddenException(
+            'Ask a workspace admin for a new invitation to rejoin',
+          );
+        }
+
+        await this.checkWorkspaceCapacity(
+          tx,
+          workspaceId,
+          workspace.subscriptionTier,
+        );
+        await tx.workspaceMember.create({
+          data: { workspaceId, userId, role: 'MEMBER' },
+        });
+        const member = await tx.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, avatarUrl: true },
+        });
+        return { workspaceId, member };
+      },
+    );
+
+    if (member) {
+      this.eventEmitter.emit('workspace.member_joined', {
+        workspaceId,
+        member,
+      });
+    }
+    return { message: 'Successfully joined workspace', workspaceId };
   }
 
   async getHistory(workspaceId: string, query: HistoryQueryDto) {
@@ -574,52 +612,87 @@ export class WorkspacesService {
   }
 
   async joinWorkspace(token: string, userId: string) {
-    const invite = await this.prisma.workspaceInvite.findUnique({
-      where: { token },
-    });
+    const { membership, accepted } = await this.withMembershipTransaction(
+      async (tx) => {
+        const invite = await tx.workspaceInvite.findUnique({
+          where: { token },
+        });
+        if (!invite) throw new NotFoundException('Invalid invitation token');
+        if (invite.usedAt)
+          throw new BadRequestException('Invitation already used');
+        const now = new Date();
+        if (invite.expiresAt <= now) {
+          throw new BadRequestException('Invitation expired');
+        }
 
-    if (!invite) throw new NotFoundException('Invalid invitation token');
-    if (invite.usedAt) throw new BadRequestException('Invitation already used');
-    if (invite.expiresAt < new Date())
-      throw new BadRequestException('Invitation expired');
+        const user = await tx.user.findUnique({ where: { id: userId } });
+        if (!user || user.email !== invite.email) {
+          throw new BadRequestException('Email does not match invitation');
+        }
 
-    // Ensure the user email matches the invite email
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user?.email !== invite.email) {
-      throw new BadRequestException('Email does not match invitation');
-    }
+        const workspaceId = invite.workspaceId;
+        const workspace = await tx.workspace.findUnique({
+          where: { id: workspaceId },
+          select: { subscriptionTier: true },
+        });
+        if (!workspace) throw new NotFoundException('Workspace not found');
 
-    // Add user as MEMBER and mark token as used
-    return this.prisma.$transaction(async (tx) => {
-      await tx.workspaceInvite.update({
-        where: { id: invite.id },
-        data: { usedAt: new Date() },
-      });
+        const existing = await tx.workspaceMember.findUnique({
+          where: { workspaceId_userId: { workspaceId, userId } },
+        });
+        if (existing?.isActive) {
+          throw new BadRequestException('User is already a member');
+        }
+        if (existing?.leftAt && invite.createdAt <= existing.leftAt) {
+          throw new BadRequestException(
+            'A new invitation is required to rejoin',
+          );
+        }
 
-      const membership = await tx.workspaceMember.create({
-        data: {
-          workspaceId: invite.workspaceId,
-          userId,
-          role: 'MEMBER',
-        },
-      });
+        await this.checkWorkspaceCapacity(
+          tx,
+          workspaceId,
+          workspace.subscriptionTier,
+        );
+        await tx.workspaceInvite.update({
+          where: { id: invite.id },
+          data: { usedAt: now },
+        });
 
-      // Find the inviter for event emitting
-      const inviter = await tx.user.findUnique({
-        where: { id: invite.invitedById },
-      });
+        const membership = existing
+          ? await tx.workspaceMember.update({
+              where: { id: existing.id },
+              data: {
+                isActive: true,
+                role: 'MEMBER',
+                teamId: null,
+                leftAt: null,
+                joinedAt: now,
+              },
+            })
+          : await tx.workspaceMember.create({
+              data: { workspaceId, userId, role: 'MEMBER' },
+            });
 
-      this.eventEmitter.emit('invite.accepted', {
-        workspaceId: invite.workspaceId,
-        userId,
-        inviterId: invite.invitedById,
-        userEmail: user.email,
-        userName: user.name,
-        inviterEmail: inviter?.email,
-      });
+        const inviter = await tx.user.findUnique({
+          where: { id: invite.invitedById },
+        });
+        return {
+          membership,
+          accepted: {
+            workspaceId,
+            userId,
+            inviterId: invite.invitedById,
+            userEmail: user.email,
+            userName: user.name,
+            inviterEmail: inviter?.email,
+          },
+        };
+      },
+    );
 
-      return membership;
-    });
+    this.eventEmitter.emit('invite.accepted', accepted);
+    return membership;
   }
 
   async getWorkspaceMembers(workspaceId: string) {
@@ -714,13 +787,13 @@ export class WorkspacesService {
     });
 
     if (
-      !requesterMember ||
+      !requesterMember?.isActive ||
       (requesterMember.role !== 'OWNER' && requesterMember.role !== 'ADMIN')
     ) {
       throw new ForbiddenException('Insufficient permissions to remove member');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const removed = await this.prisma.$transaction(async (tx) => {
       const removed = await tx.workspaceMember.update({
         where: { id: member.id },
         data: {
@@ -744,6 +817,9 @@ export class WorkspacesService {
 
       return removed;
     });
+
+    this.eventEmitter.emit('member.removed', { workspaceId, userId });
+    return removed;
   }
 
   async getActivityLog(
